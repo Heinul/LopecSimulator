@@ -5,6 +5,8 @@
 
 // 전역 네임스페이스 확인
 window.LopecScanner = window.LopecScanner || {};
+window.LopecScanner.Scanners = window.LopecScanner.Scanners || {};
+window.LopecScanner.Scanners.Accessory = window.LopecScanner.Scanners.Accessory || {};
 
 // 초기화 및 메시지 처리 함수
 (function() {
@@ -40,6 +42,11 @@ window.LopecScanner = window.LopecScanner || {};
     console.log('로펙 시뮬레이터 점수 분석기가 로드되었습니다.');
     
     // 장신구 옵션 유틸리티 글로벌 함수 추가
+    // 리팩토링된 모듈 확인
+    if (window.LopecScanner.Scanners.Accessory && 
+        window.LopecScanner.Scanners.Accessory.AccessoryScanner) {
+      console.log('리팩토링된 장신구 스캐너 모듈이 로드되었습니다.');
+    }
     window.debugAccessory = {
       // 장신구 옵션 상세 확인
       check: function() {

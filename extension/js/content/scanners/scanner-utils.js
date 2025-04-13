@@ -15,17 +15,17 @@ LopecScanner.Scanners.Utils = (function() {
    * @return {Object} - 스캔할 요소들과 관련 정보
    */
   async function prepareElementsForScan(scanSettings) {
-    // 기본 스캔너 참조
+    // 기본 스캐너 참조
     const BaseScanner = LopecScanner.Scanners.BaseScanner;
-    // 장비 스캔너 참조
+    // 장비 스캐너 참조
     const ArmorScanner = LopecScanner.Scanners.ArmorScanner;
-    // 보석 스캔너 참조
+    // 보석 스캐너 참조
     const GemScanner = LopecScanner.Scanners.GemScanner;
-    // 장신구 스캔너 참조
+    // 장신구 스캐너 참조
     const AccessoryScanner = LopecScanner.Scanners.AccessoryScanner;
-    // 각인 스캔너 참조
+    // 각인 스캐너 참조
     const EngravingScanner = LopecScanner.Scanners.EngravingScanner;
-    // 카르마 스캔너 참조
+    // 카르마 스캐너 참조
     const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
     
     // 기본 스캔 설정 (전부 활성화)
@@ -37,18 +37,41 @@ LopecScanner.Scanners.Utils = (function() {
       scanKarma: true
     };
     
+    console.log('스캔 준비: 페이지 구조 확인 시작');
+    
     // 엘리먼트 수집
     // 장비 관련 엘리먼트
     const armorNameElements = document.querySelectorAll('.armor-name');
     const armorUpgradeElements = document.querySelectorAll('.armor-upgrade');
     
+    console.log(`장비 항목: ${armorNameElements.length}개의 장비명, ${armorUpgradeElements.length}개의 강화 요소 있음`);
+    
     // 보석 관련 엘리먼트
     const gemLevelElements = document.querySelectorAll('select[name="ArmoryGem Gems Level"]');
+    
+    console.log(`보석 항목: ${gemLevelElements.length}개의 보석 레벨 요소 있음`);
     
     // 장신구 관련 엘리먼트
     const accessoryTierElements = document.querySelectorAll('.accessory-item .tier.accessory');
     const accessoryQualityElements = document.querySelectorAll('.accessory-item .quality');
     const accessoryOptionElements = document.querySelectorAll('.accessory-item .option.tooltip-text');
+    
+    console.log(`장신구 항목: 
+      - ${accessoryTierElements.length}개의 티어 요소 
+      - ${accessoryQualityElements.length}개의 탁돈 요소 
+      - ${accessoryOptionElements.length}개의 옵션 요소 있음`);
+    
+    // DOM 구조 확인을 위한 추가 검사
+    console.log('DOM 구조 확인 - 장신구:');
+    try {
+      if (LopecScanner.Scanners.Accessory && 
+          LopecScanner.Scanners.Accessory.Detector && 
+          LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure) {
+        LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure();
+      }
+    } catch (e) {
+      console.warn('장신구 구조 디버깅 함수 오류:', e);
+    }
     
     // 스캔 준비 전 장신구 옵션의 현재 값을 로그로 확인
     console.log('스캔 준비 전 장신구 옵션 값 확인:');
@@ -67,6 +90,9 @@ LopecScanner.Scanners.Utils = (function() {
     if (bangleElements && bangleElements.length > 0) {
       bangleStatElements = document.querySelectorAll('.bangle .option-item .stats');
       bangleOptionElements = document.querySelectorAll('.bangle .grinding-wrap .option.tooltip-text');
+      console.log(`팔찌 항목: ${bangleStatElements.length}개의 스탯, ${bangleOptionElements.length}개의 옵션`);
+    } else {
+      console.log('팔찌 항목: 발견되지 않음');
     }
     
     // 각인 관련 엘리먼트 - .orange 클래스를 가진 요소 참조
@@ -75,12 +101,16 @@ LopecScanner.Scanners.Utils = (function() {
     // orange 클래스를 가진 요소 확인
     const orangeEngravingLevelElements = document.querySelectorAll('.engraving-box .grade.orange');
     
+    console.log(`각인 항목: ${engravingNameElements.length}개 각인명, ${engravingLevelElements.length}개 등급, (orange: ${orangeEngravingLevelElements.length}개)`);
+    
     // 카르마 관련 엘리먼트
     const karmaRadioGroups = [
       document.querySelectorAll('input[name="enlight-karma"]'),
       document.querySelectorAll('input[name="leaf-karma"]')
     ];
     const karmaCheckboxes = document.querySelectorAll('.ark-list.enlightenment input[type="checkbox"]');
+    
+    console.log(`카르마 항목: ${karmaRadioGroups[0].length + karmaRadioGroups[1].length}개 라디오, ${karmaCheckboxes.length}개 체크박스`);
     
     // 스캔 항목 개수 계산
     let armorScanCount = settings.scanArmor ? ArmorScanner.prepareArmorScan(armorNameElements, armorUpgradeElements) : 0;
@@ -137,6 +167,8 @@ LopecScanner.Scanners.Utils = (function() {
     
     // 전체 스캔 항목 개수 설정
     BaseScanner.state.totalScans = armorScanCount + gemScanCount + accessoryScanCount + engravingScanCount + karmaScanCount;
+    
+    console.log(`스캔 준비 완료: 총 ${BaseScanner.state.totalScans}개 항목 (장비:${armorScanCount}, 보석:${gemScanCount}, 장신구:${accessoryScanCount}, 각인:${engravingScanCount}, 카르마:${karmaScanCount})`);
     
     return {
       // 장비 요소

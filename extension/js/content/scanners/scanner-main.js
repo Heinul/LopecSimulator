@@ -18,6 +18,12 @@ LopecScanner.Scanners.Main = (function() {
   const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
   const ScannerUtils = LopecScanner.Scanners.Utils;
   
+  // 리팩토링된 모듈 참조
+  console.log('로게환관리사 환관 확장 프로그램 - 스캐너 초기화 중');
+  if (LopecScanner.Scanners.Accessory && LopecScanner.Scanners.Accessory.Options) {
+    console.log('리팩토링된 장신구 스캐너 모듈 출감');  
+  }
+  
   // 스캔 설정 객체
   let scanSettings = {
     scanArmor: true,
