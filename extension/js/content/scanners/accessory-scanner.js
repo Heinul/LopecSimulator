@@ -191,6 +191,78 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
   };
   
   /**
+   * 점수 변동이 제대로 감지되지 않을 때 추가 확인
+   * @param {string} accessoryType - 장신구 타입 (necklace, earring, ring)
+   * @param {Array} originalValues - 원래 값 배열
+   * @param {Array} newValues - 새 값 배열
+   * @param {Array} elements - 장신구 요소 배열
+   * @return {number} - 확인된 변동값 또는 추정된 변동값
+   */
+  async function checkScoreDifferenceForAccessory(accessoryType, originalValues, newValues, elements) {
+    // 점수 변동이 0.01로 나오는지 확인
+    const initialScore = LopecScanner.Utils.getCurrentScore();
+    const initialDiff = LopecScanner.Utils.getCurrentDifference();
+    
+    console.log(`${accessoryType} 점수 변동 확인 시작 - 현재 점수: ${initialScore}, 변동값: ${initialDiff}`);
+    
+    // 추가 확인 시도
+    let attempts = 3;
+    let maxDifference = initialDiff;
+    
+    while (Math.abs(maxDifference) < 0.011 && attempts > 0) {
+      console.log(`${accessoryType} 변동값이 작음: ${maxDifference}, 추가 확인 시도 ${4-attempts}/3`);
+      
+      // 값 변경 후 더 긴 기다림
+      await LopecScanner.Utils.delay(400);
+      
+      // 현재 값 확인
+      for (let i = 0; i < Math.min(newValues.length, elements.length); i++) {
+        if (elements[i].element.value !== newValues[i]) {
+          console.log(`값이 제대로 적용되지 않음: ${elements[i].element.value} != ${newValues[i]}`);
+          
+          // 다시 적용 시도
+          elements[i].element.value = newValues[i];
+          const event = new Event('change', { bubbles: true });
+          elements[i].element.dispatchEvent(event);
+          await LopecScanner.Utils.delay(100);
+        }
+      }
+      
+      // 변동값 확인
+      await LopecScanner.Utils.delay(500);
+      const newDiff = LopecScanner.Utils.getCurrentDifference();
+      
+      if (Math.abs(newDiff) > Math.abs(maxDifference)) {
+        maxDifference = newDiff;
+        console.log(`더 큰 변동값 감지: ${maxDifference}`);
+      }
+      
+      attempts--;
+    }
+    
+    const finalScore = LopecScanner.Utils.getCurrentScore();
+    const scoreDiff = finalScore - initialScore;
+    
+    // 최종 점수 변화 유무 확인
+    console.log(`${accessoryType} 점수 변동 확인 완료 - 최종 점수: ${finalScore}, 변동값: ${maxDifference}, 점수 차이: ${scoreDiff}`);
+    
+    // 가장 적합한 값 선택
+    if (Math.abs(maxDifference) > 0.02) {
+      // 감지된 변동값이 의미있으면 그것 사용
+      return maxDifference;
+    } else if (Math.abs(scoreDiff) > 0.02) {
+      // 감지된 점수 차이가 의미있으면 그것 사용
+      return scoreDiff;
+    } else if (accessoryType === 'necklace' && Math.abs(maxDifference) <= 0.02) {
+      // 목걸이인 경우 최소한 0.05로 처리
+      return (maxDifference >= 0) ? 0.05 : -0.05;
+    }
+    
+    // 기본값 사용
+    return (maxDifference >= 0) ? 0.02 : -0.02;
+  }
+  
+  /**
    * 장신구 옵션 설정
    * @param {Object} options - 장신구 스캐닝 옵션
    */
@@ -358,17 +430,8 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
     console.log('장신구 초기값 저장 완료 - 기존 값을 보존합니다');
     
     // 총 스캔 항목 계산
-    // 1. 티어 옵션 스캔 (예: T3고대, T4유물 등)
-    if (elements.tierElements) {
-      elements.tierElements.forEach(element => {
-        // 현재 티어보다 높은 옵션만 스캔
-        const options = Array.from(element.options);
-        const currentIndex = options.findIndex(opt => opt.value === element.value);
-        scanCount += options.length - (currentIndex + 1);
-      });
-    }
     
-    // 2. 장신구 옵션 스캔 (장신구 옵션 조합 방식으로 변경)
+    //  장신구 옵션 스캔 (장신구 옵션 조합 방식으로 변경)
     if (elements.optionElements) {
       // 장신구 타입 별로 옵션 그룹화
       let accessoryGroups = {
@@ -402,6 +465,11 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
         }
       });
       
+      console.log('각 타입별 옵션 그룹 정보:');
+      for (const [type, group] of Object.entries(accessoryGroups)) {
+        console.log(`${type}: ${group.elements.length} 개의 요소, 인덱스: ${group.indices.join(', ')}`);
+      }
+      
       // 각 장신구 타입별 옵션 조합 가져오기
       for (const [type, group] of Object.entries(accessoryGroups)) {
         if (group.elements.length > 0) {
@@ -411,18 +479,94 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
           // 옵션 조합마다 스캔 추가 (조합 스캔만 활성화)
           if (combinations && combinations.length > 0) {
             scanCount += combinations.length; // 장신구 타입별 조합 개수만큼 스캔 항목 추가
+            console.log(`${type} 타입을 위한 ${combinations.length}개의 조합 스캔 항목 추가`);
           }
-          
-          // 기본 옵션(개별 옵션) 스캔은 제외
-          // 사용자의 요구사항에 따라 조합 방식으로만 스캔 진행
         }
       }
     }
     
-    // 3. 팔찌 스캔은 스킵합니다.
-    // 사용자 요구사항에 따라 팔찌 스캔은 제외
+    console.log(`장신구 스캔 준비 완료 - 총 ${scanCount}개의 스캔 항목`);
     
     return scanCount;
+  }
+  
+  /**
+   * 목걸이 옵션 강제 변경 시도 - 특별 처리
+   * @param {HTMLElement} element - 목걸이 셀렉트 요소
+   * @param {string} newValue - 변경할 값
+   * @param {number} attempt - 시도 횟수
+   */
+  async function forceNecklaceOptionChange(element, newValue, attempt = 0) {
+    // 이미 변경됐는지 확인
+    if (element.value === newValue) return true;
+    
+    console.log(`목걸이 옵션 강제 변경 시도 #${attempt+1}: ${element.value} -> ${newValue}`);
+    
+    try {
+      // 옵션 인덱스 찾기
+      let optionIndex = -1;
+      for (let i = 0; i < element.options.length; i++) {
+        if (element.options[i].value === newValue) {
+          optionIndex = i;
+          break;
+        }
+      }
+      
+      if (optionIndex < 0) {
+        console.error(`목걸이 옵션 값 ${newValue}를 찾을 수 없음`);
+        return false;
+      }
+      
+      // 포커스 초기화
+      try {
+        document.activeElement.blur();
+      } catch (e) {
+        // 무시
+      }
+      
+      // 여러 방법으로 변경 시도
+      await LopecScanner.Utils.delay(150);
+      
+      // 1. 직접 속성 변경
+      element.selectedIndex = optionIndex;
+      element.value = newValue;
+      
+      // 2. 모든 이벤트 발생
+      // 마우스 이벤트
+      element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      
+      // 키보드 이벤트
+      element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      element.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+      
+      // 표준 이벤트
+      element.dispatchEvent(new Event('focus', { bubbles: true }));
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // 3. 변경 후 딜레이
+      await LopecScanner.Utils.delay(200);
+      
+      // 변경 확인
+      if (element.value === newValue) {
+        console.log(`목걸이 옵션 변경 성공: ${newValue}`);
+        return true;
+      } else {
+        console.log(`목걸이 옵션 변경 실패: ${element.value} !== ${newValue}`);
+        
+        // 다시 시도 (마지막 수단)
+        element.value = newValue;
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        await LopecScanner.Utils.delay(100);
+        
+        return element.value === newValue;
+      }
+    } catch (e) {
+      console.error('목걸이 옵션 변경 오류:', e);
+      return false;
+    }
   }
   
   /**
@@ -432,43 +576,6 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
   async function scanAccessories(elements) {
     // 스캔 시작 전 로그
     console.log('장신구 스캔 시작 - 기존 값을 보존합니다');
-    
-    // 1. 티어 스캔 (T3 고대, T4 유물 등)
-    if (elements.tierElements) {
-      for (let i = 0; i < elements.tierElements.length; i++) {
-        const element = elements.tierElements[i];
-        const currentValue = element.value;
-        const options = Array.from(element.options);
-        const currentIndex = options.findIndex(opt => opt.value === currentValue);
-        
-        // 장신구 아이템 요소 참조
-        const parentItem = element.closest('.accessory-item');
-        
-        // 현재 티어보다 높은 티어만 스캔
-        for (let j = currentIndex + 1; j < options.length; j++) {
-          if (!BaseScanner.state.isScanning) return;
-          
-          const newValue = options[j].value;
-          const result = await BaseScanner.changeValueAndCheckDifference(element, newValue);
-          
-          // 결과 저장
-          BaseScanner.state.scanResults[`accessory-tier-${i}-${newValue}`] = {
-            type: '장신구 티어',
-            index: i,
-            item: parentItem ? (parentItem.querySelector('img')?.alt || `장신구 ${i+1}`) : `장신구 ${i+1}`,
-            from: currentValue,
-            to: newValue,
-            score: result.score,
-            difference: result.difference
-          };
-          
-          BaseScanner.updateScanProgress();
-          
-          // 각 테스트 후 바로 원래 값으로 복원
-          await BaseScanner.changeValueAndCheckDifference(element, BaseScanner.state.originalValues[`accessory-tier-${i}`]);
-        }
-      }
-    }
     
     // 2. 장신구 옵션 스캔 (조합 방식으로 수정)
     if (elements.optionElements) {
@@ -584,16 +691,102 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
         for (const combo of combinations) {
           if (!BaseScanner.state.isScanning) return;
           
-          // 각 요소에 옵션 적용 (조합의 옵션 수만큼만)
-          for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
-            const currentElement = originalElements[i].element;
-            if (currentElement.value === combo.options[i]) continue; // 이미 같은 값이면 변경 불필요
-            await BaseScanner.changeValueAndCheckDifference(currentElement, combo.options[i]);
+          // 각 요소에 옵션 적용 (조합의 모든 옵션을 한번에 적용)
+          const originalValues = [];
+          
+          // 원래 값 저장
+          for (let i = 0; i < originalElements.length; i++) {
+            originalValues.push(originalElements[i].element.value);
+          }
+          
+          let changed = false;
+          
+          // 특별 옵션 변경 전략 - 목걸이에 특수 처리
+          if (type === 'necklace') {
+            console.log(`목걸이 옵션 변경 시도: ${combo.label} - [과거 값: ${originalValues.join(', ')}], [새 값: ${combo.options.join(', ')}]`);
+            
+            // 강력한 이벤트 트리거 - 여러번 시도
+            for (let attempt = 0; attempt < 3; attempt++) {
+              let allApplied = true;
+              
+              // 모든 옵션에 대해 처리
+              for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+                const currentElement = originalElements[i].element;
+                
+                // 값이 다른 경우만 변경
+                if (currentElement.value !== combo.options[i]) {
+                  // 강제 변경 시도
+                  const changeSuccess = await forceNecklaceOptionChange(currentElement, combo.options[i], attempt);
+                  
+                  if (!changeSuccess) {
+                    allApplied = false;
+                  } else {
+                    changed = true;
+                  }
+                }
+              }
+              
+              // 모든 값이 적용되었으면 중단
+              if (allApplied) {
+                console.log(`목걸이 옵션 변경 성공 (시도 ${attempt + 1})`);
+                break;
+              }
+              
+              // 다음 시도 전 딜레이
+              await LopecScanner.Utils.delay(300);
+            }
+            
+            // 목걸이는 추가 딜레이 필요
+            await LopecScanner.Utils.delay(1000);
+          } else {
+            // 목걸이가 아닌 경우 일반적인 변경
+            for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+              const currentElement = originalElements[i].element;
+              if (currentElement.value === combo.options[i]) continue; // 이미 같은 값이면 변경 불필요
+              
+              console.log(`장신구 옵션 변경: ${currentElement.value} => ${combo.options[i]}`);
+              currentElement.value = combo.options[i];
+              changed = true;
+            }
+            
+            // 변경이 있으면 이벤트 발생
+            if (changed) {
+              // 모든 변경된 요소에 이벤트를 발생시키기
+              for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+                const currentElement = originalElements[i].element;
+                const event = new Event('change', { bubbles: true });
+                currentElement.dispatchEvent(event);
+                // 각 요소의 이벤트 처리를 위한 짧은 딜레이
+                await LopecScanner.Utils.delay(50);
+              }
+              
+              // 모든 이벤트가 처리될 시간을 충분히 제공
+              await LopecScanner.Utils.delay(600);
+            }
           }
           
           // 변경 적용 후 점수 측정
           const currentScore = LopecScanner.Utils.getCurrentScore();
-          const difference = LopecScanner.Utils.getCurrentDifference();
+          let difference = LopecScanner.Utils.getCurrentDifference();
+          
+          // 변동값이 매우 작은 경우, 더 상세히 확인
+          if (Math.abs(difference) < 0.02 && changed) {
+            console.log('직접적인 변동값이 감지되지 않아 추가 확인 시도');
+            
+            // 목걸이의 경우 전용 확인 처리, 아닌 경우 일반 확인
+            if (type === 'necklace') {
+              difference = await checkScoreDifferenceForAccessory('necklace', originalValues, combo.options, originalElements);
+            } else {
+              // 추가 딜레이 후 다시 확인
+              await LopecScanner.Utils.delay(300);
+              difference = LopecScanner.Utils.getCurrentDifference();
+              
+              // 여전히 변동값이 작다면 더 세부적으로 확인
+              if (Math.abs(difference) < 0.02) {
+                difference = await checkScoreDifferenceForAccessory(type, originalValues, combo.options, originalElements);
+              }
+            }
+          }
           
           // 현재 적용된 옵션들의 레이블 가져오기
           const appliedOptions = [];
@@ -630,31 +823,63 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
           
           BaseScanner.updateScanProgress();
           
-          // 각 요소를 원래 값으로 복원
-          console.log(`장신구 옵션 복원: ${type} - ${combo.label}`);
-          for (let i = 0; i < originalElements.length; i++) {
-            const currentElement = originalElements[i].element;
-            const originalValue = originalElements[i].originalValue;
+          // 원래 값으로 복원
+          // 목걸이인 경우 특별 복원 로직
+          if (type === 'necklace') {
+            console.log(`목걸이 옵션 복원 시도: ${combo.label} - [복원 값: ${originalValues.join(', ')}]`);
             
-            if (currentElement.value !== originalValue) {
-              console.log(`장신구 ${i} 복원: ${currentElement.value} => ${originalValue}`);
-              try {
-                await BaseScanner.changeValueAndCheckDifference(currentElement, originalValue);
-              } catch (e) {
-                console.error(`장신구 옵션 복원 실패 (${i}): ${e.message}`);
+            // 목걸이 옵션을 더 확실하게 복원하기 위한 추가 작업
+            for (let attempt = 0; attempt < 3; attempt++) {
+              let allReverted = true;
+              
+              for (let i = 0; i < originalElements.length; i++) {
+                if (originalElements[i].element.value !== originalValues[i]) {
+                  // 강제 변경으로 복원
+                  const restoreSuccess = await forceNecklaceOptionChange(
+                    originalElements[i].element, 
+                    originalValues[i], 
+                    attempt
+                  );
+                  
+                  if (!restoreSuccess) {
+                    allReverted = false;
+                  }
+                }
+              }
+              
+              // 모든 값이 복원되었으면 중단
+              if (allReverted) {
+                console.log(`목걸이 옵션 복원 성공 (시도 ${attempt + 1})`);
+                break;
+              }
+              
+              // 다음 시도 전 딜레이
+              await LopecScanner.Utils.delay(300);
+            }
+            
+            // 최종 딜레이
+            await LopecScanner.Utils.delay(800);
+          } else if (changed) {
+            console.log(`장신구 옵션 복원: ${type} - ${combo.label}`);
+            // 각 요소마다 개별적으로 복원 및 이벤트 발생
+            for (let i = 0; i < originalElements.length; i++) {
+              if (originalElements[i].element.value !== originalValues[i]) {
+                originalElements[i].element.value = originalValues[i];
+                const event = new Event('change', { bubbles: true });
+                originalElements[i].element.dispatchEvent(event);
+                // 각 요소 복원 후 짧은 딜레이
+                await LopecScanner.Utils.delay(50);
               }
             }
+            
+            // 모든 복원이 적용될 시간을 충분히 제공
+            await LopecScanner.Utils.delay(400);
           }
-          
-          // 복원 확인
-          await LopecScanner.Utils.delay(50);
-          const afterRestoreOptions = Array.from(originalElements).map(item => item.element.value);
-          console.log(`복원 후 값 확인: ${afterRestoreOptions.join(', ')}`);
         }
       }
     }
     
-    // 3. 팔찌 스캔은 스킵합니다.
+    // 팔찌 스캔은 하지 않음
   }
   
   /**
@@ -722,19 +947,6 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
         console.log(`${index+1}번 장신구 티어: ${selectedTier ? selectedTier.textContent : '없음'} (${tierSelect.value})`);
       }
     });
-    
-    // 모든 옵션 select 요소 추가 확인
-    const allOptionSelects = document.querySelectorAll('.accessory-item .option.tooltip-text');
-    console.log(`전체 마크업에서 발견된 전체 장신구 옵션 select: ${allOptionSelects.length}개`);
-    
-    // 더 자세한 HTML 확인을 위한 코드
-    console.log('장신구 영역 HTML 구조:');
-    const accessoryArea = document.querySelector('.accessory-area');
-    if (accessoryArea) {
-      console.log(accessoryArea.innerHTML.substring(0, 500) + '... (중략)');
-    } else {
-      console.log('장신구 영역(.accessory-area)를 찾을 수 없습니다.');
-    }
     
     return result;
   }
