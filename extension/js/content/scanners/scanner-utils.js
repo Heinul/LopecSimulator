@@ -50,6 +50,15 @@ LopecScanner.Scanners.Utils = (function() {
     const accessoryQualityElements = document.querySelectorAll('.accessory-item .quality');
     const accessoryOptionElements = document.querySelectorAll('.accessory-item .option.tooltip-text');
     
+    // 스캔 준비 전 장신구 옵션의 현재 값을 로그로 확인
+    console.log('스캔 준비 전 장신구 옵션 값 확인:');
+    accessoryOptionElements.forEach((element, index) => {
+      const selectedOption = element.options[element.selectedIndex];
+      const selectedText = selectedOption ? selectedOption.textContent : '없음';
+      const selectedValue = element.value;
+      console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
+    });
+    
     // 팔찌 관련 엘리먼트 (bangle 클래스가 있는지 먼저 확인)
     let bangleStatElements = [];
     let bangleOptionElements = [];
@@ -86,6 +95,31 @@ LopecScanner.Scanners.Utils = (function() {
       bangleOptionElements: bangleOptionElements
     };
     let accessoryScanCount = settings.scanAccessory ? AccessoryScanner.prepareAccessoryScan(accessoryElements) : 0;
+    
+    // 스캔 준비 후 장신구 옵션의 현재 값을 다시 로그로 확인
+    console.log('스캔 준비 후 장신구 옵션 값 확인:');
+    accessoryOptionElements.forEach((element, index) => {
+      const selectedOption = element.options[element.selectedIndex];
+      const selectedText = selectedOption ? selectedOption.textContent : '없음';
+      const selectedValue = element.value;
+      
+      // 원래 값 확인
+      const originalKey = `accessory-option-${index}`;
+      const originalValue = BaseScanner.state.originalValues[originalKey];
+      
+      // 원래 값과 현재 값이 다르면 경고
+      if (originalValue && originalValue !== selectedValue) {
+        console.warn(`장신구 옵션 [${index}] 값이 변경됨: ${originalValue} -> ${selectedValue}`);
+        
+        // 원래 값으로 복원 시도
+        console.log(`원래 값으로 복원 시도: ${originalValue}`);
+        element.value = originalValue;
+        const event = new Event('change', { bubbles: true });
+        element.dispatchEvent(event);
+      } else {
+        console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
+      }
+    });
     
     // 각인 스캔 항목 계산
     const engravingElements = {

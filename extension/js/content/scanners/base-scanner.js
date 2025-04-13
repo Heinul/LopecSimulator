@@ -72,61 +72,99 @@ LopecScanner.Scanners.BaseScanner = (function() {
   }
 
   /**
-   * 원래 값으로 복원
+   * 원래 값으로 복원 - 단순화된 버전
    */
   async function restoreOriginalValues() {
     console.log('원래 값으로 복원 시작...');
-    
-    // 복원할 값 로그 출력 (디버깅용)
-    console.log('복원할 원래 값들:', state.originalValues);
-    
-    for (const key in state.originalValues) {
-      const [type, index] = key.split('-').slice(0, 2);
-      const value = state.originalValues[key];
+
+    try {
+      // 장신구 복원
+      console.log('장신구 값 복원 시작');
       
-      console.log(`복원 시도: ${key} => ${value}`);
-      
-      let element = null;
-      
-      if (type === 'armor' && key.includes('name')) {
-        const elements = document.querySelectorAll('.armor-name');
-        if (elements[index]) element = elements[index];
-      } else if (type === 'armor' && key.includes('upgrade')) {
-        const elements = document.querySelectorAll('.armor-upgrade');
-        if (elements[index]) element = elements[index];
-      } else if (type === 'gem') {
-        const elements = document.querySelectorAll('select[name="ArmoryGem Gems Level"]');
-        if (elements[index]) element = elements[index];
-      } else if (type === 'accessory' && key.includes('option')) {
-        // 장신구 옵션 값 복원
-        const elements = document.querySelectorAll('.accessory-item .option.tooltip-text');
-        const numIndex = parseInt(index, 10);
-        if (elements[numIndex]) element = elements[numIndex];
-      } else if (type === 'accessory' && key.includes('tier')) {
-        // 장신구 티어 값 복원 
-        const elements = document.querySelectorAll('.accessory-item .tier.accessory');
-        const numIndex = parseInt(index, 10);
-        if (elements[numIndex]) element = elements[numIndex];
-      }
-      
-      if (element) {
-        // 기존 값과 다를 때만 변경 (줄바꿈을 줄이기 위해)
-        if (element.value !== value) {
-          try {
-            element.value = value;
-            const event = new Event('change', { bubbles: true });
-            element.dispatchEvent(event);
-            await LopecScanner.Utils.delay(100);
-            console.log(`복원 성공: ${key} => ${value}`);
-          } catch (e) {
-            console.error(`복원 실패: ${key} => ${value}`, e);
+      for (const key in state.originalValues) {
+        // 장신구 옵션
+        if (key.startsWith('accessory-option-')) {
+          const optionIndex = key.split('-')[2];
+          if (!isNaN(optionIndex)) {
+            try {
+              const optionSelects = document.querySelectorAll('.accessory-item.accessory .option.tooltip-text');
+              if (optionSelects[optionIndex]) {
+                const value = state.originalValues[key];
+                console.log(`장신구 옵션 복원 시도: ${optionIndex} => ${value}`);
+                
+                optionSelects[optionIndex].value = value;
+                const event = new Event('change', { bubbles: true });
+                optionSelects[optionIndex].dispatchEvent(event);
+                await LopecScanner.Utils.delay(80);
+              }
+            } catch (e) {
+              console.error(`장신구 옵션 복원 오류 (${optionIndex}):`, e);
+            }
           }
-        } else {
-          console.log(`복원 스킵 (같은 값): ${key} => ${value}`);
         }
-      } else {
-        console.warn(`요소를 찾을 수 없음: ${key}`);
+        
+        // 장신구 티어
+        if (key.startsWith('accessory-tier-')) {
+          const tierIndex = key.split('-')[2];
+          if (!isNaN(tierIndex)) {
+            try {
+              const tierSelects = document.querySelectorAll('.accessory-item.accessory select.tier.accessory');
+              if (tierSelects[tierIndex]) {
+                const value = state.originalValues[key];
+                console.log(`장신구 티어 복원 시도: ${tierIndex} => ${value}`);
+                
+                tierSelects[tierIndex].value = value;
+                const event = new Event('change', { bubbles: true });
+                tierSelects[tierIndex].dispatchEvent(event);
+                await LopecScanner.Utils.delay(80);
+              }
+            } catch (e) {
+              console.error(`장신구 티어 복원 오류 (${tierIndex}):`, e);
+            }
+          }
+        }
       }
+      
+      // 장비와 보석 복원 (기존 방식 유지)
+      const restoreTypes = ['armor', 'gem'];
+      for (const restoreType of restoreTypes) {
+        for (const key in state.originalValues) {
+          if (!key.startsWith(`${restoreType}-`)) continue;
+          
+          const [type, index] = key.split('-').slice(0, 2);
+          const value = state.originalValues[key];
+          
+          console.log(`${type} 복원 시도: ${key} => ${value}`);
+          
+          let selector;
+          if (type === 'armor' && key.includes('name')) {
+            selector = '.armor-name';
+          } else if (type === 'armor' && key.includes('upgrade')) {
+            selector = '.armor-upgrade';
+          } else if (type === 'gem') {
+            selector = 'select[name="ArmoryGem Gems Level"]';
+          }
+          
+          if (selector) {
+            const elements = document.querySelectorAll(selector);
+            if (elements[index]) {
+              try {
+                elements[index].value = value;
+                const event = new Event('change', { bubbles: true });
+                elements[index].dispatchEvent(event);
+                await LopecScanner.Utils.delay(80);
+                console.log(`${type} 복원 성공: ${key} => ${value}`);
+              } catch (e) {
+                console.error(`${type} 복원 실패: ${key}`, e);
+              }
+            } else {
+              console.warn(`${type} 요소를 찾을 수 없음: ${key}`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('원래 값 복원 중 오류 발생:', e);
     }
     
     console.log('복원 완료');
@@ -140,32 +178,6 @@ LopecScanner.Scanners.BaseScanner = (function() {
     
     // 오버레이 제거
     LopecScanner.UI.removeOverlay();
-    
-    // 원래 값 모두 복원되었는지 확인
-    console.log('스캔 결과 저장 전 최종 값 복원 확인');
-    for (const key in state.originalValues) {
-      if (key.startsWith('accessory-option')) {
-        const [, index] = key.split('-').slice(0, 2);
-        const value = state.originalValues[key];
-        const elements = document.querySelectorAll('.accessory-item .option.tooltip-text');
-        const numIndex = parseInt(index, 10);
-        
-        if (elements[numIndex] && elements[numIndex].value !== value) {
-          console.warn(`장신구 옵션 값이 복원되지 않음: ${key} (원래값: ${value}, 현재값: ${elements[numIndex].value})`);
-          
-          try {
-            // 한번 더 복원 시도
-            elements[numIndex].value = value;
-            const event = new Event('change', { bubbles: true });
-            elements[numIndex].dispatchEvent(event);
-            await LopecScanner.Utils.delay(50);
-            console.log(`최종 복원 성공: ${key} => ${value}`);
-          } catch (e) {
-            console.error(`최종 복원 실패: ${key}`, e);
-          }
-        }
-      }
-    }
     
     // 확장 프로그램에 완료 알림
     chrome.runtime.sendMessage({

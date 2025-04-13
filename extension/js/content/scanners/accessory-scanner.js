@@ -12,7 +12,7 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
   // 기본 스캐너 참조
   const BaseScanner = LopecScanner.Scanners.BaseScanner;
   
-  // 장신구 옵션 설정 - 사용자가 코드에서 지정할 수 있는 옵션들
+  // 장신구 옵션 설정
   let accessoryOptions = {
     // 목걸이 옵션
     necklaceOptions: {
@@ -354,6 +354,9 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
       });
     }
     
+    // 장신구 초기값 보존 상태 로그
+    console.log('장신구 초기값 저장 완료 - 기존 값을 보존합니다');
+    
     // 총 스캔 항목 계산
     // 1. 티어 옵션 스캔 (예: T3고대, T4유물 등)
     if (elements.tierElements) {
@@ -427,6 +430,9 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
    * @param {Object} elements - 장신구 요소들 모음 객체
    */
   async function scanAccessories(elements) {
+    // 스캔 시작 전 로그
+    console.log('장신구 스캔 시작 - 기존 값을 보존합니다');
+    
     // 1. 티어 스캔 (T3 고대, T4 유물 등)
     if (elements.tierElements) {
       for (let i = 0; i < elements.tierElements.length; i++) {
@@ -457,10 +463,10 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
           };
           
           BaseScanner.updateScanProgress();
+          
+          // 각 테스트 후 바로 원래 값으로 복원
+          await BaseScanner.changeValueAndCheckDifference(element, BaseScanner.state.originalValues[`accessory-tier-${i}`]);
         }
-        
-        // 원래 값으로 복원
-        await BaseScanner.changeValueAndCheckDifference(element, BaseScanner.state.originalValues[`accessory-tier-${i}`]);
       }
     }
     
@@ -501,8 +507,50 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
         }
       }
       
-      // 현재 선택된 모든 장신구 옵션 가져오기
+      // 현재 선택된 모든 장신구 옵션 가져오기 - 스캔 전 값 기록
       const currentSelectedOptions = getSelectedAccessoryOptions();
+      
+      // 장신구 초기값 로그 - 확인용
+      console.log('스캔 시작 시 선택된 장신구 값:');
+      currentSelectedOptions.forEach(option => {
+        console.log(`항목 ${option.item} [${option.type}] 옵션 ${option.optionIndex}: [${option.grade}] ${option.selectedText} (${option.selectedValue})`);
+      });
+      
+      // 장신구 스캔 전 값이 변경되는지 확인
+      const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
+      console.log('현재 장신구 아이템 값을 확인합니다:');
+      accessoryItems.forEach((item, index) => {
+        const optionSelects = item.querySelectorAll('.option.tooltip-text');
+        optionSelects.forEach((select, selectIndex) => {
+          const selectedOption = select.options[select.selectedIndex];
+          const selectedText = selectedOption ? selectedOption.textContent : '없음';
+          const selectedValue = select.value;
+          
+          // 장신구 값 변경 여부 확인
+          const originalKey = `accessory-option-${(index * 3) + selectIndex}`;
+          const originalValue = BaseScanner.state.originalValues[originalKey];
+          
+          // 기존 저장된 값과 현재 값 비교
+          if (originalValue && originalValue !== selectedValue) {
+            console.warn(`장신구 ${index+1} 옵션 ${selectIndex+1} 값이 변경되었음: ${originalValue} -> ${selectedValue}`);
+            
+            // 원래 값으로 복원
+            console.log(`원래 값으로 복원 시도: ${originalValue}`);
+            select.value = originalValue;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            console.log(`장신구 ${index+1} 옵션 ${selectIndex+1}: ${selectedText} (${selectedValue})`);
+          }
+        });
+      });
+      
+      // 복원 후 장신구 옵션 다시 확인
+      await LopecScanner.Utils.delay(100);
+      console.log('복원 후 장신구 옵션 확인:');
+      const restoredOptions = getSelectedAccessoryOptions();
+      restoredOptions.forEach(option => {
+        console.log(`복원후: 항목 ${option.item} [${option.type}] 옵션 ${option.optionIndex}: [${option.grade}] ${option.selectedText} (${option.selectedValue})`);
+      });
       
       // 각 장신구 타입별로 옵션 조합 스캔 실행
       for (const [type, group] of Object.entries(accessoryGroups)) {
@@ -520,16 +568,27 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
         // 타입별 옵션 조합 가져오기
         const combinations = getAccessoryCombinations(type);
         
+        // 원래 값을 배열로 저장 (elements마다 원래 값 저장)
+        const originalElements = group.elements.map((element, idx) => {
+          return {
+            element: element,
+            originalValue: element.value,
+            originalIndex: group.indices[idx]
+          };
+        });
+        
+        // 기존 값 로그
+        console.log(`${type} 타입 원래 값:`, originalElements.map(item => item.originalValue));
+        
         // 각 옵션 조합마다 스캔 수행
         for (const combo of combinations) {
           if (!BaseScanner.state.isScanning) return;
           
-          const originalValues = group.elements.map(el => el.value);
-          
           // 각 요소에 옵션 적용 (조합의 옵션 수만큼만)
-          for (let i = 0; i < Math.min(combo.options.length, group.elements.length); i++) {
-            if (originalValues[i] === combo.options[i]) continue; // 이미 같은 값이면 변경 불필요
-            await BaseScanner.changeValueAndCheckDifference(group.elements[i], combo.options[i]);
+          for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+            const currentElement = originalElements[i].element;
+            if (currentElement.value === combo.options[i]) continue; // 이미 같은 값이면 변경 불필요
+            await BaseScanner.changeValueAndCheckDifference(currentElement, combo.options[i]);
           }
           
           // 변경 적용 후 점수 측정
@@ -538,24 +597,25 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
           
           // 현재 적용된 옵션들의 레이블 가져오기
           const appliedOptions = [];
-          for (let i = 0; i < Math.min(combo.options.length, group.elements.length); i++) {
+          for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+            const currentElement = originalElements[i].element;
             // 옵션 텍스트 구하기
             let optionText = '';
-            for (let j = 0; j < group.elements[i].options.length; j++) {
-              if (group.elements[i].options[j].value === combo.options[i]) {
-                optionText = group.elements[i].options[j].textContent;
+            for (let j = 0; j < currentElement.options.length; j++) {
+              if (currentElement.options[j].value === combo.options[i]) {
+                optionText = currentElement.options[j].textContent;
                 break;
               }
             }
             
             // 상/중/하 등급 정보 추가
-            const qualitySpan = group.elements[i].closest('.grinding-wrap')?.querySelector('.quality');
+            const qualitySpan = currentElement.closest('.grinding-wrap')?.querySelector('.quality');
             const grade = qualitySpan ? qualitySpan.textContent : '';
             appliedOptions.push(`[${grade}] ${optionText}`);
           }
           
           // 결과 저장 (조합별로 하나의 결과)
-          const parentItem = group.elements[0].closest('li.accessory-item');
+          const parentItem = originalElements[0].element.closest('li.accessory-item');
           const itemName = parentItem ? (parentItem.querySelector('img')?.alt || `${type}`) : type;
           
           BaseScanner.state.scanResults[`accessory-combo-${type}-${combo.label}`] = {
@@ -570,24 +630,31 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
           
           BaseScanner.updateScanProgress();
           
-          // 원래 값으로 복원
+          // 각 요소를 원래 값으로 복원
           console.log(`장신구 옵션 복원: ${type} - ${combo.label}`);
-          for (let i = 0; i < group.elements.length; i++) {
-            if (originalValues[i] !== group.elements[i].value) {
-              console.log(`레그 ${i} 복원: ${group.elements[i].value} => ${originalValues[i]}`);
+          for (let i = 0; i < originalElements.length; i++) {
+            const currentElement = originalElements[i].element;
+            const originalValue = originalElements[i].originalValue;
+            
+            if (currentElement.value !== originalValue) {
+              console.log(`장신구 ${i} 복원: ${currentElement.value} => ${originalValue}`);
               try {
-                await BaseScanner.changeValueAndCheckDifference(group.elements[i], originalValues[i]);
+                await BaseScanner.changeValueAndCheckDifference(currentElement, originalValue);
               } catch (e) {
-                console.error(`장신구 옵션 복원 실패: ${e.message}`);
+                console.error(`장신구 옵션 복원 실패 (${i}): ${e.message}`);
               }
             }
           }
+          
+          // 복원 확인
+          await LopecScanner.Utils.delay(50);
+          const afterRestoreOptions = Array.from(originalElements).map(item => item.element.value);
+          console.log(`복원 후 값 확인: ${afterRestoreOptions.join(', ')}`);
         }
       }
     }
     
     // 3. 팔찌 스캔은 스킵합니다.
-    // 사용자 요구사항에 따라 팔찌 스캔은 제외
   }
   
   /**
