@@ -11,11 +11,23 @@ const PopupUI = {
     statusText: null,
     progressContainer: null,
     progressBar: null,
+    toggleOptionsBtn: null,
+    optionsContent: null,
     toggleArmor: null,
     toggleGem: null,
     toggleAccessory: null,
     toggleEngraving: null,
     toggleKarma: null
+  },
+  
+  // 설정 저장 키
+  storageKeys: {
+    isCollapsed: 'lopecScanner_optionsCollapsed',
+    toggleArmor: 'lopecScanner_toggleArmor',
+    toggleGem: 'lopecScanner_toggleGem',
+    toggleAccessory: 'lopecScanner_toggleAccessory',
+    toggleEngraving: 'lopecScanner_toggleEngraving',
+    toggleKarma: 'lopecScanner_toggleKarma'
   },
   
   // 요소 초기화
@@ -26,12 +38,49 @@ const PopupUI = {
     this.elements.progressContainer = document.getElementById('progressContainer');
     this.elements.progressBar = document.getElementById('progressBar');
     
+    // 옵션 토글 버튼
+    this.elements.toggleOptionsBtn = document.getElementById('toggleOptionsBtn');
+    this.elements.optionsContent = document.getElementById('optionsContent');
+    
     // 토글 버튼 요소 가져오기
     this.elements.toggleArmor = document.getElementById('toggleArmor');
     this.elements.toggleGem = document.getElementById('toggleGem');
     this.elements.toggleAccessory = document.getElementById('toggleAccessory');
     this.elements.toggleEngraving = document.getElementById('toggleEngraving');
     this.elements.toggleKarma = document.getElementById('toggleKarma');
+  },
+  
+  // 저장된 설정 불러오기
+  loadSettings() {
+    // 토글 옵션 펼침/접기 상태 불러오기
+    const isCollapsed = localStorage.getItem(this.storageKeys.isCollapsed) === 'true';
+    if (isCollapsed) {
+      this.elements.optionsContent.classList.add('collapsed');
+      this.elements.toggleOptionsBtn.classList.add('collapsed');
+      this.elements.toggleOptionsBtn.textContent = '►'; // 오른쪽 화살표
+    }
+    
+    // 각 토글 설정 불러오기
+    this.elements.toggleArmor.checked = localStorage.getItem(this.storageKeys.toggleArmor) !== 'false';
+    this.elements.toggleGem.checked = localStorage.getItem(this.storageKeys.toggleGem) !== 'false';
+    this.elements.toggleAccessory.checked = localStorage.getItem(this.storageKeys.toggleAccessory) !== 'false';
+    this.elements.toggleEngraving.checked = localStorage.getItem(this.storageKeys.toggleEngraving) !== 'false';
+    this.elements.toggleKarma.checked = localStorage.getItem(this.storageKeys.toggleKarma) !== 'false';
+  },
+  
+  // 토글 설정 저장
+  saveToggleSettings() {
+    // 각 토글 설정 저장
+    localStorage.setItem(this.storageKeys.toggleArmor, this.elements.toggleArmor.checked);
+    localStorage.setItem(this.storageKeys.toggleGem, this.elements.toggleGem.checked);
+    localStorage.setItem(this.storageKeys.toggleAccessory, this.elements.toggleAccessory.checked);
+    localStorage.setItem(this.storageKeys.toggleEngraving, this.elements.toggleEngraving.checked);
+    localStorage.setItem(this.storageKeys.toggleKarma, this.elements.toggleKarma.checked);
+  },
+  
+  // 토글 버튼 상태 저장
+  saveCollapseState(isCollapsed) {
+    localStorage.setItem(this.storageKeys.isCollapsed, isCollapsed);
   },
   
   // 페이지 상태에 따라 UI 업데이트
@@ -77,6 +126,21 @@ const PopupUI = {
       scanEngraving: this.elements.toggleEngraving.checked,
       scanKarma: this.elements.toggleKarma.checked
     };
+  },
+  
+  // 옵션 펼침/접기 토글
+  toggleOptions() {
+    const optionsContent = this.elements.optionsContent;
+    const toggleBtn = this.elements.toggleOptionsBtn;
+    
+    const isCollapsed = optionsContent.classList.toggle('collapsed');
+    toggleBtn.classList.toggle('collapsed');
+    
+    // 화살표 방향 변경
+    toggleBtn.textContent = isCollapsed ? '►' : '▼'; // 오른쪽 화살표 : 아래쪽 화살표
+    
+    // 상태 저장
+    this.saveCollapseState(isCollapsed);
   }
 };
 
@@ -93,6 +157,9 @@ const PopupActions = {
   
   // 스캔 시작
   startScan() {
+    // 현재 토글 설정 저장
+    PopupUI.saveToggleSettings();
+    
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       // 토글 설정 가져오기
       const scanSettings = PopupUI.getScanSettings();
@@ -127,13 +194,50 @@ const PopupActions = {
 
 // 이벤트 리스너 설정
 function setupEventListeners() {
+  // 스캔 및 데이터 조회 버튼
   PopupUI.elements.scanBtn.addEventListener('click', PopupActions.startScan);
   PopupUI.elements.viewDataBtn.addEventListener('click', PopupActions.openDataPage);
+  
+  // 옵션 펼침/접기 버튼
+  PopupUI.elements.toggleOptionsBtn.addEventListener('click', function() {
+    PopupUI.toggleOptions();
+  });
+  
+  // 옵션 헤더 클릭 시 펼침/접기 토글
+  const optionsHeader = document.querySelector('.options-header');
+  optionsHeader.addEventListener('click', function(e) {
+    // 토글 버튼 클릭은 버튼에서 처리하도록 제외
+    if (e.target !== PopupUI.elements.toggleOptionsBtn) {
+      PopupUI.toggleOptions();
+    }
+  });
+  
+  // 각 토글 버튼 변경 시 설정 저장
+  PopupUI.elements.toggleArmor.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
+  
+  PopupUI.elements.toggleGem.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
+  
+  PopupUI.elements.toggleAccessory.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
+  
+  PopupUI.elements.toggleEngraving.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
+  
+  PopupUI.elements.toggleKarma.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
 }
 
 // 초기화 함수
 function initialize() {
   PopupUI.initElements();
+  PopupUI.loadSettings(); // 저장된 설정 불러오기
   PopupActions.checkCurrentTab();
   PopupActions.setupMessageListeners();
   setupEventListeners();

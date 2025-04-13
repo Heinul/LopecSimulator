@@ -16,8 +16,8 @@ LopecScanner.Scanners.EngravingScanner = (function() {
   let engravingOptions = {
     // 스캔하고자 하는 각인 이름 배열 (빈 배열이면 모든 각인 스캔)
     engravingNames: [],
-    // 최대 스캔할 각인 레벨 (기본값: 3)
-    maxLevel: 3,
+    // 최대 스캔할 각인 레벨 (기본값: 4)
+    maxLevel: 4,
     // 특정 이름-레벨 조합만 스캔 (예: [{ name: '원한', level: 3 }, { name: '슈퍼 차지', level: 2 }])
     specificCombinations: []
   };
