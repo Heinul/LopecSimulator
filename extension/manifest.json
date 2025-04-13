@@ -32,6 +32,7 @@
         "js/content/scanners/accessory-scanner.js",
         "js/content/scanners/engraving-scanner.js",
         "js/content/scanners/karma-scanner.js",
+        "js/content/scanners/avatar-scanner.js",
         "js/content/scanners/scanner-main.js",
         "js/content/main.js"
       ]

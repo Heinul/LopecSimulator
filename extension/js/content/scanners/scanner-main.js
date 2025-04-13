@@ -16,6 +16,7 @@ LopecScanner.Scanners.Main = (function() {
   const AccessoryScanner = LopecScanner.Scanners.AccessoryScanner;
   const EngravingScanner = LopecScanner.Scanners.EngravingScanner;
   const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
+  const AvatarScanner = LopecScanner.Scanners.AvatarScanner || {};
   const ScannerUtils = LopecScanner.Scanners.Utils;
   
   // 리팩토링된 모듈 참조
@@ -24,13 +25,21 @@ LopecScanner.Scanners.Main = (function() {
     console.log('리팩토링된 장신구 스캐너 모듈 출감');  
   }
   
+  // 아바타 스캐너 모듈 확인
+  if (LopecScanner.Scanners.AvatarScanner) {
+    console.log('아바타 스캐너 모듈 로드 완료');
+  } else {
+    console.warn('아바타 스캐너 모듈을 찾을 수 없습니다. 아바타 스캔이 작동하지 않을 수 있습니다.');
+  }
+  
   // 스캔 설정 객체
   let scanSettings = {
     scanArmor: true,
     scanGem: true,
     scanAccessory: true,
     scanEngraving: true,
-    scanKarma: true
+    scanKarma: true,
+    scanAvatar: true
   };
   
   /**
@@ -103,6 +112,18 @@ LopecScanner.Scanners.Main = (function() {
           elements.karmaElements.karmaRadioGroups && 
           elements.karmaElements.karmaRadioGroups.length > 0) {
         await KarmaScanner.scanKarma(elements.karmaElements);
+      }
+      
+      // 아바타 스캔 (선택된 경우에만)
+      if (scanSettings.scanAvatar && 
+          elements.avatarElements && 
+          Object.keys(elements.avatarElements).length > 0 &&
+          LopecScanner.Scanners.AvatarScanner) {
+        try {
+          await AvatarScanner.scanAvatar(elements.avatarElements);
+        } catch (avatarError) {
+          console.error('아바타 스캔 오류:', avatarError);
+        }
       }
       
     } catch (error) {

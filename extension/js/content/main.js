@@ -16,7 +16,8 @@ window.LopecScanner.Scanners.Accessory = window.LopecScanner.Scanners.Accessory 
     scanGem: true,
     scanAccessory: true,
     scanEngraving: true,
-    scanKarma: true
+    scanKarma: true,
+    scanAvatar: true
   };
   
   // 메시지 리스너 설정

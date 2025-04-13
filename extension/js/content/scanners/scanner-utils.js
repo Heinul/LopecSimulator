@@ -112,6 +112,37 @@ LopecScanner.Scanners.Utils = (function() {
     
     console.log(`카르마 항목: ${karmaRadioGroups[0].length + karmaRadioGroups[1].length}개 라디오, ${karmaCheckboxes.length}개 체크박스`);
     
+    // 아바타 관련 엘리먼트
+    // 아바타 등급 및 카테고리별 라디오 버튼 가져오기
+    const avatarCategories = ['weapon', 'helmet', 'armor', 'pants'];
+    const avatarGrades = ['none', 'hero', 'legendary'];
+    
+    // 아바타 요소 객체 구성
+    const avatarElements = {};
+    
+    // 각 등급별 객체 생성
+    avatarGrades.forEach(grade => {
+      avatarElements[grade] = {};
+      
+      // 각 카테고리별 라디오 버튼 찾기
+      avatarCategories.forEach(category => {
+        const radio = document.querySelector(`.name-wrap .${grade} input[name="${category}"]`);
+        if (radio) {
+          avatarElements[grade][category] = radio;
+        }
+      });
+    });
+    
+    // 라디오 버튼 개수 확인
+    let totalAvatarRadios = 0;
+    avatarGrades.forEach(grade => {
+      Object.keys(avatarElements[grade] || {}).forEach(category => {
+        if (avatarElements[grade][category]) totalAvatarRadios++;
+      });
+    });
+    
+    console.log(`아바타 항목: ${totalAvatarRadios}개 라디오 버튼 (등급 ${avatarGrades.length}개 x 카테고리 ${avatarCategories.length}개)`);
+    
     // 스캔 항목 개수 계산
     let armorScanCount = settings.scanArmor ? ArmorScanner.prepareArmorScan(armorNameElements, armorUpgradeElements) : 0;
     let gemScanCount = settings.scanGem ? GemScanner.prepareGemScan(gemLevelElements) : 0;
@@ -165,10 +196,13 @@ LopecScanner.Scanners.Utils = (function() {
     };
     let karmaScanCount = settings.scanKarma ? KarmaScanner.prepareKarmaScan(karmaElements) : 0;
     
-    // 전체 스캔 항목 개수 설정
-    BaseScanner.state.totalScans = armorScanCount + gemScanCount + accessoryScanCount + engravingScanCount + karmaScanCount;
+    // 아바타 스캔 항목 계산
+    let avatarScanCount = settings.scanAvatar ? (LopecScanner.Scanners.AvatarScanner ? LopecScanner.Scanners.AvatarScanner.prepareAvatarScan(avatarElements) : 0) : 0;
     
-    console.log(`스캔 준비 완료: 총 ${BaseScanner.state.totalScans}개 항목 (장비:${armorScanCount}, 보석:${gemScanCount}, 장신구:${accessoryScanCount}, 각인:${engravingScanCount}, 카르마:${karmaScanCount})`);
+    // 전체 스캔 항목 개수 설정
+    BaseScanner.state.totalScans = armorScanCount + gemScanCount + accessoryScanCount + engravingScanCount + karmaScanCount + avatarScanCount;
+    
+    console.log(`스캔 준비 완료: 총 ${BaseScanner.state.totalScans}개 항목 (장비:${armorScanCount}, 보석:${gemScanCount}, 장신구:${accessoryScanCount}, 각인:${engravingScanCount}, 카르마:${karmaScanCount}, 아바타:${avatarScanCount})`);
     
     return {
       // 장비 요소
@@ -197,7 +231,10 @@ LopecScanner.Scanners.Utils = (function() {
       karmaElements: {
         karmaRadioGroups,
         karmaCheckboxes
-      }
+      },
+      
+      // 아바타 요소
+      avatarElements
     };
   }
   

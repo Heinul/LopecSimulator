@@ -17,7 +17,8 @@ const PopupUI = {
     toggleGem: null,
     toggleAccessory: null,
     toggleEngraving: null,
-    toggleKarma: null
+    toggleKarma: null,
+    toggleAvatar: null
   },
   
   // 설정 저장 키
@@ -27,7 +28,8 @@ const PopupUI = {
     toggleGem: 'lopecScanner_toggleGem',
     toggleAccessory: 'lopecScanner_toggleAccessory',
     toggleEngraving: 'lopecScanner_toggleEngraving',
-    toggleKarma: 'lopecScanner_toggleKarma'
+    toggleKarma: 'lopecScanner_toggleKarma',
+    toggleAvatar: 'lopecScanner_toggleAvatar'
   },
   
   // 요소 초기화
@@ -48,6 +50,7 @@ const PopupUI = {
     this.elements.toggleAccessory = document.getElementById('toggleAccessory');
     this.elements.toggleEngraving = document.getElementById('toggleEngraving');
     this.elements.toggleKarma = document.getElementById('toggleKarma');
+    this.elements.toggleAvatar = document.getElementById('toggleAvatar');
   },
   
   // 저장된 설정 불러오기
@@ -71,6 +74,7 @@ const PopupUI = {
     this.elements.toggleAccessory.checked = localStorage.getItem(this.storageKeys.toggleAccessory) !== 'false';
     this.elements.toggleEngraving.checked = localStorage.getItem(this.storageKeys.toggleEngraving) !== 'false';
     this.elements.toggleKarma.checked = localStorage.getItem(this.storageKeys.toggleKarma) !== 'false';
+    this.elements.toggleAvatar.checked = localStorage.getItem(this.storageKeys.toggleAvatar) !== 'false';
   },
   
   // 토글 설정 저장
@@ -81,6 +85,7 @@ const PopupUI = {
     localStorage.setItem(this.storageKeys.toggleAccessory, this.elements.toggleAccessory.checked);
     localStorage.setItem(this.storageKeys.toggleEngraving, this.elements.toggleEngraving.checked);
     localStorage.setItem(this.storageKeys.toggleKarma, this.elements.toggleKarma.checked);
+    localStorage.setItem(this.storageKeys.toggleAvatar, this.elements.toggleAvatar.checked);
   },
   
   // 토글 버튼 상태 저장
@@ -129,7 +134,8 @@ const PopupUI = {
       scanGem: this.elements.toggleGem.checked,
       scanAccessory: this.elements.toggleAccessory.checked,
       scanEngraving: this.elements.toggleEngraving.checked,
-      scanKarma: this.elements.toggleKarma.checked
+      scanKarma: this.elements.toggleKarma.checked,
+      scanAvatar: this.elements.toggleAvatar.checked
     };
   },
   
@@ -235,6 +241,10 @@ function setupEventListeners() {
   });
   
   PopupUI.elements.toggleKarma.addEventListener('change', function() {
+    PopupUI.saveToggleSettings();
+  });
+  
+  PopupUI.elements.toggleAvatar.addEventListener('change', function() {
     PopupUI.saveToggleSettings();
   });
 }
