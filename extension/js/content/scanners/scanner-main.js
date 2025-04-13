@@ -18,6 +18,23 @@ LopecScanner.Scanners.Main = (function() {
   const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
   const ScannerUtils = LopecScanner.Scanners.Utils;
   
+  // 스캔 설정 객체
+  let scanSettings = {
+    scanArmor: true,
+    scanGem: true,
+    scanAccessory: true,
+    scanEngraving: true,
+    scanKarma: true
+  };
+  
+  /**
+   * 스캔 설정 지정
+   * @param {Object} settings - 스캔 설정 객체
+   */
+  function setScanSettings(settings) {
+    scanSettings = {...scanSettings, ...settings};
+  }
+  
   /**
    * 스캔 시작 함수
    */
@@ -46,33 +63,37 @@ LopecScanner.Scanners.Main = (function() {
       // 각인은 orange 클래스를 가진 잔류 요소만 스캔
       
       // 스캔할 요소 준비
-      const elements = await ScannerUtils.prepareElementsForScan();
+      const elements = await ScannerUtils.prepareElementsForScan(scanSettings);
       
-      // 장비 스캔 (elements가 존재하는지 확인)
-      if (elements.armorNameElements && elements.armorNameElements.length > 0 &&
+      // 장비 스캔 (선택된 경우에만)
+      if (scanSettings.scanArmor && 
+          elements.armorNameElements && elements.armorNameElements.length > 0 &&
           elements.armorUpgradeElements && elements.armorUpgradeElements.length > 0) {
         await ArmorScanner.scanArmor(elements.armorNameElements, elements.armorUpgradeElements);
       }
       
-      // 보석 스캔
-      if (elements.gemLevelElements && elements.gemLevelElements.length > 0) {
+      // 보석 스캔 (선택된 경우에만)
+      if (scanSettings.scanGem && 
+          elements.gemLevelElements && elements.gemLevelElements.length > 0) {
         await GemScanner.scanGems(elements.gemLevelElements);
       }
       
-      // 장신구 스캔 (elements.accessoryElements가 존재하는지 확인)
-      if (elements.accessoryElements) {
+      // 장신구 스캔 (선택된 경우에만)
+      if (scanSettings.scanAccessory && elements.accessoryElements) {
         await AccessoryScanner.scanAccessories(elements.accessoryElements);
       }
       
-      // 각인 스캔 (elements.engravingElements가 존재하는지 확인)
-      if (elements.engravingElements && 
+      // 각인 스캔 (선택된 경우에만)
+      if (scanSettings.scanEngraving && 
+          elements.engravingElements && 
           elements.engravingElements.engravingNameElements && 
           elements.engravingElements.engravingNameElements.length > 0) {
         await EngravingScanner.scanEngravings(elements.engravingElements);
       }
       
-      // 카르마 스캔 (elements.karmaElements가 존재하는지 확인)
-      if (elements.karmaElements && 
+      // 카르마 스캔 (선택된 경우에만)
+      if (scanSettings.scanKarma && 
+          elements.karmaElements && 
           elements.karmaElements.karmaRadioGroups && 
           elements.karmaElements.karmaRadioGroups.length > 0) {
         await KarmaScanner.scanKarma(elements.karmaElements);
@@ -114,7 +135,8 @@ LopecScanner.Scanners.Main = (function() {
     startScan,
     isScanningActive,
     setAccessoryOptions,
-    setEngravingOptions
+    setEngravingOptions,
+    setScanSettings
   };
 })();
 

@@ -11,21 +11,31 @@ window.LopecScanner.Scanners = window.LopecScanner.Scanners || {};
 LopecScanner.Scanners.Utils = (function() {
   /**
    * 스캔할 엘리먼트 준비 및 스캔 항목 계산
+   * @param {Object} scanSettings - 스캔 설정 (선택적 매개변수)
    * @return {Object} - 스캔할 요소들과 관련 정보
    */
-  async function prepareElementsForScan() {
-    // 기본 스캐너 참조
+  async function prepareElementsForScan(scanSettings) {
+    // 기본 스캔너 참조
     const BaseScanner = LopecScanner.Scanners.BaseScanner;
-    // 장비 스캐너 참조
+    // 장비 스캔너 참조
     const ArmorScanner = LopecScanner.Scanners.ArmorScanner;
-    // 보석 스캐너 참조
+    // 보석 스캔너 참조
     const GemScanner = LopecScanner.Scanners.GemScanner;
-    // 장신구 스캐너 참조
+    // 장신구 스캔너 참조
     const AccessoryScanner = LopecScanner.Scanners.AccessoryScanner;
-    // 각인 스캐너 참조
+    // 각인 스캔너 참조
     const EngravingScanner = LopecScanner.Scanners.EngravingScanner;
-    // 카르마 스캐너 참조
+    // 카르마 스캔너 참조
     const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
+    
+    // 기본 스캔 설정 (전부 활성화)
+    const settings = scanSettings || {
+      scanArmor: true,
+      scanGem: true,
+      scanAccessory: true,
+      scanEngraving: true,
+      scanKarma: true
+    };
     
     // 엘리먼트 수집
     // 장비 관련 엘리먼트
@@ -64,8 +74,8 @@ LopecScanner.Scanners.Utils = (function() {
     const karmaCheckboxes = document.querySelectorAll('.ark-list.enlightenment input[type="checkbox"]');
     
     // 스캔 항목 개수 계산
-    let armorScanCount = ArmorScanner.prepareArmorScan(armorNameElements, armorUpgradeElements);
-    let gemScanCount = GemScanner.prepareGemScan(gemLevelElements);
+    let armorScanCount = settings.scanArmor ? ArmorScanner.prepareArmorScan(armorNameElements, armorUpgradeElements) : 0;
+    let gemScanCount = settings.scanGem ? GemScanner.prepareGemScan(gemLevelElements) : 0;
     
     // 장신구 스캔 항목 계산
     const accessoryElements = {
@@ -75,21 +85,21 @@ LopecScanner.Scanners.Utils = (function() {
       bangleStatElements: bangleStatElements,
       bangleOptionElements: bangleOptionElements
     };
-    let accessoryScanCount = AccessoryScanner.prepareAccessoryScan(accessoryElements);
+    let accessoryScanCount = settings.scanAccessory ? AccessoryScanner.prepareAccessoryScan(accessoryElements) : 0;
     
     // 각인 스캔 항목 계산
     const engravingElements = {
       engravingNameElements,
       engravingLevelElements
     };
-    let engravingScanCount = EngravingScanner.prepareEngravingScan(engravingElements);
+    let engravingScanCount = settings.scanEngraving ? EngravingScanner.prepareEngravingScan(engravingElements) : 0;
     
     // 카르마 스캔 항목 계산
     const karmaElements = {
       karmaRadioGroups,
       karmaCheckboxes
     };
-    let karmaScanCount = KarmaScanner.prepareKarmaScan(karmaElements);
+    let karmaScanCount = settings.scanKarma ? KarmaScanner.prepareKarmaScan(karmaElements) : 0;
     
     // 전체 스캔 항목 개수 설정
     BaseScanner.state.totalScans = armorScanCount + gemScanCount + accessoryScanCount + engravingScanCount + karmaScanCount;

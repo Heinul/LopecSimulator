@@ -8,9 +8,27 @@ window.LopecScanner = window.LopecScanner || {};
 
 // 초기화 및 메시지 처리 함수
 (function() {
+  // 스캔 설정 저장 변수
+  let scanSettings = {
+    scanArmor: true,
+    scanGem: true,
+    scanAccessory: true,
+    scanEngraving: true,
+    scanKarma: true
+  };
+  
   // 메시지 리스너 설정
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === 'startScan' && !LopecScanner.Scanner.isScanningActive()) {
+      // 스캔 설정 업데이트
+      if (request.settings) {
+        scanSettings = request.settings;
+      }
+      
+      // 스캐너에 설정 전달
+      LopecScanner.Scanners.Main.setScanSettings(scanSettings);
+      
+      // 스캔 시작
       LopecScanner.Scanner.startScan();
       sendResponse({status: 'started'});
     }

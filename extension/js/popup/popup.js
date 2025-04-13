@@ -10,7 +10,12 @@ const PopupUI = {
     viewDataBtn: null,
     statusText: null,
     progressContainer: null,
-    progressBar: null
+    progressBar: null,
+    toggleArmor: null,
+    toggleGem: null,
+    toggleAccessory: null,
+    toggleEngraving: null,
+    toggleKarma: null
   },
   
   // 요소 초기화
@@ -20,6 +25,13 @@ const PopupUI = {
     this.elements.statusText = document.getElementById('statusText');
     this.elements.progressContainer = document.getElementById('progressContainer');
     this.elements.progressBar = document.getElementById('progressBar');
+    
+    // 토글 버튼 요소 가져오기
+    this.elements.toggleArmor = document.getElementById('toggleArmor');
+    this.elements.toggleGem = document.getElementById('toggleGem');
+    this.elements.toggleAccessory = document.getElementById('toggleAccessory');
+    this.elements.toggleEngraving = document.getElementById('toggleEngraving');
+    this.elements.toggleKarma = document.getElementById('toggleKarma');
   },
   
   // 페이지 상태에 따라 UI 업데이트
@@ -54,6 +66,17 @@ const PopupUI = {
     this.elements.viewDataBtn.disabled = false;
     this.elements.progressBar.style.width = '100%';
     this.elements.progressBar.textContent = '100%';
+  },
+  
+  // 스캔 설정 가져오기
+  getScanSettings() {
+    return {
+      scanArmor: this.elements.toggleArmor.checked,
+      scanGem: this.elements.toggleGem.checked,
+      scanAccessory: this.elements.toggleAccessory.checked,
+      scanEngraving: this.elements.toggleEngraving.checked,
+      scanKarma: this.elements.toggleKarma.checked
+    };
   }
 };
 
@@ -71,7 +94,13 @@ const PopupActions = {
   // 스캔 시작
   startScan() {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {action: 'startScan'}, function(response) {
+      // 토글 설정 가져오기
+      const scanSettings = PopupUI.getScanSettings();
+      
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'startScan',
+        settings: scanSettings
+      }, function(response) {
         if (response && response.status === 'started') {
           PopupUI.updateForScanStart();
         }
