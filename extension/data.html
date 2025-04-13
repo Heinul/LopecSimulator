@@ -7,57 +7,63 @@
   <link rel="stylesheet" href="css/data.css">
 </head>
 <body>
-  <h1>로펙 시뮬레이터 데이터 분석</h1>
-  
-  <div class="filter-container">
-    <h3>필터 옵션</h3>
-    <div class="filter-option">
-      <label>
-        <input type="checkbox" id="filterIncrease" checked>
-        증가 항목만 보기
-      </label>
+  <div class="data-wrapper">
+    <div class="header">
+      <h1>로펙 시뮬레이터 점수 분석</h1>
+      <p>스캔된 데이터를 분석하고 관리합니다.</p>
     </div>
-    <div class="filter-option">
-      <label>카테고리:</label>
-      <select id="categoryFilter">
-        <option value="all">전체</option>
-        <option value="장비 강화">장비 강화</option>
-        <option value="장비 상재">장비 상재</option>
-        <option value="보석">보석</option>
-      </select>
+    
+    <div class="summary-section">
+      <div id="summary-container">
+        <!-- 요약 정보가 여기에 표시됩니다 -->
+        <div class="loading-indicator">데이터 로딩 중...</div>
+      </div>
     </div>
-    <div class="filter-option">
-      <label>정렬:</label>
-      <select id="sortOption">
-        <option value="differenceDesc">점수 변동 높은순</option>
-        <option value="differenceAsc">점수 변동 낮은순</option>
-      </select>
+    
+    <div class="filter-section">
+      <h2>필터 및 정렬</h2>
+      <form id="filter-form" class="filter-form">
+        <div class="filter-group">
+          <label>
+            <input type="checkbox" id="filter-increase"> 
+            점수 상승 항목만 보기
+          </label>
+        </div>
+        <div class="filter-group">
+          <label for="category-filter">카테고리:</label>
+          <select id="category-filter">
+            <option value="all">전체</option>
+            <option value="armor">장비</option>
+            <option value="gem">보석</option>
+            <option value="accessory">장신구</option>
+            <option value="engraving">각인</option>
+            <option value="karma">카르마</option>
+            <option value="avatar">아바타</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="sort-by">정렬:</label>
+          <select id="sort-by">
+            <option value="differenceDesc">점수 변동 높은순</option>
+            <option value="differenceAsc">점수 변동 낮은순</option>
+          </select>
+        </div>
+      </form>
     </div>
-  </div>
-  
-  <div id="summaryContainer" class="summary-container">
-    <!-- 요약 정보가 여기에 표시됩니다 -->
-  </div>
-  
-  <div id="dataContainer">
-    <table class="data-table" id="dataTable">
-      <thead>
-        <tr>
-          <th>카테고리</th>
-          <th>항목</th>
-          <th>현재값</th>
-          <th>변경값</th>
-          <th>점수 변동</th>
-        </tr>
-      </thead>
-      <tbody id="dataBody">
-        <!-- 데이터가 여기에 채워집니다 -->
-      </tbody>
-    </table>
-  </div>
-  
-  <div class="button-container">
-    <button id="exportData" class="export-btn">데이터 내보내기</button>
+    
+    <div class="data-table-section">
+      <div id="data-table-container">
+        <!-- 데이터 테이블이 여기에 표시됩니다 -->
+        <div class="loading-indicator">데이터 로딩 중...</div>
+      </div>
+    </div>
+    
+    <div class="export-section">
+      <h2>데이터 내보내기</h2>
+      <div class="export-buttons">
+        <button id="export-csv" class="export-button">CSV 내보내기</button>
+      </div>
+    </div>
   </div>
   
   <script src="js/data/data-manager.js"></script>

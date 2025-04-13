@@ -99,12 +99,12 @@ const DataManager = {
       
       categories[item.type].count++;
       
-      if (item.difference > 0) {
+      if (parseFloat(item.difference) > 0) {
         positiveChanges++;
         categories[item.type].positive++;
         
-        if (item.difference > categories[item.type].maxChange) {
-          categories[item.type].maxChange = item.difference;
+        if (parseFloat(item.difference) > categories[item.type].maxChange) {
+          categories[item.type].maxChange = parseFloat(item.difference);
           categories[item.type].maxItem = item;
         }
       }
@@ -124,13 +124,27 @@ const DataManager = {
     }
     
     const headers = ['카테고리', '항목', '현재값', '변경값', '점수변동'];
-    const rows = this.processedData.map(item => [
-      item.type,
-      item.item,
-      item.from,
-      item.to,
-      item.difference.toFixed(2)
-    ]);
+    const rows = this.processedData.map(item => {
+      // 카테고리 이름 변환
+      let categoryName = '';
+      switch(item.type) {
+        case 'armor': categoryName = '장비'; break;
+        case 'gem': categoryName = '보석'; break;
+        case 'accessory': categoryName = '장신구'; break;
+        case 'engraving': categoryName = '각인'; break;
+        case 'karma': categoryName = '카르마'; break;
+        case 'avatar': categoryName = '아바타'; break;
+        default: categoryName = item.type;
+      }
+      
+      return [
+        categoryName,
+        item.item,
+        item.from,
+        item.to,
+        item.difference.toFixed(2)
+      ];
+    });
     
     let csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${cell}"`).join(','))

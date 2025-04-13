@@ -34,6 +34,9 @@
         "js/content/scanners/karma-scanner.js",
         "js/content/scanners/avatar-scanner.js",
         "js/content/scanners/scanner-main.js",
+        "js/api/lostark-api.js",
+        "js/api/gold-calculator.js",
+        "js/api/api-manager.js",
         "js/content/main.js"
       ]
     }

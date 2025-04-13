@@ -96,151 +96,261 @@ LopecScanner.Scanners.BaseScanner = (function() {
   }
 
   /**
-   * 원래 값으로 복원 - 단순화된 버전
+   * 원래 값으로 복원 - 완전 재작성 버전
    */
   async function restoreOriginalValues() {
     console.log('원래 값으로 복원 시작...');
 
     try {
-      // 장신구 복원
-      console.log('장신구 값 복원 시작');
+      // 키 그룹화 - 타입별로 키를 분류하고 각 타입별로 처리
+      const keysByType = {};
       
-      const accessoryOptionKeys = [];
+      // 원본 값 키를 타입별로 분류
       for (const key in state.originalValues) {
-        // 장신구 옵션 키를 배열에 추가
-        if (key.startsWith('accessory-option-') && !key.includes('text')) {
-          accessoryOptionKeys.push(key);
+        // 키에서 타입 추출 (예: 'accessory-option-0' -> 'accessory')
+        const type = key.split('-')[0];
+        
+        if (!keysByType[type]) {
+          keysByType[type] = [];
+        }
+        
+        keysByType[type].push(key);
+      }
+      
+      // 각 타입별로 복원 처리
+      for (const type in keysByType) {
+        console.log(`=== ${type} 타입 복원 시작 (${keysByType[type].length}개 항목) ===`);
+        
+        switch (type) {
+          case 'accessory':
+            await restoreAccessories(keysByType[type]);
+            break;
+          case 'armor':
+            await restoreArmor(keysByType[type]);
+            break;
+          case 'gem':
+            await restoreGems(keysByType[type]);
+            break;
+          default:
+            console.log(`${type} 타입은 아직 복원 처리가 구현되지 않았습니다.`);
         }
       }
       
-      // 장신구 아이템 리스트 가져오기
-      const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
-      console.log(`총 ${accessoryItems.length}개의 장신구 아이템 발견`);
+      console.log('모든 값 복원 완료');
       
-      // 각 장신구 아이템에 대해
-      for (let i = 0; i < accessoryItems.length; i++) {
-        const item = accessoryItems[i];
-        
-        // 장신구 타입 확인
-        let accessoryType = 'unknown';
-        const img = item.querySelector('img');
-        if (img) {
-          const src = img.src.toLowerCase();
-          if (src.includes('acc_215')) {
-            accessoryType = '목걸이';
-          } else if (src.includes('acc_11')) {
-            accessoryType = '귀걸이';
-          } else if (src.includes('acc_22')) {
-            accessoryType = '반지';
-          }
-        }
-        
-        // 현재 장신구의 옵션 셀렉트 요소들
-        const optionSelects = item.querySelectorAll('.option.tooltip-text');
-        
-        // 각 옵션 셀렉트마다
-        for (let j = 0; j < optionSelects.length; j++) {
-          // 현재 장신구 옵션의 인덱스 계산
-          const globalIndex = (i * optionSelects.length) + j;
-          const optionKey = `accessory-option-${globalIndex}`;
-          
-          // 원래 값이 있으면 복원
-          if (state.originalValues.hasOwnProperty(optionKey)) {
-            const value = state.originalValues[optionKey];
-            console.log(`${accessoryType} ${i+1} 옵션 ${j+1} 복원: ${optionSelects[j].value} => ${value}`);
-            
-            try {
-              // 값 변경 및 이벤트 발생
-              optionSelects[j].value = value;
-              const event = new Event('change', { bubbles: true });
-              optionSelects[j].dispatchEvent(event);
-              
-              // 목걸이의 경우 더 긴 딜레이 제공
-              if (accessoryType === '목걸이') {
-                await LopecScanner.Utils.delay(200);
-              } else {
-                await LopecScanner.Utils.delay(100);
-              }
-            } catch (e) {
-              console.error(`장신구 옵션 복원 오류 (${accessoryType} ${i+1} 옵션 ${j+1}):`, e);
-            }
-          }
-        }
-        
-        // 각 장신구마다 추가 딜레이
-        if (accessoryType === '목걸이') {
-          await LopecScanner.Utils.delay(300); // 목걸이는 더 긴 딜레이
-        } else {
-          await LopecScanner.Utils.delay(100);
-        }
-      }
-      
-      // 장신구 티어 복원 (별도로 처리, 필요한 경우 주석 해제)
-      // for (const key in state.originalValues) {
-      //   if (key.startsWith('accessory-tier-')) {
-      //     const tierIndex = key.split('-')[2];
-      //     if (!isNaN(tierIndex)) {
-      //       try {
-      //         const tierSelects = document.querySelectorAll('.accessory-item.accessory select.tier.accessory');
-      //         if (tierSelects[tierIndex]) {
-      //           const value = state.originalValues[key];
-      //           console.log(`장신구 티어 복원 시도: ${tierIndex} => ${value}`);
-      //           
-      //           tierSelects[tierIndex].value = value;
-      //           const event = new Event('change', { bubbles: true });
-      //           tierSelects[tierIndex].dispatchEvent(event);
-      //           await LopecScanner.Utils.delay(80);
-      //         }
-      //       } catch (e) {
-      //         console.error(`장신구 티어 복원 오류 (${tierIndex}):`, e);
-      //       }
-      //     }
-      //   }
-      // }
-      
-      // 장비와 보석 복원 (기존 방식 유지)
-      const restoreTypes = ['armor', 'gem'];
-      for (const restoreType of restoreTypes) {
-        for (const key in state.originalValues) {
-          if (!key.startsWith(`${restoreType}-`)) continue;
-          
-          const [type, index] = key.split('-').slice(0, 2);
-          const value = state.originalValues[key];
-          
-          console.log(`${type} 복원 시도: ${key} => ${value}`);
-          
-          let selector;
-          if (type === 'armor' && key.includes('name')) {
-            selector = '.armor-name';
-          } else if (type === 'armor' && key.includes('upgrade')) {
-            selector = '.armor-upgrade';
-          } else if (type === 'gem') {
-            selector = 'select[name="ArmoryGem Gems Level"]';
-          }
-          
-          if (selector) {
-            const elements = document.querySelectorAll(selector);
-            if (elements[index]) {
-              try {
-                elements[index].value = value;
-                const event = new Event('change', { bubbles: true });
-                elements[index].dispatchEvent(event);
-                await LopecScanner.Utils.delay(80);
-                console.log(`${type} 복원 성공: ${key} => ${value}`);
-              } catch (e) {
-                console.error(`${type} 복원 실패: ${key}`, e);
-              }
-            } else {
-              console.warn(`${type} 요소를 찾을 수 없음: ${key}`);
-            }
-          }
-        }
-      }
     } catch (e) {
       console.error('원래 값 복원 중 오류 발생:', e);
     }
+  }
+  
+  /**
+   * 장신구 복원 처리
+   * @param {Array} keys - 장신구 관련 키 배열
+   */
+  async function restoreAccessories(keys) {
+    // 장신구 옵션 키만 필터링
+    const optionKeys = keys.filter(key => key.includes('-option-') && !key.includes('text'));
     
-    console.log('복원 완료');
+    if (optionKeys.length === 0) {
+      console.log('복원할 장신구 옵션이 없습니다.');
+      return;
+    }
+    
+    console.log(`${optionKeys.length}개의 장신구 옵션 복원 시작`);
+    
+    // 장신구 아이템 리스트 가져오기
+    const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
+    console.log(`총 ${accessoryItems.length}개의 장신구 아이템 발견`);
+    
+    // 각 장신구 아이템에 대해
+    for (let i = 0; i < accessoryItems.length; i++) {
+      const item = accessoryItems[i];
+      
+      // 장신구 타입 확인
+      let accessoryType = 'unknown';
+      const img = item.querySelector('img');
+      if (img) {
+        const src = img.src.toLowerCase();
+        if (src.includes('acc_215')) {
+          accessoryType = '목걸이';
+        } else if (src.includes('acc_11')) {
+          accessoryType = '귀걸이';
+        } else if (src.includes('acc_22')) {
+          accessoryType = '반지';
+        }
+      }
+      
+      // 현재 장신구의 옵션 셀렉트 요소들
+      const optionSelects = item.querySelectorAll('.option.tooltip-text');
+      
+      // 각 옵션 셀렉트마다
+      for (let j = 0; j < optionSelects.length; j++) {
+        // 현재 장신구 옵션의 인덱스 계산
+        const globalIndex = (i * optionSelects.length) + j;
+        const optionKey = `accessory-option-${globalIndex}`;
+        
+        // 원래 값이 있으면 복원
+        if (state.originalValues.hasOwnProperty(optionKey)) {
+          const value = state.originalValues[optionKey];
+          console.log(`${accessoryType} ${i+1} 옵션 ${j+1} 복원: ${optionSelects[j].value} => ${value}`);
+          
+          try {
+            // 값 변경 및 이벤트 발생
+            optionSelects[j].value = value;
+            const event = new Event('change', { bubbles: true });
+            optionSelects[j].dispatchEvent(event);
+            
+            // 목걸이의 경우 더 긴 딜레이 제공
+            if (accessoryType === '목걸이') {
+              await LopecScanner.Utils.delay(200);
+            } else {
+              await LopecScanner.Utils.delay(100);
+            }
+          } catch (e) {
+            console.error(`장신구 옵션 복원 오류 (${accessoryType} ${i+1} 옵션 ${j+1}):`, e);
+          }
+        }
+      }
+      
+      // 각 장신구마다 추가 딜레이
+      if (accessoryType === '목걸이') {
+        await LopecScanner.Utils.delay(300); // 목걸이는 더 긴 딜레이
+      } else {
+        await LopecScanner.Utils.delay(100);
+      }
+    }
+    
+    console.log('장신구 복원 완료');
+  }
+  
+  /**
+   * 장비 복원 처리
+   * @param {Array} keys - 장비 관련 키 배열
+   */
+  async function restoreArmor(keys) {
+    if (keys.length === 0) {
+      console.log('복원할 장비가 없습니다.');
+      return;
+    }
+    
+    console.log(`${keys.length}개의 장비 값 복원 시작`);
+    
+    // 장비 이름과 강화도 복원
+    const nameKeys = keys.filter(key => key.includes('-name-'));
+    const upgradeKeys = keys.filter(key => key.includes('-upgrade-'));
+    
+    // 장비 이름 복원
+    if (nameKeys.length > 0) {
+      console.log(`${nameKeys.length}개의 장비 이름 복원`);
+      const nameSelects = document.querySelectorAll('.armor-name');
+      
+      for (const key of nameKeys) {
+        try {
+          // 인덱스 추출 (예: 'armor-name-0' -> 0)
+          const index = parseInt(key.split('-')[2]);
+          
+          if (!isNaN(index) && index >= 0 && index < nameSelects.length) {
+            const value = state.originalValues[key];
+            nameSelects[index].value = value;
+            const event = new Event('change', { bubbles: true });
+            nameSelects[index].dispatchEvent(event);
+            await LopecScanner.Utils.delay(100);
+            console.log(`장비 이름 복원 성공: 인덱스 ${index}, 값 ${value}`);
+          } else {
+            console.warn(`장비 이름 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 요소: ${nameSelects.length})`);
+          }
+        } catch (e) {
+          console.error(`장비 이름 복원 오류: ${key}`, e);
+        }
+      }
+    }
+    
+    // 장비 강화도 복원
+    if (upgradeKeys.length > 0) {
+      console.log(`${upgradeKeys.length}개의 장비 강화도 복원`);
+      const upgradeSelects = document.querySelectorAll('.armor-upgrade');
+      
+      for (const key of upgradeKeys) {
+        try {
+          // 인덱스 추출 (예: 'armor-upgrade-0' -> 0)
+          const index = parseInt(key.split('-')[2]);
+          
+          if (!isNaN(index) && index >= 0 && index < upgradeSelects.length) {
+            const value = state.originalValues[key];
+            upgradeSelects[index].value = value;
+            const event = new Event('change', { bubbles: true });
+            upgradeSelects[index].dispatchEvent(event);
+            await LopecScanner.Utils.delay(100);
+            console.log(`장비 강화도 복원 성공: 인덱스 ${index}, 값 ${value}`);
+          } else {
+            console.warn(`장비 강화도 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 요소: ${upgradeSelects.length})`);
+          }
+        } catch (e) {
+          console.error(`장비 강화도 복원 오류: ${key}`, e);
+        }
+      }
+    }
+    
+    console.log('장비 복원 완료');
+  }
+  
+  /**
+   * 보석 복원 처리
+   * @param {Array} keys - 보석 관련 키 배열
+   */
+  async function restoreGems(keys) {
+    if (keys.length === 0) {
+      console.log('복원할 보석이 없습니다.');
+      return;
+    }
+    
+    console.log(`${keys.length}개의 보석 값 복원 시작`);
+    
+    // 보석 레벨 선택자
+    const gemLevelElements = document.querySelectorAll('select[name="ArmoryGem Gems Level"]');
+    console.log(`발견된 보석 레벨 요소: ${gemLevelElements.length}개`);
+    
+    // 보석 정보 출력 (디버깅용)
+    console.log('각 보석 레벨 요소 정보:');
+    for (let i = 0; i < gemLevelElements.length; i++) {
+      console.log(`  보석 ${i}: 현재 레벨 = ${gemLevelElements[i].value}`);
+    }
+    
+    // 원본 값 출력 (디버깅용)
+    console.log('저장된 보석 원본 값:');
+    const gemLevelKeys = keys.filter(key => key.startsWith('gem-level-'));
+    for (const key of gemLevelKeys) {
+      console.log(`  ${key}: ${state.originalValues[key]}`);
+    }
+    
+    // 각 보석 키를 처리
+    for (const key of gemLevelKeys) {
+      try {
+        // 인덱스 추출 (수정된 부분: 정규식 사용)
+        const match = key.match(/^gem-level-(\d+)$/);
+        
+        if (match && match[1]) {
+          const index = parseInt(match[1]);
+          
+          if (!isNaN(index) && index >= 0 && index < gemLevelElements.length) {
+            const value = state.originalValues[key];
+            gemLevelElements[index].value = value;
+            const event = new Event('change', { bubbles: true });
+            gemLevelElements[index].dispatchEvent(event);
+            await LopecScanner.Utils.delay(80);
+            console.log(`보석 복원 성공: ${key} (인덱스: ${index}, 값: ${value})`);
+          } else {
+            console.warn(`보석 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 보석: ${gemLevelElements.length})`);
+          }
+        } else {
+          console.warn(`보석 키 형식이 유효하지 않음: ${key}`);
+        }
+      } catch (e) {
+        console.error(`보석 복원 오류: ${key}`, e);
+      }
+    }
+    
+    console.log('보석 복원 완료');
   }
   
   /**
