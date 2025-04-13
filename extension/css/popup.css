@@ -1,3 +1,38 @@
+/* API 키 입력 영역 스타일 */
+.api-key-section {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.api-key-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.api-key-desc {
+  font-weight: normal;
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.api-key-input {
+  width: 100%;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.api-key-input:focus {
+  border-color: #4CAF50;
+  outline: none;
+  box-shadow: 0 0 2px #4CAF50;
+}
 /* 로펙 시뮬레이터 점수 분석기 팝업 스타일 */
 body {
   font-family: 'Malgun Gothic', sans-serif;
@@ -25,6 +60,21 @@ body {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.section-header {
+  margin: 5px 0 10px 0;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 13px;
+  color: #333;
+}
+
+.toggle-group {
+  margin-bottom: 5px;
 }
 
 .options-header h3 {

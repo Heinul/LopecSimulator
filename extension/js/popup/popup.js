@@ -13,6 +13,7 @@ const PopupUI = {
     progressBar: null,
     toggleOptionsBtn: null,
     optionsContent: null,
+    apiKeyInput: null,
     toggleArmor: null,
     toggleGem: null,
     toggleAccessory: null,
@@ -24,6 +25,7 @@ const PopupUI = {
   // 설정 저장 키
   storageKeys: {
     isCollapsed: 'lopecScanner_optionsCollapsed',
+    apiKey: 'lopecScanner_apiKey',
     toggleArmor: 'lopecScanner_toggleArmor',
     toggleGem: 'lopecScanner_toggleGem',
     toggleAccessory: 'lopecScanner_toggleAccessory',
@@ -43,6 +45,9 @@ const PopupUI = {
     // 옵션 토글 버튼
     this.elements.toggleOptionsBtn = document.getElementById('toggleOptionsBtn');
     this.elements.optionsContent = document.getElementById('optionsContent');
+    
+    // API 키 입력 요소
+    this.elements.apiKeyInput = document.getElementById('apiKeyInput');
     
     // 토글 버튼 요소 가져오기
     this.elements.toggleArmor = document.getElementById('toggleArmor');
@@ -68,6 +73,10 @@ const PopupUI = {
       this.elements.toggleOptionsBtn.textContent = '▼'; // 아래쪽 화살표
     }
     
+    // API 키 값 불러오기
+    const savedApiKey = localStorage.getItem(this.storageKeys.apiKey) || '';
+    this.elements.apiKeyInput.value = savedApiKey;
+    
     // 각 토글 설정 불러오기
     this.elements.toggleArmor.checked = localStorage.getItem(this.storageKeys.toggleArmor) !== 'false';
     this.elements.toggleGem.checked = localStorage.getItem(this.storageKeys.toggleGem) !== 'false';
@@ -86,6 +95,11 @@ const PopupUI = {
     localStorage.setItem(this.storageKeys.toggleEngraving, this.elements.toggleEngraving.checked);
     localStorage.setItem(this.storageKeys.toggleKarma, this.elements.toggleKarma.checked);
     localStorage.setItem(this.storageKeys.toggleAvatar, this.elements.toggleAvatar.checked);
+  },
+  
+  // API 키 저장
+  saveApiKey() {
+    localStorage.setItem(this.storageKeys.apiKey, this.elements.apiKeyInput.value.trim());
   },
   
   // 토글 버튼 상태 저장
@@ -130,6 +144,7 @@ const PopupUI = {
   // 스캔 설정 가져오기
   getScanSettings() {
     return {
+      apiKey: this.elements.apiKeyInput.value.trim(),
       scanArmor: this.elements.toggleArmor.checked,
       scanGem: this.elements.toggleGem.checked,
       scanAccessory: this.elements.toggleAccessory.checked,
@@ -170,6 +185,8 @@ const PopupActions = {
   startScan() {
     // 현재 토글 설정 저장
     PopupUI.saveToggleSettings();
+    // API 키 저장
+    PopupUI.saveApiKey();
     
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       // 토글 설정 가져오기
@@ -246,6 +263,16 @@ function setupEventListeners() {
   
   PopupUI.elements.toggleAvatar.addEventListener('change', function() {
     PopupUI.saveToggleSettings();
+  });
+  
+  // API 키 입력 이벤트 처리
+  PopupUI.elements.apiKeyInput.addEventListener('change', function() {
+    PopupUI.saveApiKey();
+  });
+  
+  PopupUI.elements.apiKeyInput.addEventListener('input', function() {
+    // 어떤 변경이든 반영 (throttle 또는 debounce 필요 시 추가 가능)
+    PopupUI.saveApiKey();
   });
 }
 

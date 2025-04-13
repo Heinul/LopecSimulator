@@ -11,51 +11,61 @@
   
   <div class="scan-options">
     <div class="options-header">
-      <h3>스캔 영역 선택</h3>
+      <h3>설정</h3>
       <button id="toggleOptionsBtn" class="toggle-btn collapsed">►</button>
     </div>
     <div id="optionsContent" class="options-content collapsed">
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleArmor" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">장비</span>
+      <div class="section-header">
+        <h4>스캔 영역 선택</h4>
       </div>
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleGem" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">보석</span>
+      <div class="toggle-group">
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleArmor" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">장비</span>
+        </div>
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleGem" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">보석</span>
+        </div>
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleAccessory" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">장신구</span>
+        </div>
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleEngraving" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">각인</span>
+        </div>
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleKarma" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">카르마</span>
+        </div>
+        <div class="toggle-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleAvatar" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">아바타</span>
+        </div>
       </div>
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleAccessory" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">장신구</span>
-      </div>
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleEngraving" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">각인</span>
-      </div>
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleKarma" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">카르마</span>
-      </div>
-      <div class="toggle-item">
-        <label class="toggle-label">
-          <input type="checkbox" id="toggleAvatar" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-text">아바타</span>
+
+      <div class="api-key-section">
+        <label for="apiKeyInput" class="api-key-label">API 키 <span class="api-key-desc">(입력시 스팩업 별 소요 골드를 계산합니다.)</span></label>
+        <input type="text" id="apiKeyInput" placeholder="API 키를 입력하세요" class="api-key-input">
       </div>
     </div>
   </div>
