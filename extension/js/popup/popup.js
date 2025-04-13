@@ -53,11 +53,16 @@ const PopupUI = {
   // 저장된 설정 불러오기
   loadSettings() {
     // 토글 옵션 펼침/접기 상태 불러오기
-    const isCollapsed = localStorage.getItem(this.storageKeys.isCollapsed) === 'true';
-    if (isCollapsed) {
-      this.elements.optionsContent.classList.add('collapsed');
-      this.elements.toggleOptionsBtn.classList.add('collapsed');
-      this.elements.toggleOptionsBtn.textContent = '►'; // 오른쪽 화살표
+    const savedCollapseState = localStorage.getItem(this.storageKeys.isCollapsed);
+    
+    // 저장된 값이 없는 경우 (처음 실행 시) 기본값을 true(접힌 상태)로 저장
+    if (savedCollapseState === null) {
+      localStorage.setItem(this.storageKeys.isCollapsed, 'true');
+    } else if (savedCollapseState === 'false') {
+      // 저장된 값이 'false'인 경우(펼친 상태)에만 펼침
+      this.elements.optionsContent.classList.remove('collapsed');
+      this.elements.toggleOptionsBtn.classList.remove('collapsed');
+      this.elements.toggleOptionsBtn.textContent = '▼'; // 아래쪽 화살표
     }
     
     // 각 토글 설정 불러오기
