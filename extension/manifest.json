@@ -4,6 +4,7 @@
   "version": "1.0",
   "description": "로펙 시뮬레이터에서 콤보박스 순회를 통해 점수 변동을 기록하는 확장 프로그램",
   "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["*://*.onstove.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -34,8 +35,11 @@
         "js/content/scanners/karma-scanner.js",
         "js/content/scanners/avatar-scanner.js",
         "js/content/scanners/scanner-main.js",
+        "js/api/lostark-api-handler.js",
         "js/api/lostark-api.js",
         "js/api/gold-calculator.js",
+        "js/api/api-wrapper.js",
+        "js/api/api-troubleshoot.js",
         "js/api/api-manager.js",
         "js/content/main.js"
       ]

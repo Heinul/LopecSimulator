@@ -123,7 +123,13 @@ LopecScanner.API.APIManager = (function() {
     saveButton.addEventListener('click', function() {
       const apiKey = apiKeyInput.value.trim();
       if (apiKey) {
-        LopecScanner.API.LostArkAPI.setApiKey(apiKey);
+        // 새 API 핸들러가 있으면 사용
+        if (window.LopecScanner.API.LostArkHandler) {
+          window.LopecScanner.API.LostArkHandler.setApiKey(apiKey);
+        } else if (LopecScanner.API.LostArkAPI) {
+          // 기존 API 사용
+          LopecScanner.API.LostArkAPI.setApiKey(apiKey);
+        }
         updateAPIStatus();
       }
     });
@@ -175,7 +181,15 @@ LopecScanner.API.APIManager = (function() {
       }
       
       // API 연결 테스트
-      const isConnected = await LopecScanner.API.LostArkAPI.testConnection();
+      let isConnected = false;
+      
+      // 새 API 핸들러가 있으면 사용
+      if (window.LopecScanner.API.LostArkHandler) {
+        isConnected = await window.LopecScanner.API.LostArkHandler.testConnection();
+      } else if (LopecScanner.API.LostArkAPI) {
+        // 기존 API 사용
+        isConnected = await LopecScanner.API.LostArkAPI.testConnection();
+      }
       
       if (isConnected) {
         statusIcon.style.backgroundColor = '#4CAF50';

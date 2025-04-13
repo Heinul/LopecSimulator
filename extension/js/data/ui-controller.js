@@ -128,6 +128,14 @@ const UIController = {
             <p>API 키를 설정하면 스펙업 요소별 소요 골드를 자동으로 계산합니다.</p>
             <p>API 키는 <a href="https://developer-lostark.game.onstove.com/" target="_blank">로스트아크 개발자 센터</a>에서 발급받을 수 있습니다.</p>
           </div>
+          <div class="api-troubleshoot">
+            <h4>연결 문제가 있나요?</h4>
+            <button id="troubleshoot-api" class="modal-button">문제 해결 도우미</button>
+            <div id="troubleshoot-result" class="troubleshoot-result" style="display: none;">
+              <h4>진단 중...</h4>
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button id="fetch-gold-data" class="modal-button primary">골드 정보 가져오기</button>
@@ -164,6 +172,30 @@ const UIController = {
       this.fetchGoldData();
     });
     
+    // 문제 해결 도우미 버튼 이벤트 리스너
+    document.getElementById('troubleshoot-api').addEventListener('click', () => {
+      // 문제 해결 결과 컨테이너 표시
+      const troubleshootResult = document.getElementById('troubleshoot-result');
+      troubleshootResult.style.display = 'block';
+      troubleshootResult.innerHTML = '<h4>진단 중...</h4><div class="loading-spinner"></div>';
+      
+      // API 문제 해결 도구가 있는지 확인
+      if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.Troubleshooter) {
+        window.LopecScanner.API.Troubleshooter.generateErrorReport().then(reportHtml => {
+          troubleshootResult.innerHTML = reportHtml;
+        }).catch(error => {
+          troubleshootResult.innerHTML = `<div class="error-message">진단 중 오류 발생: ${error.message}</div>`;
+        });
+      } else {
+        troubleshootResult.innerHTML = `
+          <div class="error-message">
+            <h4>진단 도구를 찾을 수 없습니다.</h4>
+            <p>확장 프로그램을 다시 로드하거나 업데이트해주세요.</p>
+          </div>
+        `;
+      }
+    });
+    
     return modalContainer;
   },
   
@@ -171,18 +203,53 @@ const UIController = {
    * API 키 저장
    * @param {string} apiKey - API 키
    */
+  /**
+   * API 키 저장
+   * @param {string} apiKey - API 키
+   */
   saveApiKey(apiKey) {
-    // API 모듈이 있으면 해당 함수 사용
-    if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.LostArkAPI) {
-      window.LopecScanner.API.LostArkAPI.setApiKey(apiKey);
-      this.updateApiStatus();
-    } else {
-      // API 모듈이 없으면 로컬 스토리지에 직접 저장
-      chrome.storage.local.set({ lostarkApiKey: apiKey }, () => {
-        console.log('API 키가 저장되었습니다.');
-        this.updateApiStatus();
-      });
+    // API 키 기본 검증
+    if (!apiKey || apiKey.length < 10) {
+      alert('API 키가 너무 짧습니다. 유효한 API 키를 입력해주세요.');
+      return;
     }
+
+    // 항상 chrome.storage.local에 저장 (모든 컴포넌트 간 공유)
+    chrome.storage.local.set({ lostarkApiKey: apiKey }, () => {
+      console.log('API 키가 chrome.storage.local에 저장되었습니다.');
+      
+      // 다른 팝업에도 동기화 신호 전송
+      chrome.runtime.sendMessage({
+        action: 'apiKeyChanged',
+        apiKey: apiKey
+      }).catch(err => console.log('팝업 동기화 메시지 전송 오류 (무시 가능):', err.message));
+      
+      // API 모듈 순서대로 시도
+      if (window.LopecScanner && window.LopecScanner.API) {
+        // 문제해결 도구가 있는 경우
+        if (window.LopecScanner.API.Troubleshooter) {
+          window.LopecScanner.API.Troubleshooter.testApiConnection();
+        }
+
+        // 여러 API 설정
+        if (window.LopecScanner.API.LostArkHandler) {
+          window.LopecScanner.API.LostArkHandler.setApiKey(apiKey);
+          console.log('API 키 설정: 새 API 핸들러 사용');
+        }
+        if (window.LopecScanner.API.LostArkAPI) {
+          window.LopecScanner.API.LostArkAPI.setApiKey(apiKey);
+          console.log('API 키 설정: 기존 API 모듈 사용');
+        }
+        if (window.LopecScanner.API.ApiWrapper) {
+          window.LopecScanner.API.ApiWrapper.setApiKey(apiKey);
+          console.log('API 키 설정: API 래퍼 사용');
+        }
+      }
+      
+      // 상태 업데이트
+      this.updateApiStatus();
+      this.updateApiStatusSummary();
+    });
   },
   
   /**
@@ -575,6 +642,31 @@ const UIController = {
       // 이벤트 리스너 설정
       this.setupFilterEvents();
       this.setupExportButtons();
+      
+      // API 키 변경 메시지 리스너 설정
+      this.setupApiKeyUpdateListener();
+    });
+  },
+  
+  /**
+   * API 키 업데이트 메시지 리스너 설정
+   */
+  setupApiKeyUpdateListener() {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'apiKeyUpdated' && request.apiKey) {
+        console.log('API 키 업데이트 메시지 수신:', request.apiKey.substring(0, 3) + '...');
+        
+        // API 상태 업데이트
+        setTimeout(() => this.updateApiStatusSummary(), 1000);
+        
+        // 데이터 테이블 업데이트 (필요 시)
+        if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.APIManager) {
+          const processedData = DataManager.processedData;
+          if (processedData && processedData.length > 0) {
+            window.LopecScanner.API.APIManager.updateDataTableWithGoldInfo(processedData);
+          }
+        }
+      }
     });
   },
   
@@ -799,6 +891,65 @@ const UIController = {
       
       .api-status-neutral .status-icon {
         background-color: #607D8B;
+      }
+
+      /* 문제 해결 도우미 스타일 */
+      .api-troubleshoot {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f0f8ff;
+        border-radius: 5px;
+        border-left: 4px solid #2196F3;
+      }
+      
+      .api-troubleshoot h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #2196F3;
+      }
+      
+      .troubleshoot-result {
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #fff;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .api-error-report {
+        font-size: 13px;
+      }
+      
+      .api-error-report h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      
+      .report-section {
+        margin-bottom: 15px;
+      }
+      
+      .report-section h4 {
+        margin-bottom: 8px;
+        color: #555;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+      
+      .report-section.errors {
+        background-color: #fff9f9;
+        border-left: 3px solid #f44336;
+        padding: 10px;
+      }
+      
+      .report-section.technical pre {
+        background-color: #f5f5f5;
+        padding: 10px;
+        overflow-x: auto;
+        font-size: 12px;
+        border-radius: 3px;
       }
     `;
     

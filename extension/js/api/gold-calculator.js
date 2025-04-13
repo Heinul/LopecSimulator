@@ -83,21 +83,59 @@ LopecScanner.API.GoldCalculator = (function() {
    */
   async function isApiAvailable() {
     try {
-      // API 키 존재 여부 확인
-      await new Promise((resolve) => {
+      console.log('[GoldCalculator] API 가용성 확인 시작');
+      
+      // API 키 바로 가져오기
+      const apiKey = await new Promise((resolve) => {
         chrome.storage.local.get(['lostarkApiKey'], function(result) {
-          if (result.lostarkApiKey) {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
+          resolve(result.lostarkApiKey || null);
         });
       });
       
-      // API 연결 테스트
-      return await LopecScanner.API.LostArkAPI.testConnection();
+      if (!apiKey) {
+        console.log('[GoldCalculator] API 키가 없습니다');
+        return false;
+      }
+      
+      console.log('[GoldCalculator] API 키 확인 성공:', apiKey.substring(0, 5) + '...');
+      
+      // 여러 API 모듈 순서대로 시도
+      let isConnected = false;
+      
+      // 1. API 래퍼
+      if (!isConnected && window.LopecScanner.API.ApiWrapper) {
+        console.log('[GoldCalculator] API 래퍼로 연결 시도');
+        isConnected = await window.LopecScanner.API.ApiWrapper.testConnection();
+        if (isConnected) {
+          console.log('[GoldCalculator] API 래퍼 연결 성공');
+          return true;
+        }
+      }
+      
+      // 2. 새 API 핸들러
+      if (!isConnected && window.LopecScanner.API.LostArkHandler) {
+        console.log('[GoldCalculator] 새 API 핸들러로 연결 시도');
+        isConnected = await window.LopecScanner.API.LostArkHandler.testConnection();
+        if (isConnected) {
+          console.log('[GoldCalculator] 새 API 핸들러 연결 성공');
+          return true;
+        }
+      }
+      
+      // 3. 기존 API 모듈
+      if (!isConnected && window.LopecScanner.API.LostArkAPI) {
+        console.log('[GoldCalculator] 기존 API 모듈로 연결 시도');
+        isConnected = await window.LopecScanner.API.LostArkAPI.testConnection();
+        if (isConnected) {
+          console.log('[GoldCalculator] 기존 API 모듈 연결 성공');
+          return true;
+        }
+      }
+      
+      console.log('[GoldCalculator] 모든 API 연결 시도 실패');
+      return false;
     } catch (error) {
-      console.error('API 가용성 확인 중 오류 발생:', error);
+      console.error('[GoldCalculator] API 가용성 확인 중 오류 발생:', error);
       return false;
     }
   }
@@ -120,18 +158,74 @@ LopecScanner.API.GoldCalculator = (function() {
     // API를 사용할 수 있으면 정확한 가격 계산
     if (apiAvailable) {
       try {
-        const costInfo = await LopecScanner.API.LostArkAPI.calculateGemUpgradeCost(currentLevel, targetLevel);
+        // 새 API 핸들러 사용 시도
+        if (window.LopecScanner.API.LostArkHandler) {
+          // 각 레벨별 소요 보석 계산
+          let totalGoldCost = 0;
+          const gemRequirements = {};
+          let fusionCost = 0;
+          
+          // 보석 합성 계산 (3개의 보석 = 1개의 상위 레벨 보석)
+          for (let level = currentLevel; level < targetLevel; level++) {
+            // 한 단계 업그레이드에 필요한 보석 수
+            const gemsNeeded = Math.pow(3, targetLevel - level - 1);
+            
+            if (!gemRequirements[level]) {
+              gemRequirements[level] = 0;
+            }
+            
+            gemRequirements[level] += gemsNeeded;
+            
+            // 합성 비용 (레벨별로 다름)
+            const levelFusionCost = 500 * (level + 1) * gemsNeeded;
+            fusionCost += levelFusionCost;
+            
+            // 보석 가격 조회 시도
+            try {
+              // 모든 종류의 보석 시세 조회 (API로)
+              const gemPrice = await window.LopecScanner.API.LostArkHandler.getGemPrice(level);
+              if (gemPrice && gemPrice.prices && gemPrice.prices.length > 0) {
+                // 가격 계산
+                const priceInfo = gemPrice.prices.sort((a, b) => a.CurrentMinPrice - b.CurrentMinPrice)[0];
+                const gemCost = priceInfo.CurrentMinPrice * gemsNeeded;
+                totalGoldCost += gemCost;
+              } else {
+                // 가격 정보가 없으면 기본값 사용
+                const estimatedGemPrice = 500 * Math.pow(3, level);
+                totalGoldCost += estimatedGemPrice * gemsNeeded;
+              }
+            } catch (e) {
+              // 가격 조회 실패 시 기본값 사용
+              const estimatedGemPrice = 500 * Math.pow(3, level);
+              totalGoldCost += estimatedGemPrice * gemsNeeded;
+            }
+          }
+          
+          return {
+            cost: totalGoldCost + fusionCost,
+            fusionCost: fusionCost,
+            materialCost: totalGoldCost,
+            materials: gemRequirements,
+            hasApiData: true,
+            message: '시장 API 데이터 기준으로 계산되었습니다.'
+          };
+        }
         
-        return {
-          cost: costInfo.totalCost,
-          fusionCost: costInfo.gold,
-          materialCost: costInfo.materialCost,
-          materials: costInfo.materials,
-          hasApiData: true,
-          message: '시장 API 데이터 기준으로 계산되었습니다.'
-        };
+        // 기존 API 처리
+        if (LopecScanner.API.LostArkAPI) {
+          const costInfo = await LopecScanner.API.LostArkAPI.calculateGemUpgradeCost(currentLevel, targetLevel);
+          
+          return {
+            cost: costInfo.totalCost,
+            fusionCost: costInfo.gold,
+            materialCost: costInfo.materialCost,
+            materials: costInfo.materials,
+            hasApiData: true,
+            message: '시장 API 데이터 기준으로 계산되었습니다.'
+          };
+        }
       } catch (error) {
-        console.error('보석 비용 계산 중 API 오류:', error);
+        console.error('[GoldCalculator] 보석 비용 계산 중 API 오류:', error);
         // API 오류 시 기본 계산 사용
       }
     }

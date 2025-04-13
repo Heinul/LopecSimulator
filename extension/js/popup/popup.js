@@ -73,9 +73,12 @@ const PopupUI = {
       this.elements.toggleOptionsBtn.textContent = '▼'; // 아래쪽 화살표
     }
     
-    // API 키 값 불러오기
-    const savedApiKey = localStorage.getItem(this.storageKeys.apiKey) || '';
-    this.elements.apiKeyInput.value = savedApiKey;
+    // API 키 chrome.storage.local에서 불러오기
+    chrome.storage.local.get(['lostarkApiKey'], (result) => {
+      if (result.lostarkApiKey) {
+        this.elements.apiKeyInput.value = result.lostarkApiKey;
+      }
+    });
     
     // 각 토글 설정 불러오기
     this.elements.toggleArmor.checked = localStorage.getItem(this.storageKeys.toggleArmor) !== 'false';
@@ -99,7 +102,21 @@ const PopupUI = {
   
   // API 키 저장
   saveApiKey() {
-    localStorage.setItem(this.storageKeys.apiKey, this.elements.apiKeyInput.value.trim());
+    const apiKey = this.elements.apiKeyInput.value.trim();
+    
+    // localStorage에 저장 (구버전 호환성)
+    localStorage.setItem(this.storageKeys.apiKey, apiKey);
+    
+    // chrome.storage.local에 저장 (피 업데이트된 API로 공유)
+    chrome.storage.local.set({ lostarkApiKey: apiKey }, () => {
+      console.log('API 키가 chrome.storage.local에 저장되었습니다.');
+      
+      // API 키가 변경되었음을 배경 스크립트에 알림
+      chrome.runtime.sendMessage({
+        action: 'apiKeyChanged',
+        apiKey: apiKey
+      });
+    });
   },
   
   // 토글 버튼 상태 저장
