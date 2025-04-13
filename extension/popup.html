@@ -3,76 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>롭크 시뮬레이터 점수 분석기</title>
-  <style>
-    body {
-      font-family: 'Malgun Gothic', sans-serif;
-      width: 300px;
-      padding: 10px;
-    }
-    .title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .btn:hover {
-      background-color: #45a049;
-    }
-    .btn:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 15px;
-      padding: 8px;
-      background-color: #f2f2f2;
-      border-radius: 4px;
-      font-size: 14px;
-      text-align: center;
-    }
-    .progress-container {
-      width: 100%;
-      background-color: #ddd;
-      border-radius: 4px;
-      margin-top: 10px;
-      display: none;
-    }
-    .progress-bar {
-      width: 0%;
-      height: 20px;
-      background-color: #4CAF50;
-      border-radius: 4px;
-      text-align: center;
-      line-height: 20px;
-      color: white;
-    }
-  </style>
+  <title>로펙 시뮬레이터 점수 분석기</title>
+  <link rel="stylesheet" href="css/popup.css">
 </head>
 <body>
-  <div class="title">롭크 시뮬레이터 점수 분석기</div>
+  <div class="title">로펙 시뮬레이터 점수 분석기</div>
   
   <button id="scanBtn" class="btn">스캔 시작</button>
   <button id="viewDataBtn" class="btn">데이터 조회</button>
   
-  <div class="status" id="statusText">롭크 시뮬레이터 페이지에서 실행해주세요.</div>
+  <div class="status" id="statusText">로펙 시뮬레이터 페이지에서 실행해주세요.</div>
   
   <div class="progress-container" id="progressContainer">
     <div class="progress-bar" id="progressBar">0%</div>
   </div>
 
-  <script src="popup.js"></script>
+  <script src="js/popup/popup.js"></script>
 </body>
 </html>

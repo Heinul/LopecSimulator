@@ -1,0 +1,62 @@
+/* 로펙 시뮬레이터 점수 분석기 팝업 스타일 */
+body {
+  font-family: 'Malgun Gothic', sans-serif;
+  width: 300px;
+  padding: 10px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn:hover {
+  background-color: #45a049;
+}
+
+.btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 15px;
+  padding: 8px;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 4px;
+  margin-top: 10px;
+  display: none;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 20px;
+  background-color: #4CAF50;
+  border-radius: 4px;
+  text-align: center;
+  line-height: 20px;
+  color: white;
+}

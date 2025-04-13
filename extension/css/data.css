@@ -1,0 +1,94 @@
+/* 로펙 시뮬레이터 데이터 분석 페이지 스타일 */
+body {
+  font-family: 'Malgun Gothic', sans-serif;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.filter-option {
+  margin-bottom: 10px;
+}
+
+.filter-option label {
+  margin-right: 10px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.data-table th, .data-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: #4CAF50;
+  color: white;
+  position: sticky;
+  top: 0;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.data-table tr:hover {
+  background-color: #ddd;
+}
+
+.positive {
+  color: #4CAF50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+.zero {
+  color: #888;
+}
+
+.button-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.export-btn {
+  padding: 10px 20px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.export-btn:hover {
+  background-color: #0b7dda;
+}
+
+.no-data {
+  text-align: center;
+  margin-top: 50px;
+  color: #888;
+  font-size: 16px;
+}
+
+
