@@ -19,9 +19,13 @@
     {
       "matches": ["*://lopec.kr/simulator/*"],
       "js": [
-        "js/content/utils.js", 
-        "js/content/scanner.js", 
-        "js/content/ui.js", 
+        "js/content/utils.js",
+        "js/content/ui.js",
+        "js/content/scanners/base-scanner.js",
+        "js/content/scanners/scanner-utils.js",
+        "js/content/scanners/armor-scanner.js",
+        "js/content/scanners/gem-scanner.js",
+        "js/content/scanners/scanner-main.js",
         "js/content/main.js"
       ]
     }
