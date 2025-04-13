@@ -40,9 +40,7 @@
         "js/api/gold-calculator.js",
         "js/api/api-wrapper.js",
         "js/api/api-troubleshoot.js",
-        "js/api/api-diagnostics.js",
         "js/api/api-manager.js",
-        "js/api/api-manager-extension.js",
         "js/content/main.js"
       ]
     }

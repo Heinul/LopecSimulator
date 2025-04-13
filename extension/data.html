@@ -68,59 +68,6 @@
   
   <script src="js/data/data-manager.js"></script>
   <script src="js/data/ui-controller.js"></script>
-  <script src="js/api/api-diagnostics.js"></script>
   <script src="js/data/main.js"></script>
-  
-  <script>
-    // 페이지 로드 시 진단 도구 추가
-    document.addEventListener('DOMContentLoaded', function() {
-      // 진단 도구 모듈이 로드된 경우 UI 추가
-      setTimeout(function() {
-        if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.Diagnostics) {
-          console.log('진단 도구 모듈 감지됨, UI 추가 시도 중...');
-          window.LopecScanner.API.Diagnostics.addDiagnosticsToPage('.data-wrapper');
-        } else {
-          console.error('진단 도구 모듈이 로드되지 않았습니다.');
-          
-          // 진단 도구 모듈이 없는 경우 대체 UI 표시
-          const dataWrapper = document.querySelector('.data-wrapper');
-          const apiSettings = document.getElementById('lostark-api-settings');
-          
-          if (dataWrapper) {
-            const troubleshootUI = document.createElement('div');
-            troubleshootUI.id = 'api-troubleshoot-ui';
-            troubleshootUI.style.padding = '15px';
-            troubleshootUI.style.backgroundColor = '#f9f9f9';
-            troubleshootUI.style.border = '1px solid #ddd';
-            troubleshootUI.style.borderRadius = '5px';
-            troubleshootUI.style.marginTop = '15px';
-            troubleshootUI.style.marginBottom = '15px';
-            
-            troubleshootUI.innerHTML = `
-              <h3 style="margin-top: 0;">API 문제 해결 도우미</h3>
-              <p>진단 도구를 찾을 수 없습니다. 확장 프로그램을 다시 로드하거나 업데이트해주세요.</p>
-              <div style="margin-top: 10px;">
-                <button id="reload-extension" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                  확장 프로그램 다시 로드
-                </button>
-              </div>
-            `;
-            
-            if (apiSettings) {
-              apiSettings.after(troubleshootUI);
-            } else {
-              dataWrapper.insertBefore(troubleshootUI, dataWrapper.firstChild);
-            }
-            
-            // 확장 프로그램 다시 로드 버튼 이벤트
-            document.getElementById('reload-extension').addEventListener('click', function() {
-              chrome.runtime.reload();
-              location.reload();
-            });
-          }
-        }
-      }, 1000);
-    });
-  </script>
 </body>
 </html>
