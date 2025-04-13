@@ -17,31 +17,44 @@ LopecScanner.Utils = (function() {
   }
 
   /**
-   * 스코어 변동값 파싱 (예: +0.25 -> 0.25, -1.36 -> -1.36)
+   * 스코어 변동값 파싱
    * @param {HTMLElement} differenceElement - 점수 변동을 표시하는 요소
    * @return {number} - 파싱된 변동값
    */
   function parseScoreDifference(differenceElement) {
     if (!differenceElement) return 0;
     
-    let className = differenceElement.className;
-    let text = differenceElement.textContent.trim();
+    // 클래스 이름 확인
+    const className = differenceElement.className || '';
+    // 텍스트 내용 확인
+    const text = differenceElement.textContent.trim();
+    
+    console.log('Element class:', className, 'Text:', text);
+    
+    // 기본값 설정
     let value = 0;
     
-    // 텍스트에서 모든 숫자와 표시를 추출
-    const numberMatch = text.match(/([+-]?\\d+\\.?\\d*)/); 
-    if (numberMatch && numberMatch[1]) {
-      value = parseFloat(numberMatch[1]);
+    // 텍스트에서 숫자 추출 시도
+    if (text) {
+      // + 또는 - 기호와 숫자 추출
+      const matches = text.match(/([+-]?[0-9]*\.?[0-9]+)/);
+      if (matches && matches[1]) {
+        value = parseFloat(matches[1]);
+        console.log('Parsed value:', value);
+      }
     }
     
-    // 클래스에 따라 값의 부호 결정
+    // 클래스에 따른 값 조정
     if (className.includes('decrease')) {
-      return value < 0 ? value : -value; // 반드시 음수값으로 보장
+      // 감소일 경우 음수 보장
+      return value <= 0 ? value : -Math.abs(value);
     } else if (className.includes('increase')) {
-      return value > 0 ? value : Math.abs(value); // 반드시 양수값으로 보장
+      // 증가일 경우 양수 보장
+      return value >= 0 ? value : Math.abs(value);
     }
     
-    return 0; // 변화 없음 (zero)
+    // 변화 없음 (zero 클래스)
+    return 0;
   }
 
   /**
@@ -63,7 +76,29 @@ LopecScanner.Utils = (function() {
    */
   function getScoreDifference() {
     const differenceElement = document.querySelector('.tier-box .difference');
+    console.log('Found difference element:', differenceElement);
     return parseScoreDifference(differenceElement);
+  }
+  
+  /**
+   * 특정 시간 동안 값 변화 모니터링
+   * @param {number} duration - 모니터링 시간(ms)
+   * @param {number} interval - 확인 간격(ms)
+   * @return {Promise<number>} - 모니터링 기간 중 감지된 가장 큰 변화 값
+   */
+  async function monitorDifferenceChanges(duration, interval = 100) {
+    let maxDifference = 0;
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < duration) {
+      const currentDiff = getScoreDifference();
+      if (Math.abs(currentDiff) > Math.abs(maxDifference)) {
+        maxDifference = currentDiff;
+      }
+      await delay(interval);
+    }
+    
+    return maxDifference;
   }
   
   // 공개 API
@@ -71,6 +106,7 @@ LopecScanner.Utils = (function() {
     delay,
     parseScoreDifference,
     getCurrentScore,
-    getScoreDifference
+    getScoreDifference,
+    monitorDifferenceChanges
   };
 })();

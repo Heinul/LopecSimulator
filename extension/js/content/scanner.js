@@ -100,6 +100,10 @@ LopecScanner.Scanner = (function() {
    * @return {Object} - 변경 후 점수와 변동 값
    */
   async function changeValueAndCheckDifference(element, newValue) {
+    // 기존 화면의 점수 및 변동 값을 초기화 받아둘
+    const initialScore = LopecScanner.Utils.getCurrentScore();
+    console.log('Initial score:', initialScore);
+    
     // 값 변경
     element.value = newValue;
     
@@ -107,21 +111,25 @@ LopecScanner.Scanner = (function() {
     const event = new Event('change', { bubbles: true });
     element.dispatchEvent(event);
     
-    // 점수 변동 확인을 위해 더 긴 딜레이
-    await LopecScanner.Utils.delay(800);
+    // 점수 변경을 기다림
+    await LopecScanner.Utils.delay(100);
     
-    // 현재 스코어와 변동 확인
+    // 변동을 지정된 시간 동안 모니터링
+    const monitorDuration = 300; // 모니터링
+    console.log('Monitoring for changes over', monitorDuration, 'ms');
+    const difference = await LopecScanner.Utils.monitorDifferenceChanges(monitorDuration);
+    
+    // 현재 점수 받아오기
     const newScore = LopecScanner.Utils.getCurrentScore();
-    const difference = LopecScanner.Utils.getScoreDifference();
+    console.log('New score:', newScore, 'Detected difference:', difference);
     
-    // 시간이 더 필요한 경우를 위해 추가 딜레이
-    if (Math.abs(difference) < 0.001) {
-      // 변화가 감지되지 않으면 더 긴 딜레이 후 다시 확인
-      await LopecScanner.Utils.delay(500);
-      const updatedDifference = LopecScanner.Utils.getScoreDifference();
+    // 변동이 감지되지 않았지만 점수가 변경되었다면
+    if (Math.abs(difference) < 0.001 && Math.abs(newScore - initialScore) > 0.001) {
+      const calculatedDifference = newScore - initialScore;
+      console.log('Calculated difference from score change:', calculatedDifference);
       return {
         score: newScore,
-        difference: updatedDifference
+        difference: calculatedDifference
       };
     }
     
@@ -146,6 +154,7 @@ LopecScanner.Scanner = (function() {
    * 원래 값으로 복원
    */
   async function restoreOriginalValues() {
+    console.log('Restoring original values...');
     for (const key in originalValues) {
       const [type, index] = key.split('-').slice(0, 2);
       const value = originalValues[key];
@@ -165,10 +174,12 @@ LopecScanner.Scanner = (function() {
           elements[index].value = value;
           const event = new Event('change', { bubbles: true });
           elements[index].dispatchEvent(event);
+          // 더 긴 딜레이로 반영 시간 확보
           await LopecScanner.Utils.delay(100);
         }
       }
     }
+    console.log('Restored all original values');
   }
 
   /**
