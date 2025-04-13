@@ -276,8 +276,11 @@ const UIController = {
         <button id="open-api-settings" class="api-settings-button">API 설정</button>
       `;
       
+      // HTML 컨텐츠 준비
+      let htmlContent = '';
+      
       if (apiAvailable) {
-        apiStatusElement.innerHTML = `
+        htmlContent = `
           <div class="api-status-ok">
             <span class="status-icon">✓</span>
             <span class="status-text">로스트아크 API 연결됨</span>
@@ -289,7 +292,7 @@ const UIController = {
           </div>
         `;
       } else if (apiKey) {
-        apiStatusElement.innerHTML = `
+        htmlContent = `
           <div class="api-status-warning">
             <span class="status-icon">!</span>
             <span class="status-text">API 연결 실패</span>
@@ -298,7 +301,7 @@ const UIController = {
           <div class="api-description">API 키를 확인하거나 다시 설정해주세요.</div>
         `;
       } else {
-        apiStatusElement.innerHTML = `
+        htmlContent = `
           <div class="api-status-neutral">
             <span class="status-icon">?</span>
             <span class="status-text">API 연결되지 않음</span>
@@ -308,12 +311,18 @@ const UIController = {
         `;
       }
       
-      // API 설정 버튼 이벤트 리스너
-      document.getElementById('open-api-settings').addEventListener('click', () => {
-        const modal = this.createApiSettingsModal();
-        modal.style.display = 'block';
-        this.updateApiStatus();
-      });
+      // HTML 업데이트
+      apiStatusElement.innerHTML = htmlContent;
+      
+      // DOM 업데이트 후 이벤트 리스너 추가
+      const openApiSettingsBtn = document.getElementById('open-api-settings');
+      if (openApiSettingsBtn) {
+        openApiSettingsBtn.addEventListener('click', () => {
+          const modal = this.createApiSettingsModal();
+          modal.style.display = 'block';
+          this.updateApiStatus();
+        });
+      }
       
       // 골드 정보 가져오기 버튼 이벤트 리스너 (있는 경우에만)
       const fetchButton = document.getElementById('fetch-gold-data-summary');
@@ -324,7 +333,9 @@ const UIController = {
       }
     } catch (error) {
       console.error('API 상태 요약 업데이트 중 오류 발생:', error);
-      apiStatusElement.innerHTML = `
+      
+      // 오류 발생 시 HTML 업데이트
+      const htmlContent = `
         <div class="api-status-error">
           <span class="status-icon">✗</span>
           <span class="status-text">API 오류 발생</span>
@@ -333,12 +344,17 @@ const UIController = {
         <div class="api-description">오류: ${error.message}</div>
       `;
       
-      // API 설정 버튼 이벤트 리스너
-      document.getElementById('open-api-settings').addEventListener('click', () => {
-        const modal = this.createApiSettingsModal();
-        modal.style.display = 'block';
-        this.updateApiStatus();
-      });
+      apiStatusElement.innerHTML = htmlContent;
+      
+      // DOM 업데이트 후 이벤트 리스너 추가
+      const openApiSettingsBtn = document.getElementById('open-api-settings');
+      if (openApiSettingsBtn) {
+        openApiSettingsBtn.addEventListener('click', () => {
+          const modal = this.createApiSettingsModal();
+          modal.style.display = 'block';
+          this.updateApiStatus();
+        });
+      }
     }
   },
   
