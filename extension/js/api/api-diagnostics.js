@@ -42,7 +42,8 @@ window.LopecScanner.API.Diagnostics = (function() {
 
       // 2. 단순 요청 테스트 (CORS 및 네트워크 문제 확인)
       try {
-        const corsTestUrl = 'https://developer-lostark.game.onstove.com/news/notices';
+        // 카테고리 API URL을 사용하여 테스트 - 실제 API와 동일한 엔드포인트 사용
+        const corsTestUrl = 'https://developer-lostark.game.onstove.com/markets/categories';
         console.log('[API 진단] CORS 테스트 URL:', corsTestUrl);
 
         const corsTestResponse = await fetch(corsTestUrl, {
@@ -100,6 +101,25 @@ window.LopecScanner.API.Diagnostics = (function() {
     }
 
     console.log('[API 진단] API 연결 테스트 결과:', results);
+    
+    // 골드 계산기 모듈을 사용한 추가 테스트 시도
+    try {
+      if (window.LopecScanner.API.GoldCalculator && 
+          typeof window.LopecScanner.API.GoldCalculator.isApiAvailable === 'function') {
+        console.log('[API 진단] 골드 계산기 모듈을 통한 추가 테스트 시도');
+        const calculatorResult = await window.LopecScanner.API.GoldCalculator.isApiAvailable();
+        results.details.goldCalculatorTest = calculatorResult;
+        
+        // API 진단이 성공했지만 골드 계산기 테스트가 실패한 경우
+        if (results.connection && !calculatorResult) {
+          results.details.mismatchWarning = '진단 테스트는 성공했지만 골드 계산기 연결은 실패했습니다. API 업데이트가 필요할 수 있습니다.';
+          results.errors.push('진단 테스트와 골드 계산기 연결 결과가 다릅니다.');
+        }
+      }
+    } catch (error) {
+      console.error('[API 진단] 골드 계산기 테스트 중 오류:', error);
+      results.details.goldCalculatorError = error.message;
+    }
     return results;
   }
 
@@ -128,6 +148,16 @@ window.LopecScanner.API.Diagnostics = (function() {
               <li>API 연결: ${testResults.connection ? '✅ 성공' : '❌ 실패'}</li>
             </ul>
           </div>
+          
+          ${testResults.details && (testResults.details.mismatchWarning || testResults.details.goldCalculatorTest === false) ? `
+          <div class="report-section warnings">
+            <h4>주의 사항</h4>
+            <ul>
+              ${testResults.details.mismatchWarning ? `<li>${testResults.details.mismatchWarning}</li>` : ''}
+              ${testResults.details.goldCalculatorTest === false ? `<li>골드 계산기 API 연결이 실패했습니다. 로그를 살펴보고 구체적인 오류 내용을 확인해보세요.</li>` : ''}
+            </ul>
+          </div>
+          ` : ''}
           
           ${testResults.errors.length > 0 ? `
             <div class="report-section errors">
@@ -308,11 +338,18 @@ window.LopecScanner.API.Diagnostics = (function() {
       section.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
     });
     
-    // 오류 섹션 스타일
+      // 오류 섹션 스타일
     const errorSection = container.querySelector('.report-section.errors');
     if (errorSection) {
       errorSection.style.backgroundColor = '#FFF8F7';
       errorSection.style.borderLeft = '4px solid #F44336';
+    }
+    
+    // 경고 섹션 스타일
+    const warningSection = container.querySelector('.report-section.warnings');
+    if (warningSection) {
+      warningSection.style.backgroundColor = '#FFFDE7';
+      warningSection.style.borderLeft = '4px solid #FFC107';
     }
     
     // 기술 정보 섹션 스타일

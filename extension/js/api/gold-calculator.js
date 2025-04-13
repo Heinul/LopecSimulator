@@ -97,7 +97,35 @@ LopecScanner.API.GoldCalculator = (function() {
         return false;
       }
       
-      console.log('[GoldCalculator] API 키 확인 성공:', apiKey.substring(0, 5) + '...');
+      console.log('[GoldCalculator] API 키 확인 성공:', apiKey);
+      
+      // 직접 카테고리 API 호출로 테스트
+      try {
+        console.log('[GoldCalculator] 직접 API 연결 테스트 시도');
+        const corsTestUrl = 'https://developer-lostark.game.onstove.com/markets/categories';
+        
+        const corsTestResponse = await fetch(corsTestUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Accept': 'application/json'
+          },
+          mode: 'cors'
+        });
+        
+        if (corsTestResponse.ok) {
+          console.log('[GoldCalculator] 직접 API 연결 성공!');
+          return true;
+        } else {
+          console.error(`[GoldCalculator] 직접 API 연결 실패: ${corsTestResponse.status} ${corsTestResponse.statusText}`);
+          return false;
+        }
+      } catch (directError) {
+        console.error('[GoldCalculator] 직접 API 호출 오류:', directError);
+      }
+      
+      // 여기까지 오면 직접 호출이 실패한 것이미로 기존 코드 실행
+      console.log('[GoldCalculator] 기존 API 모듈로 연결 시도');
       
       // 여러 API 모듈 순서대로 시도
       let isConnected = false;

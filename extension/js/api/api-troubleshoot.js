@@ -36,11 +36,11 @@ window.LopecScanner.API.Troubleshooter = (function() {
       }
 
       results.apiKey = true;
-      results.details.apiKeyPrefix = apiKey.substring(0, 5) + '...';
+      results.details.apiKeyPrefix = apiKey;
 
       // 2. 단순 요청 테스트 (CORS 및 네트워크 문제 확인)
       try {
-        const corsTestUrl = 'https://developer-lostark.game.onstove.com/news/notices';
+        const corsTestUrl = 'https://developer-lostark.game.onstove.com/markets/categories';
         console.log('[API 문제해결] CORS 테스트 URL:', corsTestUrl);
 
         const corsTestResponse = await fetch(corsTestUrl, {

@@ -273,12 +273,6 @@ const UIController = {
         chrome.storage.local.get(['lostarkApiKey'], function(result) {
           if (result.lostarkApiKey) {
             apiKey = result.lostarkApiKey;
-            
-            // API 키 입력 필드 업데이트
-            const apiKeyInput = document.getElementById('api-key-input');
-            if (apiKeyInput) {
-              apiKeyInput.value = '********'; // 보안을 위해 실제 키 대신 표시
-            }
           }
           resolve();
         });

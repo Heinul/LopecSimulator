@@ -66,7 +66,7 @@ LopecScanner.API.APIManager = (function() {
     inputGroup.style.marginBottom = '10px';
     
     const apiKeyInput = document.createElement('input');
-    apiKeyInput.type = 'password';
+    apiKeyInput.type = 'text';
     apiKeyInput.id = 'lostark-api-key';
     apiKeyInput.placeholder = '로스트아크 API 키를 입력하세요';
     apiKeyInput.style.flex = '1';
@@ -98,22 +98,9 @@ LopecScanner.API.APIManager = (function() {
     testButton.style.cursor = 'pointer';
     testButton.style.marginLeft = '8px';
     
-    // 문제 해결 버튼
-    const troubleshootButton = document.createElement('button');
-    troubleshootButton.innerText = '문제 해결';
-    troubleshootButton.id = 'troubleshoot-api';
-    troubleshootButton.style.padding = '6px 12px';
-    troubleshootButton.style.backgroundColor = '#FF9800';
-    troubleshootButton.style.color = 'white';
-    troubleshootButton.style.border = 'none';
-    troubleshootButton.style.borderRadius = '3px';
-    troubleshootButton.style.cursor = 'pointer';
-    troubleshootButton.style.marginLeft = '8px';
-    
     inputGroup.appendChild(apiKeyInput);
     inputGroup.appendChild(saveButton);
     inputGroup.appendChild(testButton);
-    inputGroup.appendChild(troubleshootButton);
     
     // 안내 텍스트
     const infoText = document.createElement('div');
@@ -132,7 +119,7 @@ LopecScanner.API.APIManager = (function() {
     settingsContainer.appendChild(inputGroup);
     settingsContainer.appendChild(infoText);
     
-    // 이벤트 리스너 추가
+    // 저장 버튼 이벤트 리스너 추가
     saveButton.addEventListener('click', function() {
       const apiKey = apiKeyInput.value.trim();
       if (apiKey) {
@@ -147,13 +134,9 @@ LopecScanner.API.APIManager = (function() {
       }
     });
     
+    // 테스트 버튼 이벤트 리스너 추가
     testButton.addEventListener('click', function() {
       updateAPIStatus(true);
-    });
-    
-    // 문제 해결 버튼 이벤트 추가
-    troubleshootButton.addEventListener('click', function() {
-      showTroubleshootingDialog();
     });
     
     return settingsContainer;
@@ -184,7 +167,7 @@ LopecScanner.API.APIManager = (function() {
             // API 키 입력 필드 업데이트
             const apiKeyInput = document.getElementById('lostark-api-key');
             if (apiKeyInput) {
-              apiKeyInput.value = '********'; // 보안을 위해 실제 키 대신 표시
+              apiKeyInput.value = apiKey; // 실제 키 그대로 표시
             }
           }
           resolve();
