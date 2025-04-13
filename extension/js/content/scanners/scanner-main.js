@@ -102,7 +102,12 @@ LopecScanner.Scanners.Main = (function() {
     } catch (error) {
       console.error('스캔 중 오류 발생:', error);
     } finally {
-      BaseScanner.finishScan();
+      // 원래 값으로 복원
+      console.log('스캔 완료 - 원래 값으로 복원 시도...');
+      await BaseScanner.restoreOriginalValues();
+      
+      // 스캔 완료 처리
+      await BaseScanner.finishScan();
     }
   }
   

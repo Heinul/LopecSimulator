@@ -75,39 +75,97 @@ LopecScanner.Scanners.BaseScanner = (function() {
    * 원래 값으로 복원
    */
   async function restoreOriginalValues() {
+    console.log('원래 값으로 복원 시작...');
+    
+    // 복원할 값 로그 출력 (디버깅용)
+    console.log('복원할 원래 값들:', state.originalValues);
+    
     for (const key in state.originalValues) {
       const [type, index] = key.split('-').slice(0, 2);
       const value = state.originalValues[key];
       
-      let selector;
+      console.log(`복원 시도: ${key} => ${value}`);
+      
+      let element = null;
+      
       if (type === 'armor' && key.includes('name')) {
-        selector = '.armor-name';
+        const elements = document.querySelectorAll('.armor-name');
+        if (elements[index]) element = elements[index];
       } else if (type === 'armor' && key.includes('upgrade')) {
-        selector = '.armor-upgrade';
+        const elements = document.querySelectorAll('.armor-upgrade');
+        if (elements[index]) element = elements[index];
       } else if (type === 'gem') {
-        selector = 'select[name="ArmoryGem Gems Level"]';
+        const elements = document.querySelectorAll('select[name="ArmoryGem Gems Level"]');
+        if (elements[index]) element = elements[index];
+      } else if (type === 'accessory' && key.includes('option')) {
+        // 장신구 옵션 값 복원
+        const elements = document.querySelectorAll('.accessory-item .option.tooltip-text');
+        const numIndex = parseInt(index, 10);
+        if (elements[numIndex]) element = elements[numIndex];
+      } else if (type === 'accessory' && key.includes('tier')) {
+        // 장신구 티어 값 복원 
+        const elements = document.querySelectorAll('.accessory-item .tier.accessory');
+        const numIndex = parseInt(index, 10);
+        if (elements[numIndex]) element = elements[numIndex];
       }
       
-      if (selector) {
-        const elements = document.querySelectorAll(selector);
-        if (elements[index]) {
-          elements[index].value = value;
-          const event = new Event('change', { bubbles: true });
-          elements[index].dispatchEvent(event);
-          await LopecScanner.Utils.delay(100);
+      if (element) {
+        // 기존 값과 다를 때만 변경 (줄바꿈을 줄이기 위해)
+        if (element.value !== value) {
+          try {
+            element.value = value;
+            const event = new Event('change', { bubbles: true });
+            element.dispatchEvent(event);
+            await LopecScanner.Utils.delay(100);
+            console.log(`복원 성공: ${key} => ${value}`);
+          } catch (e) {
+            console.error(`복원 실패: ${key} => ${value}`, e);
+          }
+        } else {
+          console.log(`복원 스킵 (같은 값): ${key} => ${value}`);
         }
+      } else {
+        console.warn(`요소를 찾을 수 없음: ${key}`);
       }
     }
+    
+    console.log('복원 완료');
   }
   
   /**
    * 스캔 완료 처리
    */
-  function finishScan() {
+  async function finishScan() {
     state.isScanning = false;
     
     // 오버레이 제거
     LopecScanner.UI.removeOverlay();
+    
+    // 원래 값 모두 복원되었는지 확인
+    console.log('스캔 결과 저장 전 최종 값 복원 확인');
+    for (const key in state.originalValues) {
+      if (key.startsWith('accessory-option')) {
+        const [, index] = key.split('-').slice(0, 2);
+        const value = state.originalValues[key];
+        const elements = document.querySelectorAll('.accessory-item .option.tooltip-text');
+        const numIndex = parseInt(index, 10);
+        
+        if (elements[numIndex] && elements[numIndex].value !== value) {
+          console.warn(`장신구 옵션 값이 복원되지 않음: ${key} (원래값: ${value}, 현재값: ${elements[numIndex].value})`);
+          
+          try {
+            // 한번 더 복원 시도
+            elements[numIndex].value = value;
+            const event = new Event('change', { bubbles: true });
+            elements[numIndex].dispatchEvent(event);
+            await LopecScanner.Utils.delay(50);
+            console.log(`최종 복원 성공: ${key} => ${value}`);
+          } catch (e) {
+            console.error(`최종 복원 실패: ${key}`, e);
+          }
+        }
+      }
+    }
     
     // 확장 프로그램에 완료 알림
     chrome.runtime.sendMessage({
