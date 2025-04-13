@@ -39,101 +39,33 @@ LopecScanner.Scanners.EngravingScanner = (function() {
     let scanCount = 0;
     
     // 요소가 존재하는지 확인
-    if (!elements || !elements.engravingNameElements || !elements.engravingLevelElements ||
-        elements.engravingNameElements.length === 0 || elements.engravingLevelElements.length === 0) {
+    if (!elements || !elements.engravingLevelElements ||
+        elements.engravingLevelElements.length === 0) {
       return scanCount;
     }
     
     // 현재 값들 저장
-    if (elements.engravingNameElements) {
-      elements.engravingNameElements.forEach((element, index) => {
-        BaseScanner.state.originalValues[`engraving-name-${index}`] = element.value;
-      });
-    }
-    
-    if (elements.engravingLevelElements) {
-      elements.engravingLevelElements.forEach((element, index) => {
+    elements.engravingLevelElements.forEach((element, index) => {
+      if (element.classList.contains('orange')) {
         BaseScanner.state.originalValues[`engraving-level-${index}`] = element.value;
-      });
-    }
+      }
+    });
     
-    // 스캔 항목 계산
-    // 1. 각인 이름 스캔
-    if (elements.engravingNameElements) {
-      elements.engravingNameElements.forEach((element, index) => {
-        let filteredNames = [];
+    // 스캔 항목 계산 - orange 클래스를 가진 각인 레벨 요소만 스캔
+    elements.engravingLevelElements.forEach((element, index) => {
+      if (element.classList.contains('orange')) {
+        const currentLevel = parseInt(element.value);
+        const maxLevel = Math.min(
+          parseInt(element.getAttribute('data-max') || '4'),
+          3 // 레벨 3까지만 스캔
+        );
         
-        // 사용자 지정 각인만 스캔하거나 모든 각인 스캔
-        if (engravingOptions.engravingNames && engravingOptions.engravingNames.length > 0) {
-          // 이미 선택된 각인 이름들 (중복 방지)
-          const selectedNames = Array.from(elements.engravingNameElements)
-            .map(el => el.value)
-            .filter(name => name !== '없음');
-          
-          // 지정된 각인 중 아직 선택되지 않은 것만 필터링
-          filteredNames = engravingOptions.engravingNames.filter(name => 
-            !selectedNames.includes(name) || name === element.value
-          );
-        } else {
-          // 모든 유효한 각인 이름 (중복 방지 없이)
-          filteredNames = Array.from(element.options)
-            .filter(option => option.value !== '없음' && !option.value.includes('무효'))
-            .map(option => option.value);
+        // 현재 레벨보다 높은 레벨만 스캔
+        for (let level = currentLevel + 1; level <= maxLevel; level++) {
+          scanCount++;
         }
-        
-        // 특정 조합만 스캔
-        if (engravingOptions.specificCombinations && engravingOptions.specificCombinations.length > 0) {
-          const uniqueNames = new Set(engravingOptions.specificCombinations.map(combo => combo.name));
-          filteredNames = [...uniqueNames];
-        }
-        
-        // 각인 이름 변경 + 레벨 스캔 포함
-        filteredNames.forEach(name => {
-          if (name === element.value) {
-            // 이미 선택된 각인이면 레벨만 계산
-            const levelElement = elements.engravingLevelElements[index];
-            const currentLevel = parseInt(levelElement.value);
-            const maxLevel = Math.min(
-              parseInt(levelElement.getAttribute('data-max') || '4'),
-              engravingOptions.maxLevel || 3
-            );
-            
-            // 현재 레벨보다 높은 레벨만 스캔
-            for (let level = currentLevel + 1; level <= maxLevel; level++) {
-              // 특정 조합만 스캔 시 필터링
-              if (engravingOptions.specificCombinations && engravingOptions.specificCombinations.length > 0) {
-                const hasCombo = engravingOptions.specificCombinations.some(combo => 
-                  combo.name === name && combo.level === level
-                );
-                if (hasCombo) scanCount++;
-              } else {
-                scanCount++;
-              }
-            }
-          } else {
-            // 새로운 각인이면 모든 유효 레벨 계산
-            const levelElement = elements.engravingLevelElements[index];
-            const maxLevel = Math.min(
-              parseInt(levelElement.getAttribute('data-max') || '4'),
-              engravingOptions.maxLevel || 3
-            );
-            
-            // 레벨 1부터 최대 레벨까지 스캔
-            for (let level = 1; level <= maxLevel; level++) {
-              // 특정 조합만 스캔 시 필터링
-              if (engravingOptions.specificCombinations && engravingOptions.specificCombinations.length > 0) {
-                const hasCombo = engravingOptions.specificCombinations.some(combo => 
-                  combo.name === name && combo.level === level
-                );
-                if (hasCombo) scanCount++;
-              } else {
-                scanCount++;
-              }
-            }
-          }
-        });
-      });
-    }
+      }
+    });
     
     return scanCount;
   }
@@ -143,83 +75,38 @@ LopecScanner.Scanners.EngravingScanner = (function() {
    * @param {Object} elements - 각인 요소들 모음 객체
    */
   async function scanEngravings(elements) {
-    if (!elements.engravingNameElements || !elements.engravingLevelElements) return;
+    if (!elements || !elements.engravingLevelElements) return;
     
-    // 각 각인 슬롯 스캔
-    for (let i = 0; i < elements.engravingNameElements.length; i++) {
-      const nameElement = elements.engravingNameElements[i];
+    // orange 클래스를 가진 요소만 스캔
+    for (let i = 0; i < elements.engravingLevelElements.length; i++) {
       const levelElement = elements.engravingLevelElements[i];
-      const currentName = nameElement.value;
-      const currentLevel = parseInt(levelElement.value);
       
-      // 필터링된 각인 이름 목록
-      let filteredNames = [];
-      
-      // 사용자 지정 각인만 스캔하거나 모든 각인 스캔
-      if (engravingOptions.engravingNames && engravingOptions.engravingNames.length > 0) {
-        // 이미 선택된 각인 이름들 (중복 방지)
-        const selectedNames = Array.from(elements.engravingNameElements)
-          .map(el => el.value)
-          .filter(name => name !== '없음');
-        
-        // 지정된 각인 중 아직 선택되지 않은 것만 필터링
-        filteredNames = engravingOptions.engravingNames.filter(name => 
-          !selectedNames.includes(name) || name === currentName
-        );
-      } else {
-        // 모든 유효한 각인 이름 (중복 방지 없이)
-        filteredNames = Array.from(nameElement.options)
-          .filter(option => option.value !== '없음' && !option.value.includes('무효'))
-          .map(option => option.value);
-      }
-      
-      // 특정 조합만 스캔
-      if (engravingOptions.specificCombinations && engravingOptions.specificCombinations.length > 0) {
-        const uniqueNames = new Set(engravingOptions.specificCombinations.map(combo => combo.name));
-        filteredNames = [...uniqueNames];
-      }
-      
-      // 각 각인 이름에 대한 스캔
-      for (const name of filteredNames) {
-        if (!BaseScanner.state.isScanning) return;
-        
-        // 이름이 같으면 레벨만 변경, 다르면 이름도 변경
-        if (name !== currentName) {
-          // 각인 이름 변경
-          await BaseScanner.changeValueAndCheckDifference(nameElement, name);
-        }
-        
-        // 최대 레벨 결정
+      // orange 클래스가 있는 각인 레벨 요소만 스캔
+      if (levelElement.classList.contains('orange')) {
+        const currentLevel = parseInt(levelElement.value);
         const maxLevel = Math.min(
           parseInt(levelElement.getAttribute('data-max') || '4'),
-          engravingOptions.maxLevel || 3
+          3 // 레벨 3까지만 스캔
         );
         
-        // 레벨 스캔 시작 포인트 (현재 이름이 동일하면 현재 레벨+1, 아니면 1부터)
-        const startLevel = name === currentName ? currentLevel + 1 : 1;
+        // 각인 이름 요소 참조
+        const nameElement = elements.engravingNameElements[i];
+        const currentName = nameElement ? nameElement.value : '알 수 없음';
         
-        // 각 레벨 스캔
-        for (let level = startLevel; level <= maxLevel; level++) {
+        // 현재 레벨보다 높은 레벨만 스캔
+        for (let level = currentLevel + 1; level <= maxLevel; level++) {
           if (!BaseScanner.state.isScanning) return;
-          
-          // 특정 조합만 스캔 시 필터링
-          if (engravingOptions.specificCombinations && engravingOptions.specificCombinations.length > 0) {
-            const hasCombo = engravingOptions.specificCombinations.some(combo => 
-              combo.name === name && combo.level === level
-            );
-            if (!hasCombo) continue;
-          }
           
           // 레벨 변경 및 변동 확인
           const result = await BaseScanner.changeValueAndCheckDifference(levelElement, level.toString());
           
           // 결과 저장
-          BaseScanner.state.scanResults[`engraving-${i}-${name}-${level}`] = {
+          BaseScanner.state.scanResults[`engraving-${i}-${level}`] = {
             type: '각인',
             index: i,
-            item: `${name} Lv.${level}`,
-            from: currentName === name ? `${name} Lv.${currentLevel}` : `${currentName} Lv.${currentLevel}`,
-            to: `${name} Lv.${level}`,
+            item: `${currentName} Lv.${level}`,
+            from: `${currentName} Lv.${currentLevel}`,
+            to: `${currentName} Lv.${level}`,
             score: result.score,
             difference: result.difference
           };
@@ -227,14 +114,9 @@ LopecScanner.Scanners.EngravingScanner = (function() {
           BaseScanner.updateScanProgress();
         }
         
-        // 원래 이름이 아닌 경우 원래 이름으로 복원
-        if (name !== currentName) {
-          await BaseScanner.changeValueAndCheckDifference(nameElement, currentName);
-        }
+        // 원래 레벨로 복원
+        await BaseScanner.changeValueAndCheckDifference(levelElement, currentLevel.toString());
       }
-      
-      // 원래 레벨로 복원
-      await BaseScanner.changeValueAndCheckDifference(levelElement, currentLevel.toString());
     }
   }
   

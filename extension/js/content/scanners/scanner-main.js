@@ -18,28 +18,6 @@ LopecScanner.Scanners.Main = (function() {
   const KarmaScanner = LopecScanner.Scanners.KarmaScanner;
   const ScannerUtils = LopecScanner.Scanners.Utils;
   
-  // 장신구 관련 스캔 옵션 초기화
-  const accessoryOptions = {
-    // 목걸이 옵션 (예: '적에게 주는 피해', '무기 공격력')
-    necklaceOptions: ['피해', '공격력', '무기'],
-    // 귀걸이 옵션
-    earringOptions: ['무기', '공격력'],
-    // 반지 옵션
-    ringOptions: ['치명타', '피해', '공격력'],
-    // 팔찌 옵션
-    bangleOptions: ['피해', '치명타', '무기']
-  };
-  
-  // 각인 관련 스캔 옵션 초기화
-  const engravingOptions = {
-    // 주요 각인만 스캔
-    engravingNames: ['원한', '바리케이드', '슈퍼 차지', '안정된 상태', '결투의 대가'],
-    // 최대 레벨 3까지만 스캔
-    maxLevel: 3,
-    // 특정 조합 스캔 (선택적)
-    specificCombinations: []
-  };
-  
   /**
    * 스캔 시작 함수
    */
@@ -56,8 +34,16 @@ LopecScanner.Scanners.Main = (function() {
     
     try {
       // 장신구/각인 옵션 설정
-      AccessoryScanner.setAccessoryOptions(accessoryOptions);
-      EngravingScanner.setEngravingOptions(engravingOptions);
+      AccessoryScanner.setAccessoryOptions({
+        // 목걸이 옵션 (추가피해, 적에게 주는 피해, 공격력, 무기공격력)
+        necklaceOptions: ['추가피해', '적에게 주는 피해', '공격력', '무기 공격력'],
+        // 귀걸이 옵션 (공격력과 무기공격력 퍼센트와 고정값 모두 포함)
+        earringOptions: ['공격력 +', '무기 공격력 +', '공격력', '무기 공격력'],
+        // 반지 옵션 (치명타 적중률, 치명타 피해, 공격력, 무기공격력)
+        ringOptions: ['치명타 적중률', '치명타 피해', '공격력', '무기 공격력']
+      });
+      
+      // 각인은 orange 클래스를 가진 잔류 요소만 스캔
       
       // 스캔할 요소 준비
       const elements = await ScannerUtils.prepareElementsForScan();
@@ -112,8 +98,7 @@ LopecScanner.Scanners.Main = (function() {
    * @param {Object} options - 장신구 스캔 옵션
    */
   function setAccessoryOptions(options) {
-    Object.assign(accessoryOptions, options);
-    AccessoryScanner.setAccessoryOptions(accessoryOptions);
+    AccessoryScanner.setAccessoryOptions(options);
   }
   
   /**
@@ -121,8 +106,7 @@ LopecScanner.Scanners.Main = (function() {
    * @param {Object} options - 각인 스캔 옵션
    */
   function setEngravingOptions(options) {
-    Object.assign(engravingOptions, options);
-    EngravingScanner.setEngravingOptions(engravingOptions);
+    EngravingScanner.setEngravingOptions(options);
   }
   
   // 공개 API

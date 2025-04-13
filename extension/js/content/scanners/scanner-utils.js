@@ -50,9 +50,11 @@ LopecScanner.Scanners.Utils = (function() {
       bangleOptionElements = document.querySelectorAll('.bangle .grinding-wrap .option.tooltip-text');
     }
     
-    // 각인 관련 엘리먼트
+    // 각인 관련 엘리먼트 - .orange 클래스를 가진 요소 참조
     const engravingNameElements = document.querySelectorAll('.engraving-box .engraving-name');
     const engravingLevelElements = document.querySelectorAll('.engraving-box .grade');
+    // orange 클래스를 가진 요소 확인
+    const orangeEngravingLevelElements = document.querySelectorAll('.engraving-box .grade.orange');
     
     // 카르마 관련 엘리먼트
     const karmaRadioGroups = [

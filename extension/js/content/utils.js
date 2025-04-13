@@ -77,6 +77,14 @@ LopecScanner.Utils = (function() {
   }
   
   /**
+   * 현재 점수 변동 값 가져오기
+   * @return {number} - 현재 변동 값
+   */
+  function getCurrentDifference() {
+    return getScoreDifference();
+  }
+  
+  /**
    * 특정 시간 동안 값 변화 모니터링
    * @param {number} duration - 모니터링 시간(ms)
    * @param {number} interval - 확인 간격(ms)
@@ -103,6 +111,7 @@ LopecScanner.Utils = (function() {
     parseScoreDifference,
     getCurrentScore,
     getScoreDifference,
+    getCurrentDifference,
     monitorDifferenceChanges
   };
 })();
