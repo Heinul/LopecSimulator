@@ -1,5 +1,5 @@
 /**
- * 롭크 시뮬레이터 점수 분석기 - 데이터 페이지 메인 스크립트
+ * 로펙 시뮬레이터 점수 분석기 - 데이터 페이지 메인 스크립트
  */
 
 // 이벤트 리스너 설정
@@ -12,7 +12,7 @@ function setupEventListeners() {
   // 데이터 내보내기 버튼 이벤트
   UIController.elements.exportDataBtn.addEventListener('click', () => {
     const csvContent = DataManager.exportDataToCSV();
-    UIController.downloadCSV(csvContent, '롭크_시뮬레이터_데이터.csv');
+    UIController.downloadCSV(csvContent, '로펙_시뮬레이터_데이터.csv');
   });
 }
 

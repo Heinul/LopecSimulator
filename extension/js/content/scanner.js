@@ -102,7 +102,6 @@ LopecScanner.Scanner = (function() {
   async function changeValueAndCheckDifference(element, newValue) {
     // 기존 화면의 점수 및 변동 값을 초기화 받아둘
     const initialScore = LopecScanner.Utils.getCurrentScore();
-    console.log('Initial score:', initialScore);
     
     // 값 변경
     element.value = newValue;
@@ -115,18 +114,15 @@ LopecScanner.Scanner = (function() {
     await LopecScanner.Utils.delay(100);
     
     // 변동을 지정된 시간 동안 모니터링
-    const monitorDuration = 300; // 모니터링
-    console.log('Monitoring for changes over', monitorDuration, 'ms');
+    const monitorDuration = 300;
     const difference = await LopecScanner.Utils.monitorDifferenceChanges(monitorDuration);
     
     // 현재 점수 받아오기
     const newScore = LopecScanner.Utils.getCurrentScore();
-    console.log('New score:', newScore, 'Detected difference:', difference);
     
     // 변동이 감지되지 않았지만 점수가 변경되었다면
     if (Math.abs(difference) < 0.001 && Math.abs(newScore - initialScore) > 0.001) {
       const calculatedDifference = newScore - initialScore;
-      console.log('Calculated difference from score change:', calculatedDifference);
       return {
         score: newScore,
         difference: calculatedDifference
@@ -154,7 +150,6 @@ LopecScanner.Scanner = (function() {
    * 원래 값으로 복원
    */
   async function restoreOriginalValues() {
-    console.log('Restoring original values...');
     for (const key in originalValues) {
       const [type, index] = key.split('-').slice(0, 2);
       const value = originalValues[key];
@@ -174,76 +169,74 @@ LopecScanner.Scanner = (function() {
           elements[index].value = value;
           const event = new Event('change', { bubbles: true });
           elements[index].dispatchEvent(event);
-          // 더 긴 딜레이로 반영 시간 확보
           await LopecScanner.Utils.delay(100);
         }
       }
     }
-    console.log('Restored all original values');
   }
 
   /**
-   * 장비 스캔
+   * 장비 스캔 (새로운 방식: 한 콤보박스 완전 순회 후 다음으로 이동)
    * @param {NodeList} armorNameElements - 장비 강화 콤보박스 요소들
    * @param {NodeList} armorUpgradeElements - 장비 상재 콤보박스 요소들
    */
   async function scanArmor(armorNameElements, armorUpgradeElements) {
+    // 각 장비 아이템에 대해 스캔
     for (let i = 0; i < armorNameElements.length; i++) {
-      const element = armorNameElements[i];
-      const currentValue = parseInt(element.value);
-      const maxValue = parseInt(element.getAttribute('data-max') || 25);
+      const nameElement = armorNameElements[i];
+      const nameCurrentValue = parseInt(nameElement.value);
+      const nameMaxValue = parseInt(nameElement.getAttribute('data-max') || 25);
       
-      // 현재값보다 큰 값만 스캔
-      for (let newValue = currentValue + 1; newValue <= maxValue; newValue++) {
+      // 1. 먼저 armor-name 옵션을 모두 순회
+      for (let newNameValue = nameCurrentValue + 1; newNameValue <= nameMaxValue; newNameValue++) {
         if (!isScanning) return;
         
-        const result = await changeValueAndCheckDifference(element, newValue.toString());
+        // 값 변경 및 변동 확인
+        const result = await changeValueAndCheckDifference(nameElement, newNameValue.toString());
         
-        scanResults[`armor-name-${i}-${newValue}`] = {
+        // 결과 저장
+        scanResults[`armor-name-${i}-${newNameValue}`] = {
           type: '장비 강화',
           index: i,
           item: document.querySelectorAll('.armor-tag')[i]?.textContent || `장비 ${i+1}`,
-          from: currentValue,
-          to: newValue,
+          from: nameCurrentValue,
+          to: newNameValue,
           score: result.score,
           difference: result.difference
         };
         
         updateScanProgress();
+      }
+      
+      // 원래 값으로 복원
+      await changeValueAndCheckDifference(nameElement, originalValues[`armor-name-${i}`]);
+      
+      // 2. 상재 옵션이 있으면 별도로 순회
+      if (i < armorUpgradeElements.length) {
+        const upgradeElement = armorUpgradeElements[i];
+        const upgradeCurrentValue = parseInt(upgradeElement.value);
         
-        // armor-name에 따른 armor-upgrade 규칙 적용
-        if (i < armorUpgradeElements.length) {
-          const upgradeElement = armorUpgradeElements[i];
-          const currentUpgrade = parseInt(upgradeElement.value);
-          let maxUpgrade = 40;
+        // armor-name이 6 이상인 경우에만 상재 적용 가능
+        if (nameCurrentValue >= 6) {
+          let maxUpgrade = nameCurrentValue >= 14 ? 40 : 20;
+          let minUpgrade = nameCurrentValue >= 14 ? Math.max(upgradeCurrentValue + 1, 21) : upgradeCurrentValue + 1;
           
-          // armor-name이 6 미만이면 upgrade 스캔 불가
-          if (newValue < 6) {
-            continue;
-          }
-          
-          let minUpgrade = currentUpgrade + 1;
-          
-          // armor-name이 14 이상일 때만 21 이상 선택 가능
-          if (newValue >= 14) {
-            minUpgrade = Math.max(minUpgrade, 21);
-          } else {
-            maxUpgrade = 20;
-          }
-          
-          for (let newUpgrade = minUpgrade; newUpgrade <= maxUpgrade; newUpgrade++) {
+          // 상재 값 순회
+          for (let newUpgradeValue = minUpgrade; newUpgradeValue <= maxUpgrade; newUpgradeValue++) {
             if (!isScanning) return;
             
-            const upgradeResult = await changeValueAndCheckDifference(upgradeElement, newUpgrade.toString());
+            // 값 변경 및 변동 확인
+            const result = await changeValueAndCheckDifference(upgradeElement, newUpgradeValue.toString());
             
-            scanResults[`armor-upgrade-${i}-${newUpgrade}`] = {
+            // 결과 저장
+            scanResults[`armor-upgrade-${i}-${newUpgradeValue}`] = {
               type: '장비 상재',
               index: i,
               item: document.querySelectorAll('.armor-tag')[i]?.textContent || `장비 ${i+1} 상재`,
-              from: currentUpgrade,
-              to: newUpgrade,
-              score: upgradeResult.score,
-              difference: upgradeResult.difference
+              from: upgradeCurrentValue,
+              to: newUpgradeValue,
+              score: result.score,
+              difference: result.difference
             };
             
             updateScanProgress();
@@ -252,15 +245,12 @@ LopecScanner.Scanner = (function() {
           // 원래 값으로 복원
           await changeValueAndCheckDifference(upgradeElement, originalValues[`armor-upgrade-${i}`]);
         }
-        
-        // 원래 값으로 복원
-        await changeValueAndCheckDifference(element, originalValues[`armor-name-${i}`]);
       }
     }
   }
 
   /**
-   * 보석 스캔
+   * 보석 스캔 (새로운 방식: 한 보석 완전 순회 후 다음으로 이동)
    * @param {NodeList} gemLevelElements - 보석 레벨 콤보박스 요소들
    */
   async function scanGems(gemLevelElements) {
@@ -271,12 +261,14 @@ LopecScanner.Scanner = (function() {
       const gemType = element.nextElementSibling.value;
       const skillName = element.parentElement.querySelector('.skill')?.textContent || '';
       
-      // 현재값보다 큰 값만 스캔
+      // 현재값부터 최대값까지 순회
       for (let newValue = currentValue + 1; newValue <= maxValue; newValue++) {
         if (!isScanning) return;
         
+        // 값 변경 및 변동 확인
         const result = await changeValueAndCheckDifference(element, newValue.toString());
         
+        // 결과 저장
         scanResults[`gem-level-${i}-${newValue}`] = {
           type: '보석',
           index: i,
@@ -322,9 +314,6 @@ LopecScanner.Scanner = (function() {
       
       // 보석 스캔
       await scanGems(gemLevelElements);
-      
-      // 원래 값으로 복원
-      await restoreOriginalValues();
       
     } catch (error) {
       console.error('스캔 중 오류 발생:', error);

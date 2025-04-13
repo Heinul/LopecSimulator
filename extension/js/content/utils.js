@@ -1,5 +1,5 @@
 /**
- * 롭크 시뮬레이터 점수 분석기 - 유틸리티 함수
+ * 로펙 시뮬레이터 점수 분석기 - 유틸리티 함수
  */
 
 // 전역 네임스페이스
@@ -29,8 +29,6 @@ LopecScanner.Utils = (function() {
     // 텍스트 내용 확인
     const text = differenceElement.textContent.trim();
     
-    console.log('Element class:', className, 'Text:', text);
-    
     // 기본값 설정
     let value = 0;
     
@@ -40,7 +38,6 @@ LopecScanner.Utils = (function() {
       const matches = text.match(/([+-]?[0-9]*\.?[0-9]+)/);
       if (matches && matches[1]) {
         value = parseFloat(matches[1]);
-        console.log('Parsed value:', value);
       }
     }
     
@@ -76,7 +73,6 @@ LopecScanner.Utils = (function() {
    */
   function getScoreDifference() {
     const differenceElement = document.querySelector('.tier-box .difference');
-    console.log('Found difference element:', differenceElement);
     return parseScoreDifference(differenceElement);
   }
   
@@ -86,7 +82,7 @@ LopecScanner.Utils = (function() {
    * @param {number} interval - 확인 간격(ms)
    * @return {Promise<number>} - 모니터링 기간 중 감지된 가장 큰 변화 값
    */
-  async function monitorDifferenceChanges(duration, interval = 100) {
+  async function monitorDifferenceChanges(duration, interval = 50) {
     let maxDifference = 0;
     const startTime = Date.now();
     
