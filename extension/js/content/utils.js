@@ -132,7 +132,7 @@ LopecScanner.Utils = (function() {
     console.log(`모니터링 시작, 초기 점수: ${initialScore}`);
     
     // 변동이 감지될 때까지 시간 동안 계속 돌림
-    const endTime = Date.now() + duration;
+    let endTime = Date.now() + duration;
     let foundSignificantChange = false;
     
     while (Date.now() < endTime) {
