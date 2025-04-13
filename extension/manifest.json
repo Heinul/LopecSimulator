@@ -25,6 +25,9 @@
         "js/content/scanners/scanner-utils.js",
         "js/content/scanners/armor-scanner.js",
         "js/content/scanners/gem-scanner.js",
+        "js/content/scanners/accessory-scanner.js",
+        "js/content/scanners/engraving-scanner.js",
+        "js/content/scanners/karma-scanner.js",
         "js/content/scanners/scanner-main.js",
         "js/content/main.js"
       ]
