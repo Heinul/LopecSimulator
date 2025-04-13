@@ -1,0 +1,87 @@
+각인 정보를 변경하는 엘리먼트
+<div class="engraving-area shadow">
+
+                    <div class="engraving-box">
+                        <img src="https://cdn-lostark.game.onstove.com/EFUI_IconAtlas/Buff/Buff_71.png" class="engraving-img" alt="">
+                        <select class="relic-ico engraving-ico orange" name="ArmoryEngraving ArkPassiveEffects Grade">
+                            <option value="유물">유물</option>
+                            <option value="전설">전설</option>
+                            <option value="영웅">영웅</option>
+                        </select>
+                        <select class="grade orange" data-max="4" data-min="0" data-string="X ">
+                        <option value="0">X 0</option><option value="1">X 1</option><option value="2">X 2</option><option value="3">X 3</option><option value="4">X 4</option></select>
+                        <select class="engraving-name">
+                        <option value="없음">없음</option><option value="결투의 대가">결투의 대가</option><option value="기습의 대가 - 무효">기습의 대가 - 무효</option><option value="달인의 저력 - 무효">달인의 저력 - 무효</option><option value="돌격대장">돌격대장</option><option value="마나 효율 증가">마나 효율 증가</option><option value="바리케이드">바리케이드</option><option value="속전속결 - 무효">속전속결 - 무효</option><option value="슈퍼 차지">슈퍼 차지</option><option value="아드레날린">아드레날린</option><option value="안정된 상태">안정된 상태</option><option value="에테르 포식자">에테르 포식자</option><option value="예리한 둔기">예리한 둔기</option><option value="원한">원한</option><option value="저주받은 인형">저주받은 인형</option><option value="정밀 단도">정밀 단도</option><option value="질량 증가">질량 증가</option><option value="추진력 - 무효">추진력 - 무효</option><option value="타격의 대가 - 무효">타격의 대가 - 무효</option></select>
+                        <div class="ability-ico engraving-ico unknown"></div>
+                        <span class="ability-level"></span>
+                    </div>
+                    <div class="engraving-box">
+                        <img src="https://cdn-lostark.game.onstove.com/EFUI_IconAtlas/Ability/Ability_224.png" class="engraving-img" alt="">
+                        <select class="relic-ico engraving-ico orange" name="ArmoryEngraving ArkPassiveEffects Grade">
+                            <option value="유물">유물</option>
+                            <option value="전설">전설</option>
+                            <option value="영웅">영웅</option>
+                        </select>
+                        <select class="grade orange" data-max="4" data-min="0" data-string="X ">
+                        <option value="0">X 0</option><option value="1">X 1</option><option value="2">X 2</option><option value="3">X 3</option><option value="4">X 4</option></select>
+                        <select class="engraving-name">
+                        <option value="없음">없음</option><option value="결투의 대가">결투의 대가</option><option value="기습의 대가 - 무효">기습의 대가 - 무효</option><option value="달인의 저력 - 무효">달인의 저력 - 무효</option><option value="돌격대장">돌격대장</option><option value="마나 효율 증가">마나 효율 증가</option><option value="바리케이드">바리케이드</option><option value="속전속결 - 무효">속전속결 - 무효</option><option value="슈퍼 차지">슈퍼 차지</option><option value="아드레날린">아드레날린</option><option value="안정된 상태">안정된 상태</option><option value="에테르 포식자">에테르 포식자</option><option value="예리한 둔기">예리한 둔기</option><option value="원한">원한</option><option value="저주받은 인형">저주받은 인형</option><option value="정밀 단도">정밀 단도</option><option value="질량 증가">질량 증가</option><option value="추진력 - 무효">추진력 - 무효</option><option value="타격의 대가 - 무효">타격의 대가 - 무효</option></select>
+                        <div class="ability-ico engraving-ico unknown"></div>
+                        <span class="ability-level"></span>
+
+
+                    </div>
+                    <div class="engraving-box">
+                        <img src="https://cdn-lostark.game.onstove.com/efui_iconatlas/achieve/achieve_06_14.png" class="engraving-img" alt="">
+                        <select class="relic-ico engraving-ico orange" name="ArmoryEngraving ArkPassiveEffects Grade">
+                            <option value="유물">유물</option>
+                            <option value="전설">전설</option>
+                            <option value="영웅">영웅</option>
+                        </select>
+                        <select class="grade orange" data-max="4" data-min="0" data-string="X ">
+                        <option value="0">X 0</option><option value="1">X 1</option><option value="2">X 2</option><option value="3">X 3</option><option value="4">X 4</option></select>
+                        <select class="engraving-name">
+                        <option value="없음">없음</option><option value="결투의 대가">결투의 대가</option><option value="기습의 대가 - 무효">기습의 대가 - 무효</option><option value="달인의 저력 - 무효">달인의 저력 - 무효</option><option value="돌격대장">돌격대장</option><option value="마나 효율 증가">마나 효율 증가</option><option value="바리케이드">바리케이드</option><option value="속전속결 - 무효">속전속결 - 무효</option><option value="슈퍼 차지">슈퍼 차지</option><option value="아드레날린">아드레날린</option><option value="안정된 상태">안정된 상태</option><option value="에테르 포식자">에테르 포식자</option><option value="예리한 둔기">예리한 둔기</option><option value="원한">원한</option><option value="저주받은 인형">저주받은 인형</option><option value="정밀 단도">정밀 단도</option><option value="질량 증가">질량 증가</option><option value="추진력 - 무효">추진력 - 무효</option><option value="타격의 대가 - 무효">타격의 대가 - 무효</option></select>
+                        <div class="ability-ico engraving-ico unknown"></div>
+                        <span class="ability-level"></span>
+
+
+                    </div>
+                    <div class="engraving-box">
+                        <img src="https://cdn-lostark.game.onstove.com/efui_iconatlas/buff/buff_170.png" class="engraving-img" alt="">
+                        <select class="relic-ico engraving-ico orange" name="ArmoryEngraving ArkPassiveEffects Grade">
+                            <option value="유물">유물</option>
+                            <option value="전설">전설</option>
+                            <option value="영웅">영웅</option>
+                        </select>
+                        <select class="grade orange" data-max="4" data-min="0" data-string="X ">
+                        <option value="0">X 0</option><option value="1">X 1</option><option value="2">X 2</option><option value="3">X 3</option><option value="4">X 4</option></select>
+                        <select class="engraving-name">
+                        <option value="없음">없음</option><option value="결투의 대가">결투의 대가</option><option value="기습의 대가 - 무효">기습의 대가 - 무효</option><option value="달인의 저력 - 무효">달인의 저력 - 무효</option><option value="돌격대장">돌격대장</option><option value="마나 효율 증가">마나 효율 증가</option><option value="바리케이드">바리케이드</option><option value="속전속결 - 무효">속전속결 - 무효</option><option value="슈퍼 차지">슈퍼 차지</option><option value="아드레날린">아드레날린</option><option value="안정된 상태">안정된 상태</option><option value="에테르 포식자">에테르 포식자</option><option value="예리한 둔기">예리한 둔기</option><option value="원한">원한</option><option value="저주받은 인형">저주받은 인형</option><option value="정밀 단도">정밀 단도</option><option value="질량 증가">질량 증가</option><option value="추진력 - 무효">추진력 - 무효</option><option value="타격의 대가 - 무효">타격의 대가 - 무효</option></select>
+                        <div class="ability-ico engraving-ico unknown"></div>
+                        <span class="ability-level"></span>
+
+
+                    </div>
+                    <div class="engraving-box">
+                        <img src="https://cdn-lostark.game.onstove.com/EFUI_IconAtlas/Buff/Buff_105.png" class="engraving-img" alt="">
+                        <select class="relic-ico engraving-ico orange" name="ArmoryEngraving ArkPassiveEffects Grade">
+                            <option value="유물">유물</option>
+                            <option value="전설">전설</option>
+                            <option value="영웅">영웅</option>
+                        </select>
+                        <select class="grade orange" data-max="4" data-min="0" data-string="X ">
+                        <option value="0">X 0</option><option value="1">X 1</option><option value="2">X 2</option><option value="3">X 3</option><option value="4">X 4</option></select>
+                        <select class="engraving-name">
+                        <option value="없음">없음</option><option value="결투의 대가">결투의 대가</option><option value="기습의 대가 - 무효">기습의 대가 - 무효</option><option value="달인의 저력 - 무효">달인의 저력 - 무효</option><option value="돌격대장">돌격대장</option><option value="마나 효율 증가">마나 효율 증가</option><option value="바리케이드">바리케이드</option><option value="속전속결 - 무효">속전속결 - 무효</option><option value="슈퍼 차지">슈퍼 차지</option><option value="아드레날린">아드레날린</option><option value="안정된 상태">안정된 상태</option><option value="에테르 포식자">에테르 포식자</option><option value="예리한 둔기">예리한 둔기</option><option value="원한">원한</option><option value="저주받은 인형">저주받은 인형</option><option value="정밀 단도">정밀 단도</option><option value="질량 증가">질량 증가</option><option value="추진력 - 무효">추진력 - 무효</option><option value="타격의 대가 - 무효">타격의 대가 - 무효</option></select>
+                        <div class="ability-ico engraving-ico unknown"></div>
+                        <span class="ability-level"></span>
+
+
+                    </div>
+                </div>
+Full Xpath
+/html/body/div/section[3]/div[3]/div[1]
+
+순회해야할 클래스
+grade orange

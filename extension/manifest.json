@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "롭크 시뮬레이터 점수 분석기",
+  "version": "1.0",
+  "description": "롭크 시뮬레이터에서 콤보박스 순회를 통해 점수 변동을 기록하는 확장 프로그램",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://lopec.kr/simulator/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}

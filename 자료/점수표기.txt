@@ -1,0 +1,18 @@
+점수를 표기하는 엘리먼트
+<div class="spec-area shadow minimum flag on">
+                    <div class="tier-box">
+                        <div class="spec-point">2503.<i style="font-size:20px;">58</i></div>
+                        <span class="difference zero">0.00</span>
+                    </div>
+                    <div class="gauge-box">
+                        <span class="desc level">아이템 레벨 - 1734.17</span>
+                        <span class="desc spec" data-spec-point="2503.58">기존 스펙포인트 - 2503.58</span>
+                    </div>
+                </div>
+
+
+Full Xpath
+/html/body/div/section[3]/div[1]/div[1]
+
+
+

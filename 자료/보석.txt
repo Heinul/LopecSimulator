@@ -1,0 +1,107 @@
+보석의 값을 변경하는 엘리먼트
+<div class="gem-area shadow"><div class="gem-box radius common-background" data-index="0">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">파이어 불릿</span>
+                    </div><div class="gem-box radius common-background" data-index="1">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">대쉬 어퍼 파이어</span>
+                    </div><div class="gem-box radius common-background" data-index="4">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">차지 스팅거</span>
+                    </div><div class="gem-box radius common-background" data-index="5">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">카운터 스피어</span>
+                    </div><div class="gem-box radius common-background" data-index="6">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">버스트 캐넌</span>
+                    </div><div class="gem-box radius common-background" data-index="7">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="겁화">
+                            
+                        <option value="멸화">멸화</option>
+                        <option value="겁화">겁화</option>
+                        </select>
+                        <span class="skill tooltip-text">스피어 샷</span>
+                    </div><div class="gem-box radius common-background" data-index="2">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="작열">
+                            
+                        <option value="홍염">홍염</option>
+                        <option value="작열">작열</option>
+                        </select>
+                        <span class="skill tooltip-text">카운터 스피어</span>
+                    </div><div class="gem-box radius common-background" data-index="3">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="작열">
+                            
+                        <option value="홍염">홍염</option>
+                        <option value="작열">작열</option>
+                        </select>
+                        <span class="skill tooltip-text">증오의 함성</span>
+                    </div><div class="gem-box radius common-background" data-index="8">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="작열">
+                            
+                        <option value="홍염">홍염</option>
+                        <option value="작열">작열</option>
+                        </select>
+                        <span class="skill tooltip-text">버스트 캐넌</span>
+                    </div><div class="gem-box radius common-background" data-index="9">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="작열">
+                            
+                        <option value="홍염">홍염</option>
+                        <option value="작열">작열</option>
+                        </select>
+                        <span class="skill tooltip-text">차지 스팅거</span>
+                    </div><div class="gem-box radius common-background" data-index="10">
+                        <select class="level" name="ArmoryGem Gems Level" data-max="10" data-select="8">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                        <select class="gems" data-select="작열">
+                            
+                        <option value="홍염">홍염</option>
+                        <option value="작열">작열</option>
+                        </select>
+                        <span class="skill tooltip-text">스피어 샷</span>
+                    </div></div>
+
+Full Xpath
+/html/body/div/section[3]/div[2]/div[1]
+
+순회해야할 클래스
+ArmoryGem Gems Level

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>롭크 시뮬레이터 데이터 분석</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .filter-container {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+    .filter-option {
+      margin-bottom: 10px;
+    }
+    .filter-option label {
+      margin-right: 10px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .data-table th, .data-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .data-table th {
+      background-color: #4CAF50;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    .data-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .data-table tr:hover {
+      background-color: #ddd;
+    }
+    .positive {
+      color: #4CAF50;
+    }
+    .negative {
+      color: #f44336;
+    }
+    .zero {
+      color: #888;
+    }
+    .button-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .export-btn {
+      padding: 10px 20px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .export-btn:hover {
+      background-color: #0b7dda;
+    }
+    .no-data {
+      text-align: center;
+      margin-top: 50px;
+      color: #888;
+      font-size: 16px;
+    }
+    .cost-input {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+    .cost-input h3 {
+      margin-top: 0;
+    }
+    .cost-group {
+      margin-bottom: 10px;
+    }
+    .cost-group label {
+      display: inline-block;
+      width: 150px;
+    }
+    .cost-group input {
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100px;
+    }
+    .apply-cost-btn {
+      padding: 8px 15px;
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .apply-cost-btn:hover {
+      background-color: #e68a00;
+    }
+  </style>
+</head>
+<body>
+  <h1>롭크 시뮬레이터 데이터 분석</h1>
+  
+  <div class="filter-container">
+    <h3>필터 옵션</h3>
+    <div class="filter-option">
+      <label>
+        <input type="checkbox" id="filterIncrease" checked>
+        증가 항목만 보기
+      </label>
+    </div>
+    <div class="filter-option">
+      <label>카테고리:</label>
+      <select id="categoryFilter">
+        <option value="all">전체</option>
+        <option value="장비 강화">장비 강화</option>
+        <option value="장비 상재">장비 상재</option>
+        <option value="보석">보석</option>
+      </select>
+    </div>
+    <div class="filter-option">
+      <label>정렬:</label>
+      <select id="sortOption">
+        <option value="differenceDesc">점수 변동 높은순</option>
+        <option value="differenceAsc">점수 변동 낮은순</option>
+        <option value="costDesc">비용 높은순</option>
+        <option value="costAsc">비용 낮은순</option>
+        <option value="efficiencyDesc">효율 좋은순 (점수/비용)</option>
+        <option value="efficiencyAsc">효율 나쁜순 (점수/비용)</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="cost-input">
+    <h3>비용 설정</h3>
+    <div class="cost-group">
+      <label for="costArmorName">장비 강화 (레벨당):</label>
+      <input type="number" id="costArmorName" value="1000" min="0">
+    </div>
+    <div class="cost-group">
+      <label for="costArmorUpgrade">장비 상재 (단계당):</label>
+      <input type="number" id="costArmorUpgrade" value="500" min="0">
+    </div>
+    <div class="cost-group">
+      <label for="costGem">보석 (레벨당):</label>
+      <input type="number" id="costGem" value="2000" min="0">
+    </div>
+    <button id="applyCost" class="apply-cost-btn">비용 적용</button>
+  </div>
+  
+  <div id="dataContainer">
+    <table class="data-table" id="dataTable">
+      <thead>
+        <tr>
+          <th>카테고리</th>
+          <th>항목</th>
+          <th>현재값</th>
+          <th>변경값</th>
+          <th>점수 변동</th>
+          <th>예상 비용</th>
+          <th>효율(점수/비용)</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody">
+        <!-- 데이터가 여기에 채워집니다 -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="button-container">
+    <button id="exportData" class="export-btn">데이터 내보내기</button>
+  </div>
+  
+  <script src="data.js"></script>
+</body>
+</html>
