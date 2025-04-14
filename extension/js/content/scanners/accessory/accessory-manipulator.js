@@ -73,79 +73,6 @@ LopecScanner.Scanners.Accessory.Manipulator = (function() {
   }
   
   /**
-   * 목걸이 옵션 강제 변경 시도 - 특별 처리
-   * @param {HTMLElement} element - 목걸이 셀렉트 요소
-   * @param {string} newValue - 변경할 값
-   * @param {number} attempt - 시도 횟수
-   * @return {boolean} - 변경 성공 여부
-   */
-  async function forceNecklaceOptionChange(element, newValue, attempt = 0) {
-    // 이미 변경됐는지 확인
-    if (element.value === newValue) return true;
-    
-    try {
-      // 옵션 인덱스 찾기
-      let optionIndex = -1;
-      for (let i = 0; i < element.options.length; i++) {
-        if (element.options[i].value === newValue) {
-          optionIndex = i;
-          break;
-        }
-      }
-      
-      if (optionIndex < 0) {
-        return false;
-      }
-      
-      // 포커스 초기화
-      try {
-        document.activeElement.blur();
-      } catch (e) {
-        // 무시
-      }
-      
-      // 여러 방법으로 변경 시도
-      await LopecScanner.Utils.delay(150);
-      
-      // 1. 직접 속성 변경
-      element.selectedIndex = optionIndex;
-      element.value = newValue;
-      
-      // 2. 모든 이벤트 발생
-      // 마우스 이벤트
-      element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-      element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-      element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      
-      // 키보드 이벤트
-      element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-      element.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-      
-      // 표준 이벤트
-      element.dispatchEvent(new Event('focus', { bubbles: true }));
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-      element.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // 3. 변경 후 딜레이
-      await LopecScanner.Utils.delay(200);
-      
-      // 변경 확인
-      if (element.value === newValue) {
-        return true;
-      } else {
-        // 다시 시도 (마지막 수단)
-        element.value = newValue;
-        element.dispatchEvent(new Event('change', { bubbles: true }));
-        await LopecScanner.Utils.delay(100);
-        
-        return element.value === newValue;
-      }
-    } catch (e) {
-      return false;
-    }
-  }
-  
-  /**
    * 장신구 옵션 변경
    * @param {HTMLElement} element - 장신구 옵션 요소
    * @param {string} newValue - 변경할 값
@@ -153,19 +80,96 @@ LopecScanner.Scanners.Accessory.Manipulator = (function() {
    * @return {boolean} - 변경 성공 여부
    */
   async function changeAccessoryOption(element, newValue, accessoryType) {
+    // 디버깅 로그 추가
+    console.log(`옵션 변경 시도: ${element.value} -> ${newValue} (${accessoryType})`);
+    
     // 이미 같은 값이면 아무 것도 하지 않음
-    if (element.value === newValue) return false;
-
-    // 모든 장신구에 공통된 방식 적용
-    element.value = newValue;
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-    return true;
+    if (element.value === newValue) {
+      console.log(`현재 값이 동일해 변경 필요 없음: ${newValue}`);
+      return false;
+    }
+    
+    // 옵션 값이 존재하는지 확인
+    const optionExists = Array.from(element.options).some(option => option.value === newValue);
+    if (!optionExists) {
+      console.warn(`요청한 옵션 값이 선택 목록에 없음: ${newValue}`);
+      
+      // 비슷한 값이 있는지 찾기 (예: 상:addDamagePer:2.6 -> 중:addDamagePer:1.6)
+      if (newValue.includes(':')) {
+        const [grade, key] = newValue.split(':');
+        const similarOption = Array.from(element.options).find(option => 
+          option.value.startsWith(`${grade}:${key}:`) || 
+          option.value.includes(`:${key}:`)
+        );
+        
+        if (similarOption) {
+          console.log(`유사한 옵션 값으로 대체: ${similarOption.value}`);
+          newValue = similarOption.value;
+        } else {
+          // 비슷한 옵션도 찾지 못함 - 없음 옵션 시도
+          const noneOption = Array.from(element.options).find(option => 
+            option.value.includes('value:0') || 
+            option.textContent.includes('없음')
+          );
+          
+          if (noneOption) {
+            console.log(`없음 옵션으로 대체: ${noneOption.value}`);
+            newValue = noneOption.value;
+          } else {
+            console.error(`적절한 대체 옵션을 찾을 수 없음`);
+            return false;
+          }
+        }
+      }
+    }
+    
+    // 다양한 방법으로 값 변경 시도
+    try {
+      // 1. 직접 값 변경
+      element.value = newValue;
+      
+      // 2. 인덱스 기반 변경
+      const optionIndex = Array.from(element.options).findIndex(option => option.value === newValue);
+      if (optionIndex >= 0) {
+        element.selectedIndex = optionIndex;
+      }
+      
+      // 3. 이벤트 발생
+      const events = [
+        new Event('change', { bubbles: true }),
+        new Event('input', { bubbles: true })
+      ];
+      
+      // 모든 이벤트 발생
+      for (const event of events) {
+        element.dispatchEvent(event);
+      }
+      
+      // 짧은 지연 후 값이 변경되었는지 확인
+      await LopecScanner.Utils.delay(100);
+      
+      if (element.value === newValue) {
+        console.log(`옵션 변경 성공: ${newValue}`);
+        return true;
+      } else {
+        console.warn(`옵션 변경 실패: ${element.value} != ${newValue}`);
+        
+        // 마지막 시도: 다시 값 설정 및 이벤트 발생
+        element.value = newValue;
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        await LopecScanner.Utils.delay(50);
+        return element.value === newValue;
+      }
+    } catch (error) {
+      console.error(`옵션 변경 중 오류 발생:`, error);
+      return false;
+    }
   }
   
   // 공개 API
   return {
     checkScoreDifferenceForAccessory,
-    forceNecklaceOptionChange,
     changeAccessoryOption
   };
 })();

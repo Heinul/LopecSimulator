@@ -165,6 +165,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
     for (const combo of qualityCombinations) {
       if (!BaseScanner.state.isScanning) return;
       
+      console.log(`스캔 실행 - ${combo.label}, 옵션: ${JSON.stringify(combo.options)}`);
+      
       // 각 요소에 옵션 적용 (조합의 모든 옵션을 한번에 적용)
       const originalValues = [];
       
@@ -226,16 +228,29 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         const qualitySpan = currentElement.closest('.grinding-wrap')?.querySelector('.quality');
         const grade = qualitySpan ? qualitySpan.textContent : '';
         appliedOptions.push(`[${grade}] ${optionText}`);
+        
+        // 옵션 텍스트 확인
+        console.log(`옵션 ${i+1} 적용: ${currentElement.value} -> ${optionText} (등급: ${grade})`);
       }
       
       // 결과 저장 (조합별로 하나의 결과)
       const parentItem = originalElements[0].element.closest('li.accessory-item');
       const itemName = parentItem ? (parentItem.querySelector('img')?.alt || `${type}`) : type;
       
+      // 사용자가 보기 쉽게 조합 설명 추가
+      let comboDescription = combo.label;
+      // 옵션 값이 있는 경우에만 추가
+      if (appliedOptions.length > 0 && appliedOptions.every(opt => opt.includes('[') && opt.includes(']'))) {
+        comboDescription += ` (${appliedOptions.join(', ')})`;
+      } else {
+        // 옵션 값이 없는 경우 기본 설명 사용
+        comboDescription += ` (옵션 정보 없음, 상/중/하/무 조합)`;
+      }
+      
       BaseScanner.state.scanResults[`accessory-combo-${jobType}-${type}-${combo.label}`] = {
         type: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
         combo: combo.label,
-        item: `${itemName} - ${combo.label} (${appliedOptions.join(', ')})`,
+        item: `${itemName} - ${comboDescription}`,
         from: `원래 옵션: ${originalOptionTexts.join(', ')}`,
         to: `${combo.label} 조합: ${appliedOptions.join(', ')}`,
         score: currentScore,
