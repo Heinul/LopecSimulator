@@ -32,6 +32,13 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
   function prepareAccessoryScan(elements) {
     let scanCount = 0;
     
+    // 직업 타입 감지
+    const jobType = Detector.detectJobType(); // 'SUPPORTER' 또는 'DEALER'
+    console.log(`직업 타입 감지된 상태: ${jobType}`);
+    
+    // 직업 타입 저장 (추후 참조를 위해)
+    BaseScanner.state.jobType = jobType;
+    
     // 현재 값들 저장
     if (elements.tierElements) {
       elements.tierElements.forEach((element, index) => {
@@ -66,24 +73,12 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
     // 장신구 초기값 보존 상태 로그
     console.log('장신구 초기값 저장 완료');
     
-    // 장신구 옵션 스캔 (장신구 옵션 조합 방식으로 변경)
-    if (elements.optionElements) {
-      // 장신구 타입 별로 옵션 그룹화
-      let accessoryGroups = Detector.groupAccessoriesByType(elements.optionElements);
-      
-      // 각 장신구 타입별 옵션 조합 가져오기
-      for (const [type, group] of Object.entries(accessoryGroups)) {
-        if (group.elements.length > 0) {
-          // 타입별 옵션 조합 가져오기
-          const combinations = Options.getAccessoryCombinations(type);
-          
-          // 옵션 조합마다 스캔 추가 (조합 스캔만 활성화)
-          if (combinations && combinations.length > 0) {
-            scanCount += combinations.length; // 장신구 타입별 조합 개수만큼 스캔 항목 추가
-          }
-        }
-      }
-    }
+    // 장신구 조합 개수 계산
+    // 장신구 조합.txt 파일에 따른 16개의 조합(상상, 상중, 중상, ..., 무무)
+    const combinationsPerType = 16;
+    
+    // 목걸이, 귀걸이, 반지 총 3가지 타입
+    scanCount = 3 * combinationsPerType; // 총 48개
     
     return scanCount;
   }
@@ -93,6 +88,10 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
    * @param {Object} elements - 장신구 요소들 모음 객체
    */
   async function scanAccessories(elements) {
+    // 직업 타입 확인 (초기화 시 저장한 값 그대로 사용)
+    const jobType = BaseScanner.state.jobType || Detector.detectJobType();
+    console.log(`장신구 스캔 실행 - 직업 타입: ${jobType}`);
+    
     // 장신구 옵션 스캔 (조합 방식으로 수정)
     if (elements.optionElements) {
       // 장신구 타입별로 요소들 그룹화
@@ -101,10 +100,14 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       // 현재 선택된 모든 장신구 옵션 가져오기 - 스캔 전 값 기록
       const currentSelectedOptions = Detector.getSelectedAccessoryOptions();
       
+      // 직업 타입에 따른 옵션 리스트 사용
+      // 상상, 상중, 상하, 중중, 중하, 하하, 상무, 무상, 중무, 무중, 하무, 무하, 무무 조합 방식으로 사용
+      console.log(`${jobType} 리스트 사용하여 스캔 실행`);
+      
       // 각 장신구 타입별로 옵션 조합 스캔 실행
-      await scanAccessoryByType('necklace', accessoryGroups.necklace, currentSelectedOptions);
-      await scanAccessoryByType('earring', accessoryGroups.earring, currentSelectedOptions);
-      await scanAccessoryByType('ring', accessoryGroups.ring, currentSelectedOptions);
+      await scanAccessoryByType('necklace', accessoryGroups.necklace, currentSelectedOptions, jobType);
+      await scanAccessoryByType('earring', accessoryGroups.earring, currentSelectedOptions, jobType);
+      await scanAccessoryByType('ring', accessoryGroups.ring, currentSelectedOptions, jobType);
     }
   }
   
@@ -113,8 +116,9 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
    * @param {string} type - 장신구 타입 (necklace, earring, ring)
    * @param {Object} group - 장신구 그룹 정보
    * @param {Array} currentSelectedOptions - 현재 선택된 옵션 정보
+   * @param {string} jobType - 직업 타입 ('DEALER' 또는 'SUPPORTER')
    */
-  async function scanAccessoryByType(type, group, currentSelectedOptions) {
+  async function scanAccessoryByType(type, group, currentSelectedOptions, jobType = 'DEALER') {
     if (group.elements.length <= 0 || !BaseScanner.state.isScanning) return;
     
     // 현재 타입의 장신구 옵션 참조 가져오기
@@ -125,8 +129,28 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       return `[${option.grade}] ${option.selectedText}`;
     });
     
-    // 타입별 옵션 조합 가져오기
-    const combinations = Options.getAccessoryCombinations(type);
+    // 장신구 타입 변환 (necklace -> NECKLACE)
+    const accessoryTypeUppercase = type.toUpperCase();
+    
+    // 직업 타입과 장신구 타입에 맞는 옵션 가져오기
+    // 상상, 상중, 상하, 중중, 중하, 하하, 상무, 무상, 중무, 무중, 하무, 무하, 무무 조합 생성
+    const qualityCombinations = Options.getAccessoryCombinations(type, jobType);
+    
+    // 화면에 표시할 때 사용하는 타입 이름
+    const typeDisplayName = type === 'necklace' ? '목걸이' : type === 'earring' ? '귀걸이' : '반지';
+    
+    // 옵션 가져오기 에러 처리
+    if (!qualityCombinations || qualityCombinations.length === 0) {
+      console.error(`${jobType} 직업의 ${type} 옵션 조합을 생성할 수 없습니다.`);
+      
+      // 스캔 완료로 처리 (전체 16개 조합)
+      for (let i = 0; i < 16; i++) {
+        BaseScanner.updateScanProgress();
+      }
+      return;
+    }
+    
+    console.log(`${type} 옵션 조합 (${jobType}): ${qualityCombinations.length}개 생성됨`);
     
     // 원래 값을 배열로 저장 (elements마다 원래 값 저장)
     const originalElements = group.elements.map((element, idx) => {
@@ -138,7 +162,7 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
     });
     
     // 각 옵션 조합마다 스캔 수행
-    for (const combo of combinations) {
+    for (const combo of qualityCombinations) {
       if (!BaseScanner.state.isScanning) return;
       
       // 각 요소에 옵션 적용 (조합의 모든 옵션을 한번에 적용)
@@ -208,8 +232,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       const parentItem = originalElements[0].element.closest('li.accessory-item');
       const itemName = parentItem ? (parentItem.querySelector('img')?.alt || `${type}`) : type;
       
-      BaseScanner.state.scanResults[`accessory-combo-${type}-${combo.label}`] = {
-        type: `${type === 'necklace' ? '목걸이' : type === 'earring' ? '귀걸이' : '반지'} 옵션 조합`,
+      BaseScanner.state.scanResults[`accessory-combo-${jobType}-${type}-${combo.label}`] = {
+        type: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
         combo: combo.label,
         item: `${itemName} - ${combo.label} (${appliedOptions.join(', ')})`,
         from: `원래 옵션: ${originalOptionTexts.join(', ')}`,

@@ -11,6 +11,35 @@ window.LopecScanner.Scanners.Accessory = window.LopecScanner.Scanners.Accessory 
 // 장신구 탐지 모듈
 LopecScanner.Scanners.Accessory.Detector = (function() {
   /**
+   * 직업 타입을 감지 (서포터 또는 딜러)
+   * @return {string} - 'SUPPORTER' 또는 'DEALER' 중 하나
+   */
+  function detectJobType() {
+    try {
+      // 직업 정보가 있는 엘리먼트 찾기 - /html/body/div/section[1]/div[2]/div[1]
+      const jobElement = document.querySelector('.name-area .job');
+      
+      if (jobElement) {
+        const jobText = jobElement.textContent.toLowerCase();
+        
+        // 서폿 관련 키워드 포함 여부 확인
+        if (jobText.includes('서폿')) {
+          console.log('서포터 직업 감지됨:', jobElement.textContent);
+          return 'SUPPORTER';
+        }
+      }
+      
+      // 서폿이 아니거나 엘리먼트를 찾을 수 없으면 기본적으로 딜러로 처리
+      console.log('딜러 직업으로 처리됨');
+      return 'DEALER';
+    } catch (e) {
+      console.error('직업 타입 감지 오류:', e);
+      // 오류 발생 시 기본값은 딜러
+      return 'DEALER';
+    }
+  }
+
+  /**
    * 장신구 타입 감지
    * @param {HTMLElement} element - 장신구 옵션 요소
    * @return {string} - 감지된 장신구 타입 (necklace, earring, ring 또는 unknown)
@@ -217,6 +246,7 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
     detectAccessoryType,
     getSelectedAccessoryOptions,
     groupAccessoriesByType,
-    debugAccessoryStructure
+    debugAccessoryStructure,
+    detectJobType
   };
 })();
