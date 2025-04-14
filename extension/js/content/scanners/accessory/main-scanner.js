@@ -151,63 +151,23 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       
       let changed = false;
       
-      // 특별 옵션 변경 전략 - 목걸이에 특수 처리
-      if (type === 'necklace') {
-        // 강력한 이벤트 트리거 - 여러번 시도
-        for (let attempt = 0; attempt < 3; attempt++) {
-          let allApplied = true;
-          
-          // 모든 옵션에 대해 처리
-          for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
-            const currentElement = originalElements[i].element;
-            
-            // 값이 다른 경우만 변경
-            if (currentElement.value !== combo.options[i]) {
-              // 강제 변경 시도
-              const changeSuccess = await Manipulator.forceNecklaceOptionChange(
-                currentElement, 
-                combo.options[i], 
-                attempt
-              );
-              
-              if (!changeSuccess) {
-                allApplied = false;
-              } else {
-                changed = true;
-              }
-            }
-          }
-          
-          // 모든 값이 적용되었으면 중단
-          if (allApplied) {
-            break;
-          }
-          
-          // 다음 시도 전 딜레이
-          await LopecScanner.Utils.delay(300);
-        }
+      // 모든 장신구에 대해 동일한 방식 적용
+      for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
+        const currentElement = originalElements[i].element;
         
-        // 목걸이는 추가 딜레이 필요
-        await LopecScanner.Utils.delay(1000);
-      } else {
-        // 목걸이가 아닌 경우 일반적인 변경
-        for (let i = 0; i < Math.min(combo.options.length, originalElements.length); i++) {
-          const currentElement = originalElements[i].element;
-          
-          // 값 변경 시도
-          const changeResult = await Manipulator.changeAccessoryOption(
-            currentElement, 
-            combo.options[i], 
-            type
-          );
-          
-          if (changeResult) changed = true;
-        }
+        // 값 변경 시도
+        const changeResult = await Manipulator.changeAccessoryOption(
+          currentElement, 
+          combo.options[i], 
+          type
+        );
         
-        // 변경이 있으면 이벤트를 처리할 시간을 제공
-        if (changed) {
-          await LopecScanner.Utils.delay(400);
-        }
+        if (changeResult) changed = true;
+      }
+      
+      // 변경이 있으면 이벤트를 처리할 시간을 제공
+      if (changed) {
+        await LopecScanner.Utils.delay(500); // 모든 장신구에 동일한 딜레이 적용
       }
       
       // 변경 적용 후 점수 측정
@@ -272,58 +232,24 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
    * @param {Array} originalValues - 원래 값
    */
   async function restoreOriginalValues(type, originalElements, originalValues) {
-    // 목걸이인 경우 특별 복원 로직
-    if (type === 'necklace') {
-      // 목걸이 옵션을 더 확실하게 복원하기 위한 추가 작업
-      for (let attempt = 0; attempt < 3; attempt++) {
-        let allReverted = true;
+    // 각 요소마다 개별적으로 복원 및 이벤트 발생
+    let changed = false;
+    
+    for (let i = 0; i < originalElements.length; i++) {
+      if (originalElements[i].element.value !== originalValues[i]) {
+        originalElements[i].element.value = originalValues[i];
+        const event = new Event('change', { bubbles: true });
+        originalElements[i].element.dispatchEvent(event);
+        changed = true;
         
-        for (let i = 0; i < originalElements.length; i++) {
-          if (originalElements[i].element.value !== originalValues[i]) {
-            // 강제 변경으로 복원
-            const restoreSuccess = await Manipulator.forceNecklaceOptionChange(
-              originalElements[i].element, 
-              originalValues[i], 
-              attempt
-            );
-            
-            if (!restoreSuccess) {
-              allReverted = false;
-            }
-          }
-        }
-        
-        // 모든 값이 복원되었으면 중단
-        if (allReverted) {
-          break;
-        }
-        
-        // 다음 시도 전 딜레이
-        await LopecScanner.Utils.delay(300);
+        // 각 요소 복원 후 짧은 딜레이
+        await LopecScanner.Utils.delay(50);
       }
-      
-      // 최종 딜레이
-      await LopecScanner.Utils.delay(800);
-    } else {
-      // 각 요소마다 개별적으로 복원 및 이벤트 발생
-      let changed = false;
-      
-      for (let i = 0; i < originalElements.length; i++) {
-        if (originalElements[i].element.value !== originalValues[i]) {
-          originalElements[i].element.value = originalValues[i];
-          const event = new Event('change', { bubbles: true });
-          originalElements[i].element.dispatchEvent(event);
-          changed = true;
-          
-          // 각 요소 복원 후 짧은 딜레이
-          await LopecScanner.Utils.delay(50);
-        }
-      }
-      
-      // 변경이 있었다면 모든 복원이 적용될 시간을 충분히 제공
-      if (changed) {
-        await LopecScanner.Utils.delay(300);
-      }
+    }
+    
+    // 변경이 있었다면 모든 복원이 적용될 시간을 충분히 제공
+    if (changed) {
+      await LopecScanner.Utils.delay(300); // 모든 장신구에 동일한 딜레이 적용
     }
   }
   

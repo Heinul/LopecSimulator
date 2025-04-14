@@ -156,12 +156,7 @@ LopecScanner.Scanners.Accessory.Manipulator = (function() {
     // 이미 같은 값이면 아무 것도 하지 않음
     if (element.value === newValue) return false;
 
-    // 목걸이인 경우 특별 처리
-    if (accessoryType === 'necklace') {
-      return await forceNecklaceOptionChange(element, newValue);
-    }
-    
-    // 일반적인 경우
+    // 모든 장신구에 공통된 방식 적용
     element.value = newValue;
     element.dispatchEvent(new Event('change', { bubbles: true }));
     return true;

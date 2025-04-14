@@ -200,12 +200,8 @@ LopecScanner.Scanners.BaseScanner = (function() {
             const event = new Event('change', { bubbles: true });
             optionSelects[j].dispatchEvent(event);
             
-            // 목걸이의 경우 더 긴 딜레이 제공
-            if (accessoryType === '목걸이') {
-              await LopecScanner.Utils.delay(200);
-            } else {
-              await LopecScanner.Utils.delay(100);
-            }
+            // 모든 장신구에 대해 동일한 딜레이 사용
+            await LopecScanner.Utils.delay(100);
           } catch (e) {
             console.error(`장신구 옵션 복원 오류 (${accessoryType} ${i+1} 옵션 ${j+1}):`, e);
           }
@@ -213,11 +209,7 @@ LopecScanner.Scanners.BaseScanner = (function() {
       }
       
       // 각 장신구마다 추가 딜레이
-      if (accessoryType === '목걸이') {
-        await LopecScanner.Utils.delay(300); // 목걸이는 더 긴 딜레이
-      } else {
-        await LopecScanner.Utils.delay(100);
-      }
+      await LopecScanner.Utils.delay(200);
     }
     
     console.log('장신구 복원 완료');
