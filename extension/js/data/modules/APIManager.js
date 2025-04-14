@@ -300,12 +300,12 @@ const APIManager = (function() {
       // API 연결 테스트 - 직접 fetch 호출
       console.log('API 연결 테스트 시작:', apiKey.substring(0, 5) + '...');
       
-      // 지정된 엔드포인트로 테스트
-      const testUrl = 'https://developer-lostark.game.onstove.com/auctions/options';
+      // API_CONFIG 상수 사용
+      const testUrl = API_CONFIG.baseUrl + API_CONFIG.endpoints.auctionOptions;
       const response = await fetch(testUrl, {
         method: 'GET',
         headers: {
-          'accept': 'application/json',
+          ...API_CONFIG.headers,
           'authorization': `bearer ${apiKey}`
         }
       });

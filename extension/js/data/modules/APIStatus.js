@@ -3,6 +3,19 @@
  * API 상태 업데이트 및 표시를 담당합니다.
  */
 
+// API 관련 상수 정의
+const API_CONFIG = {
+  baseUrl: "https://developer-lostark.game.onstove.com",
+  headers: {
+    "content-type": "application/json;charset=UTF-8",
+    "accept": "application/json",
+  },
+  endpoints: {
+    auctionOptions: "/auctions/options",
+    // 다른 엔드포인트들 추가 가능
+  }
+};
+
 // API 상태 관리 모듈
 const APIStatus = (function() {
   /**
@@ -28,11 +41,11 @@ const APIStatus = (function() {
       if (apiKey) {
         try {
           // 직접 API 연결 테스트
-          const testUrl = 'https://developer-lostark.game.onstove.com/auctions/options';
+          const testUrl = API_CONFIG.baseUrl + API_CONFIG.endpoints.auctionOptions;
           const response = await fetch(testUrl, {
             method: 'GET',
             headers: {
-              'accept': 'application/json',
+              ...API_CONFIG.headers,
               'authorization': `bearer ${apiKey}`
             }
           });
@@ -232,8 +245,8 @@ const APIStatus = (function() {
     }
     
     // 여기에 실제 API 호출 구현 코드가 들어갑니다.
-    // 예시: 로스트아크 API 엔드포인트 정보
-    const apiEndpoint = 'API_ENDPOINT_URL'; // 나중에 실제 URL로 대체
+    // 예시: 로스트아크 API 엔드포인트 정보 - 엔드포인트 추가 필요
+    const apiEndpoint = API_CONFIG.baseUrl + '/path/to/goldcost/api'; // TODO: 실제 API 경로로 대체
     
     // 데이터 처리를 위한 배치 사이즈
     const batchSize = 10;
@@ -265,9 +278,8 @@ const APIStatus = (function() {
         const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
-            'accept': 'application/json',
-            'authorization': `bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            ...API_CONFIG.headers,
+            'authorization': `bearer ${apiKey}`
           },
           body: JSON.stringify({
             items: requestItems
