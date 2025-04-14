@@ -58,7 +58,7 @@ LopecScanner.Scanners.Utils = (function() {
     
     console.log(`장신구 항목: 
       - ${accessoryTierElements.length}개의 티어 요소 
-      - ${accessoryQualityElements.length}개의 탁돈 요소 
+      - ${accessoryQualityElements.length}개의 등급 요소 
       - ${accessoryOptionElements.length}개의 옵션 요소 있음`);
     
     // DOM 구조 확인을 위한 추가 검사
