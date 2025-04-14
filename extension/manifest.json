@@ -3,8 +3,9 @@
   "name": "로펙 시뮬레이터 점수 분석기",
   "version": "1.0",
   "description": "로펙 시뮬레이터에서 콤보박스 순회를 통해 점수 변동을 기록하는 확장 프로그램",
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["*://*.onstove.com/*"],
+  "permissions": ["storage", "activeTab", "scripting", "alarms"],
+  "host_permissions": ["*://*.onstove.com/*", "https://developer-lostark.game.onstove.com/*"],
+
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -35,7 +36,14 @@
         "js/content/scanners/karma-scanner.js",
         "js/content/scanners/avatar-scanner.js",
         "js/content/scanners/scanner-main.js",
-        "js/content/main.js"
+        "js/content/main.js",
+        "js/data/modules/APIManager.js",
+        "js/data/modules/APIStatus.js",
+        "js/data/modules/pricing/PriceManager.js",
+        "js/data/modules/pricing/PriceScanner.js",
+        "js/data/modules/pricing/PriceStorage.js",
+        "js/data/modules/pricing/index.js",
+        "js/data/modules/PriceIntegration.js"
       ]
     }
   ],

@@ -64,6 +64,10 @@
         <button id="export-csv" class="export-button">CSV 내보내기</button>
       </div>
     </div>
+    
+    <div id="api-status-summary" class="api-status-container">
+      <!-- API 상태 정보가 여기에 표시됩니다 -->
+    </div>
   </div>
   
   <script src="js/data/data-manager.js"></script>
@@ -72,6 +76,14 @@
   <script src="js/data/modules/DataRenderer.js"></script>
   <script src="js/data/modules/ExportManager.js"></script>
   <script src="js/data/modules/UIEvents.js"></script>
+  
+  <!-- 가격 관련 모듈 -->
+  <script src="js/data/modules/pricing/PriceManager.js"></script>
+  <script src="js/data/modules/pricing/PriceScanner.js"></script>
+  <script src="js/data/modules/pricing/PriceStorage.js"></script>
+  <script src="js/data/modules/pricing/index.js"></script>
+  <script src="js/data/modules/PriceIntegration.js"></script>
+  
   <script src="js/data/ui-controller.js"></script>
   <script src="js/data/main.js"></script>
 </body>
