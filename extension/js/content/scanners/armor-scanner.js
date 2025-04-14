@@ -30,33 +30,30 @@ LopecScanner.Scanners.ArmorScanner = (function() {
       BaseScanner.state.originalValues[`armor-upgrade-${index}`] = element.value;
     });
     
-    // 장비 스캔 갯수 계산 (armor-name에 따른 armor-upgrade 규칙 고려)
+    // 장비 스캔 개수 계산 (실제 스캔 함수와 동일한 방식으로 계산)
     for (let i = 0; i < armorNameElements.length; i++) {
-      const currentValue = parseInt(armorNameElements[i].value);
-      const maxValue = parseInt(armorNameElements[i].getAttribute('data-max') || 25);
+      const nameElement = armorNameElements[i];
+      const nameCurrentValue = parseInt(nameElement.value);
+      const nameMaxValue = parseInt(nameElement.getAttribute('data-max') || 25);
       
-      for (let newValue = currentValue + 1; newValue <= maxValue; newValue++) {
+      // 1. 장비 강화 옵션 개수 계산
+      for (let newNameValue = nameCurrentValue + 1; newNameValue <= nameMaxValue; newNameValue++) {
         scanCount++;
+      }
+      
+      // 2. 상재 옵션이 있으면 계산
+      if (i < armorUpgradeElements.length) {
+        const upgradeElement = armorUpgradeElements[i];
+        const upgradeCurrentValue = parseInt(upgradeElement.value);
         
-        // armor-name이 변경되면 armor-upgrade 옵션도 스캔
-        if (i < armorUpgradeElements.length) {
-          const currentUpgrade = parseInt(armorUpgradeElements[i].value);
-          let maxUpgrade = 40;
+        // 현재 장비 강화 레벨에 맞게 계산
+        if (nameCurrentValue >= 6) {
+          let maxUpgrade = nameCurrentValue >= 14 ? 40 : 20;
+          let minUpgrade = nameCurrentValue >= 14 ? Math.max(upgradeCurrentValue + 1, 21) : upgradeCurrentValue + 1;
           
-          // armor-name 6 미만에서는 armor-upgrade 불가
-          if (newValue < 6) {
-            continue;
-          }
-          
-          // armor-name 14 이상일 때만 armor-upgrade 21 이상 선택 가능
-          if (newValue >= 14) {
-            for (let newUpgrade = Math.max(currentUpgrade + 1, 21); newUpgrade <= maxUpgrade; newUpgrade++) {
-              scanCount++;
-            }
-          } else {
-            for (let newUpgrade = currentUpgrade + 1; newUpgrade <= 20; newUpgrade++) {
-              scanCount++;
-            }
+          // 상재 개수 계산
+          for (let newUpgradeValue = minUpgrade; newUpgradeValue <= maxUpgrade; newUpgradeValue++) {
+            scanCount++;
           }
         }
       }
