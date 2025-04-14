@@ -81,6 +81,25 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         // 값 변경 및 변동 확인
         const result = await BaseScanner.changeValueAndCheckDifference(nameElement, newNameValue.toString());
         
+        // 값이 변경되었지만 변화가 0인 경우 추가 기다림
+        if (Math.abs(result.difference) < 0.001) {
+          // 추가 딜레이를 적용하고 점수를 다시 확인
+          await LopecScanner.Utils.delay(800);
+          const updatedResult = {
+            score: LopecScanner.Utils.getCurrentScore(),
+            difference: LopecScanner.Utils.getCurrentDifference()
+          };
+          
+          // 두 번째 값을 사용하되, 여전히 0이면 최소값 0.01 사용
+          if (Math.abs(updatedResult.difference) < 0.001) {
+            console.log(`장비 강화 변경 후에도 변화가 0임: ${newNameValue}, 최소값 0.01 사용`);
+            result.difference = 0.01; // 최소값 사용
+          } else {
+            console.log(`장비 강화 지연 후 변화 감지: ${updatedResult.difference}`);
+            result.difference = updatedResult.difference;
+          }
+        }
+        
         // 결과 저장
         BaseScanner.state.scanResults[`armor-name-${i}-${newNameValue}`] = {
           type: '장비 강화',
@@ -125,6 +144,25 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         
         // 값 변경 및 변동 확인
         const result = await BaseScanner.changeValueAndCheckDifference(upgradeElement, newUpgradeValue.toString());
+        
+        // 값이 변경되었지만 변화가 0인 경우 추가 기다림
+        if (Math.abs(result.difference) < 0.001) {
+          // 추가 딜레이를 적용하고 점수를 다시 확인
+          await LopecScanner.Utils.delay(800);
+          const updatedResult = {
+            score: LopecScanner.Utils.getCurrentScore(),
+            difference: LopecScanner.Utils.getCurrentDifference()
+          };
+          
+          // 두 번째 값을 사용하되, 여전히 0이면 최소값 0.01 사용
+          if (Math.abs(updatedResult.difference) < 0.001) {
+            console.log(`장비 상재 변경 후에도 변화가 0임: ${newUpgradeValue}, 최소값 0.01 사용`);
+            result.difference = 0.01; // 최소값 사용
+          } else {
+            console.log(`장비 상재 지연 후 변화 감지: ${updatedResult.difference}`);
+            result.difference = updatedResult.difference;
+          }
+        }
         
         // 결과 저장
         BaseScanner.state.scanResults[`armor-upgrade-${index}-${newUpgradeValue}`] = {
