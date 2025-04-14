@@ -12,7 +12,27 @@ const API_CONFIG = {
   },
   endpoints: {
     auctionOptions: "/auctions/options",
-    // 다른 엔드포인트들 추가 가능
+    auctionItems: "/auctions/items", // 경매장 아이템 검색 (장신구, 보석 등)
+    marketItems: "/markets/items",   // 거래소 아이템 검색 (각인서 등)
+  },
+  // 아이템 유형별 카테고리 코드
+  categoryCodes: {
+    // 경매장 카테고리
+    auction: {
+      accessory: 200000,  // 장신구 (Code: 200000, CodeName: 장신구)
+      gem: 210000,       // 보석 (Code: 210000, CodeName: 보석)
+    },
+    // 거래소 카테고리
+    market: {
+      engraving: 40000,   // 각인서 (Code: 40000, CodeName: 각인서)
+    }
+  },
+  // 아이템 등급
+  itemGrades: {
+    legendary: "전설", // 전설
+    relic: "유물",     // 유물
+    ancient: "고대",   // 고대
+    epic: "영웅"       // 영웅
   }
 };
 
@@ -180,7 +200,7 @@ const APIStatus = (function() {
       console.log('처리할 데이터 항목 수:', filteredData.length);
       
       // 실제 API 호출 로직을 사용할지 가짜 데이터를 사용할지 결정
-      let useRealApi = false; // 추후 실제 API를 사용할 때 true로 변경
+      let useRealApi = true; // 실제 API 호출 사용
       
       if (useRealApi) {
         // 실제 API 호출
@@ -244,10 +264,6 @@ const APIStatus = (function() {
       throw new Error('API 키가 설정되지 않았습니다.');
     }
     
-    // 여기에 실제 API 호출 구현 코드가 들어갑니다.
-    // 예시: 로스트아크 API 엔드포인트 정보 - 엔드포인트 추가 필요
-    const apiEndpoint = API_CONFIG.baseUrl + '/path/to/goldcost/api'; // TODO: 실제 API 경로로 대체
-    
     // 데이터 처리를 위한 배치 사이즈
     const batchSize = 10;
     const batches = [];
@@ -262,54 +278,27 @@ const APIStatus = (function() {
       const batch = batches[i];
       console.log(`배치 ${i+1}/${batches.length} 처리 중... (${batch.length} 항목)`);
       
-      // 각 배치에 대한 요청 데이터 준비
-      const requestItems = batch.map(item => ({
-        // 요청에 필요한 필드 생성
-        // 예시:
-        itemType: item.type,
-        itemName: item.item,
-        fromValue: item.from,
-        toValue: item.to
-      }));
+      // 각 배치의 아이템을 형식에 맞게 그룹화
+      const accessoryItems = batch.filter(item => isAccessoryItem(item));
+      const gemItems = batch.filter(item => isGemItem(item));
+      const engravingItems = batch.filter(item => isEngravingItem(item));
       
+      // 각 아이템 그룹 처리
       try {
-        // API 요청 수행 예시
-        /*
-        const response = await fetch(apiEndpoint, {
-          method: 'POST',
-          headers: {
-            ...API_CONFIG.headers,
-            'authorization': `bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            items: requestItems
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API 오류: ${response.status} ${response.statusText}`);
+        if (accessoryItems.length > 0) {
+          await processAccessoryItems(accessoryItems, apiKey);
         }
         
-        const data = await response.json();
+        if (gemItems.length > 0) {
+          await processGemItems(gemItems, apiKey);
+        }
         
-        // 응답 데이터를 각 아이템에 적용
-        data.forEach((result, index) => {
-          if (result && result.goldCost) {
-            batch[index].goldCost = result.goldCost;
-          }
-        });
-        */
-        
-        // 임시 코드: 실제 API 구현 전까지 채우기
-        batch.forEach(item => {
-          if (item.difference > 0) {
-            item.goldCost = Math.floor(Math.random() * 9900) + 100;
-          }
-        });
+        if (engravingItems.length > 0) {
+          await processEngravingItems(engravingItems, apiKey);
+        }
         
         // 요청 간 지연 (서버 부하 방지)
         await new Promise(resolve => setTimeout(resolve, 300));
-        
       } catch (error) {
         console.error(`배치 ${i+1} 처리 중 오류:`, error);
         // 오류가 발생해도 다음 배치 처리 계속
@@ -317,6 +306,190 @@ const APIStatus = (function() {
     }
     
     console.log('모든 배치 처리 완료');
+  }
+  
+  /**
+   * 장신구 타입 확인
+   * @param {Object} item - 아이템 데이터
+   * @returns {boolean} 장신구 여부
+   */
+  function isAccessoryItem(item) {
+    return item.type === 'accessory';
+  }
+  
+  /**
+   * 보석 타입 확인
+   * @param {Object} item - 아이템 데이터
+   * @returns {boolean} 보석 여부
+   */
+  function isGemItem(item) {
+    return item.type === 'gem';
+  }
+  
+  /**
+   * 각인서 타입 확인
+   * @param {Object} item - 아이템 데이터
+   * @returns {boolean} 각인서 여부
+   */
+  function isEngravingItem(item) {
+    return item.type === 'engraving';
+  }
+  
+  /**
+   * 장신구 아이템 처리
+   * @param {Array} items - 장신구 아이템 배열
+   * @param {string} apiKey - API 키
+   */
+  async function processAccessoryItems(items, apiKey) {
+    // 경매장 API로 장신구 가격 조회
+    const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.auctionItems;
+    
+    for (const item of items) {
+      try {
+        // API 요청 작성
+        const requestBody = {
+          ItemLevelMin: 0,
+          ItemLevelMax: 0,
+          ItemGradeQuality: null,
+          ItemName: item.item, // 아이템 이름
+          CategoryCode: API_CONFIG.categoryCodes.auction.accessory, // 장신구 카테고리
+          Sort: "BIDSTART_PRICE", // 가격 순 정렬
+          SortCondition: "ASC", // 오름차순
+          PageNo: 1
+        };
+        
+        // API 요청 수행
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...API_CONFIG.headers,
+            'authorization': `bearer ${apiKey}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.Items && data.Items.length > 0) {
+            // 최저가 기준으로 가격 정보 가져오기
+            const lowestPrice = data.Items[0].AuctionInfo.BuyPrice;
+            item.goldCost = lowestPrice;
+            console.log(`장신구 '${item.item}' 가격 조회 성공:`, lowestPrice);
+          }
+        } else {
+          console.error(`장신구 이름 '${item.item}' 조회 실패:`, response.status);
+        }
+      } catch (error) {
+        console.error(`장신구 '${item.item}' 처리 중 오류:`, error);
+      }
+      
+      // API 요청 간 지연
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  }
+  
+  /**
+   * 보석 아이템 처리
+   * @param {Array} items - 보석 아이템 배열
+   * @param {string} apiKey - API 키
+   */
+  async function processGemItems(items, apiKey) {
+    // 경매장 API로 보석 가격 조회
+    const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.auctionItems;
+    
+    for (const item of items) {
+      try {
+        // API 요청 작성
+        const requestBody = {
+          ItemLevelMin: 0,
+          ItemLevelMax: 0,
+          ItemGradeQuality: null,
+          ItemName: item.item, // 보석 이름
+          CategoryCode: API_CONFIG.categoryCodes.auction.gem, // 보석 카테고리
+          Sort: "BIDSTART_PRICE", // 가격 순 정렬
+          SortCondition: "ASC", // 오름차순
+          PageNo: 1
+        };
+        
+        // API 요청 수행
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...API_CONFIG.headers,
+            'authorization': `bearer ${apiKey}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.Items && data.Items.length > 0) {
+            // 최저가 기준으로 가격 정보 가져오기
+            const lowestPrice = data.Items[0].AuctionInfo.BuyPrice;
+            item.goldCost = lowestPrice;
+            console.log(`보석 '${item.item}' 가격 조회 성공:`, lowestPrice);
+          }
+        } else {
+          console.error(`보석 이름 '${item.item}' 조회 실패:`, response.status);
+        }
+      } catch (error) {
+        console.error(`보석 '${item.item}' 처리 중 오류:`, error);
+      }
+      
+      // API 요청 간 지연
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  }
+  
+  /**
+   * 각인서 아이템 처리
+   * @param {Array} items - 각인서 아이템 배열
+   * @param {string} apiKey - API 키
+   */
+  async function processEngravingItems(items, apiKey) {
+    // 거래소 API로 각인서 가격 조회
+    const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.marketItems;
+    
+    for (const item of items) {
+      try {
+        // API 요청 작성
+        const requestBody = {
+          Sort: "GRADE",
+          CategoryCode: API_CONFIG.categoryCodes.market.engraving, // 각인서 카테고리
+          ItemName: item.item, // 각인서 이름
+          ItemGrade: API_CONFIG.itemGrades.legendary, // 전설 각인서 기본
+          SortCondition: "ASC", // 오름차순
+          PageNo: 1
+        };
+        
+        // API 요청 수행
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            ...API_CONFIG.headers,
+            'authorization': `bearer ${apiKey}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.Items && data.Items.length > 0) {
+            // 최저가 기준으로 가격 정보 가져오기
+            const lowestPrice = data.Items[0].CurrentMinPrice;
+            item.goldCost = lowestPrice;
+            console.log(`각인서 '${item.item}' 가격 조회 성공:`, lowestPrice);
+          }
+        } else {
+          console.error(`각인서 이름 '${item.item}' 조회 실패:`, response.status);
+        }
+      } catch (error) {
+        console.error(`각인서 '${item.item}' 처리 중 오류:`, error);
+      }
+      
+      // API 요청 간 지연
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
   }
   
   /**
