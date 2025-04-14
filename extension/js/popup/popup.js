@@ -73,10 +73,47 @@ const PopupUI = {
       this.elements.toggleOptionsBtn.textContent = '▼'; // 아래쪽 화살표
     }
     
-    // API 키 chrome.storage.local에서 불러오기
+    // API 키 불러오기 (chrome.storage.local 우선, localStorage 백업)
     chrome.storage.local.get(['lostarkApiKey'], (result) => {
-      if (result.lostarkApiKey) {
+      const chromeError = chrome.runtime.lastError;
+      if (chromeError) {
+        console.error('chrome.storage.local에서 API 키 불러오기 실패:', chromeError);
+      }
+      
+      if (result && result.lostarkApiKey) {
+        console.log('chrome.storage.local에서 불러온 API 키:', result.lostarkApiKey);
         this.elements.apiKeyInput.value = result.lostarkApiKey;
+
+        // API 키 형식이 유효한지 확인 (API 키는 일반적으로 문자와 숫자의 조합)
+        if (!/^[a-zA-Z0-9]+$/.test(result.lostarkApiKey)) {
+          console.warn('API 키 형식이 유효하지 않을 수 있습니다:', result.lostarkApiKey);
+        }
+        
+        // localStorage에도 동기화
+        localStorage.setItem(this.storageKeys.apiKey, result.lostarkApiKey);
+      } else {
+        // chrome.storage.local에 없는 경우 localStorage에서 불러오기 시도
+        try {
+          const localApiKey = localStorage.getItem(this.storageKeys.apiKey);
+          if (localApiKey) {
+            console.log('localStorage에서 불러온 API 키:', localApiKey);
+            this.elements.apiKeyInput.value = localApiKey;
+            
+            // API 키 형식이 유효한지 확인
+            if (!/^[a-zA-Z0-9]+$/.test(localApiKey)) {
+              console.warn('localStorage의 API 키 형식이 유효하지 않을 수 있습니다:', localApiKey);
+            }
+            
+            // localStorage에서 가져온 키를 chrome.storage.local에도 저장
+            chrome.storage.local.set({ lostarkApiKey: localApiKey }, () => {
+              console.log('localStorage의 API 키를 chrome.storage.local에 동기화함');
+            });
+          } else {
+            console.log('API 키가 저장되어 있지 않음');
+          }
+        } catch (e) {
+          console.error('localStorage에서 API 키 불러오기 실패:', e);
+        }
       }
     });
     
@@ -103,18 +140,41 @@ const PopupUI = {
   // API 키 저장
   saveApiKey() {
     const apiKey = this.elements.apiKeyInput.value.trim();
+    console.log('저장하려는 API 키:', apiKey); // 디버깅용 로그 추가
+    
+    if (!apiKey) {
+      console.warn('API 키가 비어 있습니다.');
+      return;
+    }
     
     // localStorage에 저장 (구버전 호환성)
-    localStorage.setItem(this.storageKeys.apiKey, apiKey);
+    try {
+      localStorage.setItem(this.storageKeys.apiKey, apiKey);
+      console.log('localStorage에 API 키가 저장됨:', apiKey);
+    } catch (e) {
+      console.error('localStorage에 API 키 저장 실패:', e);
+    }
     
     // chrome.storage.local에 저장 (피 업데이트된 API로 공유)
     chrome.storage.local.set({ lostarkApiKey: apiKey }, () => {
-      console.log('API 키가 chrome.storage.local에 저장되었습니다.');
+      const error = chrome.runtime.lastError;
+      if (error) {
+        console.error('chrome.storage.local에 API 키 저장 실패:', error);
+      } else {
+        console.log('API 키가 chrome.storage.local에 저장되었습니다:', apiKey);
+      }
       
       // API 키가 변경되었음을 배경 스크립트에 알림
       chrome.runtime.sendMessage({
         action: 'apiKeyChanged',
         apiKey: apiKey
+      }, (response) => {
+        const msgError = chrome.runtime.lastError;
+        if (msgError) {
+          console.error('API 키 변경 메시지 전송 실패:', msgError);
+        } else {
+          console.log('API 키 변경 메시지 전송 성공:', response);
+        }
       });
     });
   },
@@ -282,14 +342,35 @@ function setupEventListeners() {
     PopupUI.saveToggleSettings();
   });
   
-  // API 키 입력 이벤트 처리
-  PopupUI.elements.apiKeyInput.addEventListener('change', function() {
-    PopupUI.saveApiKey();
+  // API 키 입력 필드 이벤트 처리
+  // input 이벤트는 너무 자주 발생하미로 걷기(디바운스) 처리
+  let apiKeyInputTimeout = null;
+  
+  // input 이벤트 - 변경사항 감지
+  PopupUI.elements.apiKeyInput.addEventListener('input', function() {
+    // 현재 입력값 로그 (디버깅용)
+    console.log('API 키 입력 중:', this.value);
+    
+    // 500ms 동안 추가 키 입력이 없으면 저장 실행 (디바운스)
+    clearTimeout(apiKeyInputTimeout);
+    apiKeyInputTimeout = setTimeout(() => {
+      console.log('API 키 입력 완료, 저장 시도');
+      PopupUI.saveApiKey();
+    }, 500);
   });
   
-  PopupUI.elements.apiKeyInput.addEventListener('input', function() {
-    // 어떤 변경이든 반영 (throttle 또는 debounce 필요 시 추가 가능)
-    PopupUI.saveApiKey();
+  // change 이벤트 - 포커스 상실시 저장
+  PopupUI.elements.apiKeyInput.addEventListener('change', function() {
+    console.log('API 키 change 이벤트 발생');
+    clearTimeout(apiKeyInputTimeout); // 디바운스 취소
+    PopupUI.saveApiKey(); // 즉시 저장
+  });
+  
+  // blur 이벤트 - 포커스 상실시 저장
+  PopupUI.elements.apiKeyInput.addEventListener('blur', function() {
+    console.log('API 키 필드에서 포커스 상실');
+    clearTimeout(apiKeyInputTimeout); // 디바운스 취소
+    PopupUI.saveApiKey(); // 즉시 저장
   });
 }
 

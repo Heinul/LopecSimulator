@@ -26,6 +26,10 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 13px;
+  font-family: monospace; /* 고정폭 글꼴 사용 */
+  letter-spacing: normal; /* 글자 간격 정상화 */
+  text-security: none; /* 텍스트 숨김 비활성화 */
+  -webkit-text-security: none; /* 웹킷 브라우저용 */
 }
 
 .api-key-input:focus {
