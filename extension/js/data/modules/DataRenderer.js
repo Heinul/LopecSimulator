@@ -145,12 +145,53 @@ const DataRenderer = (function() {
                           item.difference < 0 ? 'negative-change' : 'no-change';
       
       // 행 HTML 추가
+      // 보석이나 장신구인 경우 템플릿 구조 수정
+      let fromDisplay = item.from;
+      let toDisplay = item.to;
+      
+      // 보석의 경우 from과 to에 레벨이 있으면 보석 정보가 들어간 item을 표시
+      if (item.type === 'gem' && item.from && item.to) {
+        // 보석 정보 추출
+        let gemInfo = '';
+        if (item.gemType && item.skillName) {
+          // gemType과 skillName 필드가 있는 경우
+          gemInfo = `${item.gemType} ${item.skillName}`;
+        } else if (item.item && item.item.includes('보석 (')) {
+          // item에서 정보 추출
+          gemInfo = item.item.replace('보석 (', '').replace(')', '');
+        }
+        
+        // 보석 정보가 있으면 표시
+        if (gemInfo) {
+          fromDisplay = `${item.from} (${gemInfo})`;          
+          toDisplay = `${item.to} (${gemInfo})`;          
+        }
+      }
+      
+      // 장신구의 경우
+      if (item.type && item.type.includes('장신구') && item.item) {
+        // 장신구 정보 세분화
+        let accessoryType = '';
+        
+        if (item.accessoryType) {
+          // 장신구 타입 필드가 있는 경우
+          switch(item.accessoryType) {
+            case 'necklace': accessoryType = '목걸이'; break;
+            case 'earring': accessoryType = '귀걸이'; break;
+            case 'ring': accessoryType = '반지'; break;
+            default: accessoryType = item.accessoryType;
+          }
+          
+          item.item = `${accessoryType} - ${item.item}`;
+        }
+      }
+      
       tableHTML += `
         <tr data-item-key="${item.key}" data-item-type="${item.type}">
           <td class="item-category">${categoryName}</td>
           <td class="item-name">${item.item}</td>
-          <td class="item-from">${item.from}</td>
-          <td class="item-to">${item.to}</td>
+          <td class="item-from">${fromDisplay}</td>
+          <td class="item-to">${toDisplay}</td>
           <td class="item-difference ${scoreClass}">${item.difference.toFixed(2)}</td>
         </tr>
       `;

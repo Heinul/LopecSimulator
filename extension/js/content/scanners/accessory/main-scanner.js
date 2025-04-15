@@ -247,12 +247,20 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         comboDescription += ` (옵션 정보 없음, 상/중/하/무 조합)`;
       }
       
+      // 원래 옵션과 신규 옵션 분리 - 최대 3개만 저장
+      const maxOptionsToShow = 3;
+      const originalOptionsFormatted = originalOptionTexts.slice(0, maxOptionsToShow).join(', ');
+      const appliedOptionsFormatted = appliedOptions.slice(0, maxOptionsToShow).join(', ');
+      
       BaseScanner.state.scanResults[`accessory-combo-${jobType}-${type}-${combo.label}`] = {
         type: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
         combo: combo.label,
-        item: `${itemName} - ${comboDescription}`,
-        from: `원래 옵션: ${originalOptionTexts.slice(0, 3).join(', ')}`,
-        to: `${combo.label} 조합: ${appliedOptions.join(', ')}`,
+        item: `${itemName}`,
+        from: `원래 옵션: ${originalOptionsFormatted}`,
+        to: `${combo.label} 조합: ${appliedOptionsFormatted}`,
+        accessoryType: type,           // 장신구 타입 추가
+        originalOptions: originalOptionTexts.slice(0, maxOptionsToShow),  // 원래 옵션 배열
+        appliedOptions: appliedOptions.slice(0, maxOptionsToShow),       // 적용된 옵션 배열
         score: currentScore,
         difference: difference
       };

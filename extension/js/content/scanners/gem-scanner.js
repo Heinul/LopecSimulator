@@ -66,17 +66,21 @@ LopecScanner.Scanners.GemScanner = (function() {
         // 보석 타입 (멸화/홍염) 가져오기
         const typeElement = element.nextElementSibling;
         if (typeElement && typeElement.tagName === 'SELECT') {
-          gemType = typeElement.value;
+          const selectedOption = typeElement.options[typeElement.selectedIndex];
+          gemType = selectedOption ? selectedOption.textContent : typeElement.value;
         }
         
         // 스킬 이름 가져오기
-        const gemContainer = element.closest('.gem-item');
+        const gemContainer = element.closest('.gem-box');
         if (gemContainer) {
           const skillElement = gemContainer.querySelector('.skill');
           if (skillElement) {
             skillName = skillElement.textContent.trim();
           }
         }
+        
+        // 로그 추가
+        console.log(`보석 정보 추출: 레벨=${currentValue}, 타입=${gemType}, 스킬=${skillName}`);
       } catch (e) {
         console.error(`보석 ${i} 정보 추출 오류:`, e);
       }
@@ -97,12 +101,17 @@ LopecScanner.Scanners.GemScanner = (function() {
         
         // 결과 저장
         const resultKey = `gem-level-${i}-${newValue}`;
+        // 보석 표시 형식 개선
+        const gemDisplayName = `보석 (${gemType} ${skillName})`;
+        
         BaseScanner.state.scanResults[resultKey] = {
           type: 'gem',  // type을 'gem'으로 변경 (스캔 결과의 'type' 필드가 영문 카테고리 이름이어야 함)
           index: i,
-          item: `${gemType} - ${skillName}`,
-          from: `${currentValue}레벨 (${gemType} ${skillName})`,
-          to: `${newValue}레벨 (${gemType} ${skillName})`,
+          item: gemDisplayName,
+          from: `${currentValue}레벨`,
+          to: `${newValue}레벨`,
+          gemType: gemType,      // 보석 타입 추가
+          skillName: skillName,  // 스킬 이름 추가
           score: result.score,
           difference: result.difference
         };
