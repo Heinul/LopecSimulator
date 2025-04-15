@@ -4,6 +4,8 @@
  */
 
 import MarketApi from './market-api.js';
+import GemApi from './gem-api.js';
+import EngravingApi from './engraving-api.js';
 import CONFIG from './config.js';
 
 /**
@@ -250,6 +252,101 @@ const AccessorySearch = {
     }
 };
 
+/**
+ * 보석 검색 API
+ */
+const GemSearch = {
+    /**
+     * 보석 가격 검색
+     * @param {number} level - 보석 레벨 (1~10)
+     * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
+     * @returns {Promise<Object|null>} 보석 가격 정보
+     */
+    async searchGem(level, type) {
+        const apiKey = await ApiKeyManager.getApiKey();
+        if (!apiKey) {
+            console.error('API 키가 설정되지 않았습니다.');
+            return null;
+        }
+        
+        try {
+            return await GemApi.getGemPriceByLevelAndType(level, type, apiKey);
+        } catch (error) {
+            console.error(`보석 검색 중 오류 발생 (${level}레벨 ${type}):`, error);
+            return null;
+        }
+    },
+    
+    /**
+     * 스킬 정보를 포함한 보석 가격 검색
+     * @param {number} level - 보석 레벨 (1~10)
+     * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
+     * @param {string} skillName - 스킬 이름
+     * @returns {Promise<Object|null>} 보석 가격 정보
+     */
+    async searchGemWithSkill(level, type, skillName) {
+        const apiKey = await ApiKeyManager.getApiKey();
+        if (!apiKey) {
+            console.error('API 키가 설정되지 않았습니다.');
+            return null;
+        }
+        
+        try {
+            return await GemApi.getGemPriceWithSkill(level, type, skillName, apiKey);
+        } catch (error) {
+            console.error(`보석 검색 중 오류 발생 (${level}레벨 ${type} ${skillName}):`, error);
+            return null;
+        }
+    }
+};
+
+/**
+ * 각인서 검색 API
+ */
+const EngravingSearch = {
+    /**
+     * 각인서 가격 검색
+     * @param {string} engravingName - 각인 이름 (예: "돌격대장")
+     * @param {string} grade - 각인서 등급 (예: "유물")
+     * @returns {Promise<Object|null>} 각인서 가격 정보
+     */
+    async searchEngraving(engravingName, grade = "유물") {
+        const apiKey = await ApiKeyManager.getApiKey();
+        if (!apiKey) {
+            console.error('API 키가 설정되지 않았습니다.');
+            return null;
+        }
+        
+        try {
+            return await EngravingApi.getEngravingPrice(engravingName, grade, apiKey);
+        } catch (error) {
+            console.error(`각인서 검색 중 오류 발생 (${engravingName} ${grade}):`, error);
+            return null;
+        }
+    },
+    
+    /**
+     * 여러 등급의 각인서 가격 검색
+     * @param {string} engravingName - 각인 이름 (예: "돌격대장")
+     * @param {Array} grades - 등급 배열 (예: ["유물", "전설", "영웅"])
+     * @returns {Promise<Object|null>} 등급별 각인서 가격 정보
+     */
+    async searchEngravingByGrades(engravingName, grades = ["유물", "전설"]) {
+        const apiKey = await ApiKeyManager.getApiKey();
+        if (!apiKey) {
+            console.error('API 키가 설정되지 않았습니다.');
+            return null;
+        }
+        
+        try {
+            return await EngravingApi.getEngravingPricesByGrades(engravingName, grades, apiKey);
+        } catch (error) {
+            console.error(`각인서 검색 중 오류 발생 (${engravingName}):`, error);
+            return null;
+        }
+    }
+};
+
 // 모듈 초기화 함수
 function initialize() {
     console.log('API 모듈 초기화 완료');
@@ -266,8 +363,12 @@ if (window.LopecScanner.API === undefined) {
 
 // API 기능 연결
 window.LopecScanner.API.MarketApi = MarketApi;
+window.LopecScanner.API.GemApi = GemApi;
+window.LopecScanner.API.EngravingApi = EngravingApi;
 window.LopecScanner.API.ApiKeyManager = ApiKeyManager;
 window.LopecScanner.API.AccessorySearch = AccessorySearch;
+window.LopecScanner.API.GemSearch = GemSearch;
+window.LopecScanner.API.EngravingSearch = EngravingSearch;
 window.LopecScanner.API.CONFIG = CONFIG;
 
 // 이전 코드와의 호환성을 위한 함수
@@ -278,6 +379,19 @@ window.LopecScanner.API.getAccessoryPrice = async function(categoryCode, combina
 // 문자열 타입 지원 함수 - 한글 문자열 지원
 window.LopecScanner.API.searchByString = async function(classType, accessoryType, combinationType, values) {
     return AccessorySearch.searchByStringType(classType, accessoryType, combinationType, values);
+};
+
+// 보석 검색 함수
+window.LopecScanner.API.searchGem = async function(level, type, skillName = null) {
+    if (skillName) {
+        return GemSearch.searchGemWithSkill(level, type, skillName);
+    }
+    return GemSearch.searchGem(level, type);
+};
+
+// 각인서 검색 함수
+window.LopecScanner.API.searchEngraving = async function(engravingName, grade = "유물") {
+    return EngravingSearch.searchEngraving(engravingName, grade);
 };
 
 // 트리거 함수 - 리스너 등록용
@@ -299,19 +413,33 @@ window.LopecScanner.API.CLASS_TYPES = {
     "서포터": "SUPPORTER"
 };
 
+// 보석 타입 상수
+window.LopecScanner.API.GEM_TYPES = GemApi.GEM_TYPES;
+
+// 각인서 등급 상수
+window.LopecScanner.API.ENGRAVING_GRADES = EngravingApi.ENGRAVING_GRADES;
+
 // 내보내기
 export {
     MarketApi,
+    GemApi,
+    EngravingApi,
     ApiKeyManager,
     AccessorySearch,
+    GemSearch,
+    EngravingSearch,
     CONFIG,
     initialize
 };
 
 export default {
     MarketApi,
+    GemApi,
+    EngravingApi,
     ApiKeyManager,
     AccessorySearch,
+    GemSearch,
+    EngravingSearch,
     CONFIG,
     initialize
 };

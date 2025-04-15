@@ -144,21 +144,25 @@ const PriceIntegration = (function() {
   async function collectPriceInfo() {
     // 가격 정보 객체
     const priceInfo = {
-      gems: [],       // 보석 정보
-      engravings: [], // 각인 정보
-      accessories: [], // 악세서리 정보
-      totalGold: 0    // 총 골드 비용
+    gems: [],       // 보석 정보
+    engravings: [], // 각인 정보
+    accessories: [], // 악세서리 정보
+    totalGold: 0    // 총 골드 비용
     };
     
     try {
-      // 시뮬레이터에서 현재 옵션 데이터 가져오기
-      // 실제 구현은 페이지 구조에 따라 달라질 수 있음
-      const currentData = window.LopecScanner.DataManager ? 
-                        window.LopecScanner.DataManager.processedData : [];
-      
-      if (!currentData || currentData.length === 0) {
-        return priceInfo; // 데이터 없음
-      }
+    // API 모듈 사용 가능한지 확인
+    if (!window.LopecScanner || !window.LopecScanner.API) {
+      console.warn('[가격 통합] API 모듈을 가져올 수 없습니다.');
+    return priceInfo;
+    }
+    
+    // API 키 체크
+    const apiKeyExists = await window.LopecScanner.API.ApiKeyManager.getApiKey();
+        if (!apiKeyExists) {
+          console.warn('[가격 통합] API 키가 설정되지 않았습니다.');
+          return priceInfo;
+        }
       
       // 데이터 순회하며 가격 정보 수집
       for (const item of currentData) {
