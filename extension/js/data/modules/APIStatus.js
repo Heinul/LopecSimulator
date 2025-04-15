@@ -1,7 +1,8 @@
-// API 캠시 저장소 (전역 변수)
+// API 캐시 저장소 (전역 변수)
 const API_CACHE = {
   gems: {}, // 보석 가격 캐싱 (예: '9레벨 겁화': 785000)
-  lastUpdate: {}, // 마지막 업데이트 시간 (캠시 유효성 확인용)
+  engravings: {}, // 각인서 가격 캐싱
+  lastUpdate: {}, // 마지막 업데이트 시간 (캐시 유효성 확인용)
 };
 
 /**
@@ -192,8 +193,23 @@ const APIStatus = (function() {
     dataTableContainer.appendChild(loadingOverlay);
     
     try {
+      // API 키 불러오기 (미리 확인)
+      let apiKey = null;
+      await new Promise((resolve) => {
+        chrome.storage.local.get(['lostarkApiKey'], function(result) {
+          apiKey = result && result.lostarkApiKey;
+          resolve();
+        });
+      });
+      
+      if (!apiKey) {
+        alert('API 키가 설정되지 않았습니다. API 설정에서 키를 등록해주세요.');
+        loadingOverlay.remove();
+        return;
+      }
+
       // 현재 표시된 데이터 가져오기
-      const filteredData = DataManager.processedData;
+      const filteredData = DataManager ? DataManager.processedData : null;
       
       if (!filteredData || filteredData.length === 0) {
         alert('표시할 데이터가 없습니다.');
@@ -201,25 +217,43 @@ const APIStatus = (function() {
         return;
       }
       
-      // 여기에 API 요청 구현
+      // API 요청 시작 로그
       console.log('골드 데이터 요청 시작...');
       console.log('처리할 데이터 항목 수:', filteredData.length);
       
-      // 실제 API 호출 로직을 사용할지 가짜 데이터를 사용할지 결정
-      let useRealApi = true; // 실제 API 호출 사용
+      // API 캐시 초기화 (없는 경우에 대비)
+      if (!API_CACHE.engravings) API_CACHE.engravings = {};
+      if (!API_CACHE.gems) API_CACHE.gems = {};
+      if (!API_CACHE.lastUpdate) API_CACHE.lastUpdate = {};
       
-      if (useRealApi) {
+      try {
         // 실제 API 호출
         await fetchRealGoldData(filteredData);
-      } else {
-        // 가짜 데이터 생성 (테스트용)
-        await mockGoldDataFetch(filteredData);
+        
+        // 데이터 테이블 업데이트
+        updateDataTableWithGoldInfo(filteredData);
+        
+        alert('골드 데이터를 성공적으로 가져왔습니다!');
+      } catch (apiError) {
+        console.error('API 호출 오류:', apiError);
+        
+        // API 오류에도 불구하고 가진 데이터로 테이블 업데이트
+        try {
+          // 데이터 테이블 업데이트
+          updateDataTableWithGoldInfo(filteredData);
+          
+          // 일부 데이터만 가져왔을 수 있으므로 다른 메시지 표시
+          const goldItems = filteredData.filter(item => item.goldCost).length;
+          if (goldItems > 0) {
+            alert(`일부 골드 데이터(${goldItems}/${filteredData.length})를 가져우는데 성공했지만, 일부 오류가 발생했습니다: ${apiError.message}`);
+          } else {
+            alert(`골드 데이터를 가져오는 중 오류가 발생했습니다: ${apiError.message}`);
+          }
+        } catch (e) {
+          console.error('테이블 업데이트 오류:', e);
+          alert(`골드 데이터를 가져오는 중 오류가 발생했습니다: ${apiError.message}`);
+        }
       }
-      
-      // 데이터 테이블 업데이트
-      updateDataTableWithGoldInfo(filteredData);
-      
-      alert('골드 데이터를 성공적으로 가져왔습니다!');
     } catch (error) {
       console.error('골드 데이터 가져오기 오류:', error);
       alert('골드 데이터를 가져오는 중 오류가 발생했습니다: ' + error.message);
@@ -424,7 +458,7 @@ const APIStatus = (function() {
       };
     }
     
-    // 캠시 유효 시간 (6시간, 밀리초 단위)
+    // 캐시 유효 시간 (6시간, 밀리초 단위)
     const CACHE_TTL = 6 * 60 * 60 * 1000;
     // 현재 시간
     const now = Date.now();
@@ -503,7 +537,7 @@ const APIStatus = (function() {
             // 최저가 기준으로 가격 정보 가져오기
             const lowestPrice = data.Items[0].AuctionInfo.BuyPrice;
             
-            // 캠시에 저장
+            // 캐시에 저장
             API_CACHE.gems[cacheKey] = lowestPrice;
             API_CACHE.lastUpdate[cacheKey] = now;
             console.log(`캐시 업데이트: ${cacheKey} = ${lowestPrice}`);
@@ -552,11 +586,47 @@ const APIStatus = (function() {
       console.error('각인서 API 모듈을 불러오는데 실패했습니다:', error);
       console.log('기본 내장 요청 방식으로 대체합니다.');
       
-      // 내장 기능 사용
-      EngravingAPI = null;
+      // 내장 기능 사용 - 더미 API 오브젝트 생성
+      EngravingAPI = {
+        getEngravingPrice: async function(name, grade, apiKey) {
+          // 직접 API 요청 구현
+          const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.marketItems;
+          const requestBody = {
+            Sort: "BUY_PRICE",
+            CategoryCode: API_CONFIG.categoryCodes.market.engraving,
+            ItemName: name,
+            Grade: grade,
+            SortCondition: "ASC",
+            PageNo: 1
+          };
+          
+          try {
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                ...API_CONFIG.headers,
+                'authorization': `bearer ${apiKey}`
+              },
+              body: JSON.stringify(requestBody)
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.Items && data.Items.length > 0) {
+                return { price: data.Items[0].CurrentMinPrice };
+              }
+            }
+            return null;
+          } catch (e) {
+            console.error('내장 각인서 API 요청 중 오류:', e);
+            return null;
+          }
+        }
+      };
+      console.log('내장 각인서 API 핸들러 생성됨');
     }
     
-    // 캠시 유효 시간 (6시간, 밀리초 단위)
+    // 캐시 유효 시간 (6시간, 밀리초 단위)
     const CACHE_TTL = 6 * 60 * 60 * 1000;
     // 현재 시간
     const now = Date.now();
@@ -597,16 +667,16 @@ const APIStatus = (function() {
           }
         }
         
-        // 캠시키 생성
+        // 캐시키 생성
         const cacheKey = `${engravingName}_${fromGrade}_${fromLevel}_${toGrade}_${toLevel}`;
         
-        // 캠시에서 가격 확인
+        // 캐시에서 가격 확인
         const cachedData = API_CACHE.engravings[cacheKey];
         const lastUpdate = API_CACHE.lastUpdate[cacheKey] || 0;
         
-        // 캠시 데이터가 있고, 유효 시간 내인 경우 캠시된 값 사용
+        // 캐시 데이터가 있고, 유효 시간 내인 경우 캐시된 값 사용
         if (cachedData && (now - lastUpdate) < CACHE_TTL) {
-          console.log(`캠시에서 각인서 가격 가져옴: ${cacheKey} = ${cachedData}`);
+          console.log(`캐시에서 각인서 가격 가져옴: ${cacheKey} = ${cachedData}`);
           item.goldCost = cachedData;
           completedRequests++;
           continue; // 다음 아이템으로 진행
@@ -631,7 +701,7 @@ const APIStatus = (function() {
                 // 총 가격 계산
                 const totalCost = originalPrice.price * bookCount;
                 
-                // 캠시에 저장
+                // 캐시에 저장
                 API_CACHE.engravings[cacheKey] = totalCost;
                 API_CACHE.lastUpdate[cacheKey] = now;
                 
@@ -650,15 +720,21 @@ const APIStatus = (function() {
         
         // API 모듈을 사용할 수 없을 경우 또는 API 모듈 사용 중 오류가 발생하면 기본 요청 사용
         if (!item.goldCost) {
+          // fromGrade, toGrade 처리
+          const fromGradeEng = getGradeCode(fromGrade || '전설');
+          const toGradeEng = getGradeCode(toGrade || '전설');
+          
           // API 요청 작성
           const requestBody = {
             Sort: "BUY_PRICE", // 가격순으로 변경
             CategoryCode: API_CONFIG.categoryCodes.market.engraving, // 각인서 카테고리
             ItemName: engravingName, // 추출한 각인서 이름
-            Grade: fromGrade, // 원본 각인서 등급 사용
+            Grade: fromGrade || '전설', // 원본 각인서 등급 사용, 기본값 전설
             SortCondition: "ASC", // 오름차순
             PageNo: 1
           };
+          
+          console.log(`각인서 API 요청:`, JSON.stringify(requestBody, null, 2));
           
           // API 요청 수행
           const response = await fetch(endpoint, {
@@ -677,12 +753,14 @@ const APIStatus = (function() {
               const lowestPrice = data.Items[0].CurrentMinPrice;
               
               // 필요한 책 수량 계산
-              const bookCount = calculateEngravingBooks(fromGradeEng || 'legendary', fromLevel || 0, toGradeEng || 'legendary', toLevel || 0);
+              const bookCount = calculateEngravingBooks(fromGradeEng, fromLevel || 0, toGradeEng, toLevel || 0);
               
               // 총 가격 계산
               const totalCost = lowestPrice * bookCount;
               
-              // 캠시에 저장
+              // 캐시에 저장
+              API_CACHE.engravings = API_CACHE.engravings || {}; // 없는 경우 초기화
+              API_CACHE.lastUpdate = API_CACHE.lastUpdate || {}; // 없는 경우 초기화
               API_CACHE.engravings[cacheKey] = totalCost;
               API_CACHE.lastUpdate[cacheKey] = now;
               
@@ -691,6 +769,8 @@ const APIStatus = (function() {
               item.engravingBooks = bookCount; // 책 수량 저장
               
               console.log(`각인서 '${engravingName}' 가격 조회 성공: ${lowestPrice}G x ${bookCount}개 = ${totalCost}G`);
+            } else {
+              console.warn(`각인서 '${engravingName}' 검색 결과가 없습니다.`);
             }
           } else {
             console.error(`각인서 이름 '${engravingName}' 조회 실패:`, response.status);
@@ -717,6 +797,9 @@ const APIStatus = (function() {
    * @returns {string} 등급 영문명 (예: legendary, relic)
    */
   function getGradeCode(grade) {
+    // 초기에 trim 처리
+    const trimmedGrade = grade.trim();
+    
     const gradeMap = {
       '전설': 'legendary',
       '유물': 'relic',
@@ -725,7 +808,27 @@ const APIStatus = (function() {
       '희귀': 'rare',
       '고급': 'uncommon'
     };
-    return gradeMap[grade] || grade; // 일치하는 것이 없으면 원본 반환
+    
+    // 정확한 매칭
+    const result = gradeMap[trimmedGrade];
+    if (result) return result;
+    
+    // 일부만 포함되어 있는 경우 처리
+    for (const [key, value] of Object.entries(gradeMap)) {
+      if (trimmedGrade.includes(key)) {
+        console.log(`등급 변환: '${trimmedGrade}' -> '${value}'`);
+        return value;
+      }
+    }
+    
+    // 그래도 매칭이 없으면, 입력값이 이미 영문이면 그대로 사용
+    if (['legendary', 'relic', 'ancient', 'epic', 'rare', 'uncommon'].includes(trimmedGrade.toLowerCase())) {
+      return trimmedGrade.toLowerCase();
+    }
+    
+    // 아무것도 찾지 못했으면 기본값 legendary 반환
+    console.warn(`알 수 없는 등급 '${trimmedGrade}', legendary가 기본값으로 사용됩니다.`);
+    return 'legendary';
   }
   
   /**
