@@ -457,10 +457,19 @@ const PriceIntegration = (function() {
               if (priceResult && priceResult.price) {
                 itemPrice = priceResult.price;
                 
-                // 필요 개수 계산 (예: 레벨당 5개 - 실제 적용 시 조정 필요)
-                const count = item.count || (
-                  item.level ? parseInt(item.level) * 5 : 5
-                );
+                // 각인서 레벨 추출
+                let level = 1;
+                if (item.level) {
+                  level = parseInt(item.level);
+                } else if (item.item && typeof item.item === 'string') {
+                  const lvMatch = item.item.match(/Lv\.(\d+)/);
+                  if (lvMatch && lvMatch[1]) {
+                    level = parseInt(lvMatch[1]);
+                  }
+                }
+                
+                // 필요 개수 계산 (레벨당 5장)
+                const count = level * 5;
                 const totalPrice = itemPrice * count;
                 
                 priceInfo.engravings.push({

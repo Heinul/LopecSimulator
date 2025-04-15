@@ -9,11 +9,9 @@ import CONFIG from './config.js';
  * 각인서 등급 상수
  */
 const ENGRAVING_GRADES = {
-    RARE: '희귀',
     EPIC: '영웅',
     LEGENDARY: '전설',
-    RELIC: '유물',
-    ANCIENT: '고대'
+    RELIC: '유물'
 };
 
 /**

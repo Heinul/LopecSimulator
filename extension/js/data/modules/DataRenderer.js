@@ -168,6 +168,51 @@ const DataRenderer = (function() {
         }
       }
       
+      // 각인서의 경우 레벨 추출하여 필요 개수 표시
+      if (item.type === 'engraving' && item.from && item.to) {
+        // 상세 정보 표시 옵션 확인
+        const showDetails = window.LopecScanner && 
+                           typeof window.LopecScanner.showEngravingDetails !== 'undefined' ?
+                           window.LopecScanner.showEngravingDetails : true; // 기본값은 true
+        
+        if (showDetails) {
+          // 레벨 추출
+          let fromLevel = 0;
+          let toLevel = 0;
+          
+          const fromLvMatch = item.from.match(/Lv\.(\d+)/);
+          if (fromLvMatch && fromLvMatch[1]) {
+            fromLevel = parseInt(fromLvMatch[1]);
+          }
+          
+          const toLvMatch = item.to.match(/Lv\.(\d+)/);
+          if (toLvMatch && toLvMatch[1]) {
+            toLevel = parseInt(toLvMatch[1]);
+          }
+          
+          // 각인서 등급 추출
+          let fromGrade = '';
+          let toGrade = '';
+          
+          if (item.from.includes('영웅')) fromGrade = '영웅';
+          else if (item.from.includes('전설')) fromGrade = '전설';
+          else if (item.from.includes('유물')) fromGrade = '유물';
+          
+          if (item.to.includes('영웅')) toGrade = '영웅';
+          else if (item.to.includes('전설')) toGrade = '전설';
+          else if (item.to.includes('유물')) toGrade = '유물';
+          
+          // 필요 장수 표시 (5장/레벨)
+          if (fromLevel > 0) {
+            fromDisplay = `${item.from} (${fromLevel*5}장)`;
+          }
+          
+          if (toLevel > 0) {
+            toDisplay = `${item.to} (${toLevel*5}장)`;
+          }
+        }
+      }
+      
       // 장신구의 경우
       if (item.type && item.type.includes('장신구') && item.item) {
         // 장신구 정보 세분화

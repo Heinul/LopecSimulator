@@ -26,6 +26,29 @@ const UIEvents = (function() {
       // UI 업데이트
       DataRenderer.updateDataTable(processedData);
     });
+    
+    // 각인서 상세 정보 표시 토글
+    const showEngravingDetails = document.getElementById('show-engraving-details');
+    if (showEngravingDetails) {
+      showEngravingDetails.addEventListener('change', () => {
+        // 기존 필터 설정 유지
+        const { filterIncrease, categoryFilter, sortBy } = getCurrentFilterSettings();
+        
+        // 전역 변수로 각인서 상세 정보 표시 상태 저장
+        window.LopecScanner = window.LopecScanner || {};
+        window.LopecScanner.showEngravingDetails = showEngravingDetails.checked;
+        
+        // 조건이 변경되었으므로 데이터 다시 처리
+        const processedData = DataManager.processData(filterIncrease, categoryFilter, sortBy);
+        
+        // UI 업데이트
+        DataRenderer.updateDataTable(processedData);
+      });
+      
+      // 초기화시 상태 설정
+      window.LopecScanner = window.LopecScanner || {};
+      window.LopecScanner.showEngravingDetails = showEngravingDetails.checked;
+    }
   }
 
   /**
