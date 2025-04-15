@@ -256,48 +256,26 @@ const AccessorySearch = {
  * 보석 검색 API
  */
 const GemSearch = {
-    /**
-     * 보석 가격 검색
-     * @param {number} level - 보석 레벨 (1~10)
-     * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
-     * @returns {Promise<Object|null>} 보석 가격 정보
-     */
-    async searchGem(level, type) {
-        const apiKey = await ApiKeyManager.getApiKey();
-        if (!apiKey) {
-            console.error('API 키가 설정되지 않았습니다.');
-            return null;
-        }
-        
-        try {
-            return await GemApi.getGemPriceByLevelAndType(level, type, apiKey);
-        } catch (error) {
-            console.error(`보석 검색 중 오류 발생 (${level}레벨 ${type}):`, error);
-            return null;
-        }
-    },
-    
-    /**
-     * 스킬 정보를 포함한 보석 가격 검색
-     * @param {number} level - 보석 레벨 (1~10)
-     * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
-     * @param {string} skillName - 스킬 이름
-     * @returns {Promise<Object|null>} 보석 가격 정보
-     */
-    async searchGemWithSkill(level, type, skillName) {
-        const apiKey = await ApiKeyManager.getApiKey();
-        if (!apiKey) {
-            console.error('API 키가 설정되지 않았습니다.');
-            return null;
-        }
-        
-        try {
-            return await GemApi.getGemPriceWithSkill(level, type, skillName, apiKey);
-        } catch (error) {
-            console.error(`보석 검색 중 오류 발생 (${level}레벨 ${type} ${skillName}):`, error);
-            return null;
-        }
+  /**
+   * 보석 가격 검색
+   * @param {number} level - 보석 레벨 (1~10)
+   * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
+   * @returns {Promise<Object|null>} 보석 가격 정보
+   */
+  async searchGem(level, type) {
+    const apiKey = await ApiKeyManager.getApiKey();
+    if (!apiKey) {
+      console.error('API 키가 설정되지 않았습니다.');
+      return null;
     }
+    
+    try {
+      return await GemApi.getGemPriceByLevelAndType(level, type, apiKey);
+    } catch (error) {
+      console.error(`보석 검색 중 오류 발생 (${level}레벨 ${type}):`, error);
+      return null;
+    }
+  }
 };
 
 /**
@@ -382,10 +360,7 @@ window.LopecScanner.API.searchByString = async function(classType, accessoryType
 };
 
 // 보석 검색 함수
-window.LopecScanner.API.searchGem = async function(level, type, skillName = null) {
-    if (skillName) {
-        return GemSearch.searchGemWithSkill(level, type, skillName);
-    }
+window.LopecScanner.API.searchGem = async function(level, type) {
     return GemSearch.searchGem(level, type);
 };
 

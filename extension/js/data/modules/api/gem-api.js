@@ -38,10 +38,11 @@ const GEM_LEVELS = {
  */
 function buildGemRequestBody(itemName) {
     return {
-        CategoryCode: CONFIG.categoryCodes.gem,
-        SortCondition: "ASC",
-        Sort: "BUY_PRICE",
-        ItemName: itemName
+        CategoryCode: 210000,
+        ItemName: itemName,
+        PageNo: 1,
+        Sort: "BIDSTART_PRICE",
+        SortCondition: "ASC"
     };
 }
 
@@ -53,6 +54,8 @@ function buildGemRequestBody(itemName) {
  */
 async function sendApiRequest(requestBody, apiKey) {
     try {
+        console.log('보석 API 요청 본문:', JSON.stringify(requestBody, null, 2));
+        
         const response = await fetch(`${CONFIG.baseUrl}${CONFIG.endpoints.market}`, {
             method: 'POST',
             headers: {
@@ -110,7 +113,7 @@ async function getGemPrice(gemLevel, gemType, apiKey) {
 }
 
 /**
- * 레벨과 타입으로 보석 최저가 검색
+ * 보석 최저가 검색
  * @param {number} level - 보석 레벨 (1~10)
  * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
  * @param {string} apiKey - API 키
@@ -131,38 +134,21 @@ async function getGemPriceByLevelAndType(level, type, apiKey) {
         return null;
     }
     
-    return await getGemPrice(gemLevel, type, apiKey);
-}
-
-/**
- * 스킬명을 포함한 보석 최저가 검색
- * @param {number} level - 보석 레벨 (1~10)
- * @param {string} type - 보석 타입 ("멸화", "겁화", "홍염", "작열")
- * @param {string} skillName - 스킬 이름
- * @param {string} apiKey - API 키
- * @returns {Promise<Object|null>} - 보석 최저가 정보
- */
-async function getGemPriceWithSkill(level, type, skillName, apiKey) {
+    // 고정 형식: "N레벨 타입" 형식
+    const gemName = `${level}레벨 ${type}`;
+    console.log(`보석 가격 검색: ${gemName}`);
+    
+    // 요청 본문 생성
+    const requestBody = buildGemRequestBody(gemName);
+    
     try {
-        // 스킬명이 없으면 일반 보석 검색
-        if (!skillName) {
-            return await getGemPriceByLevelAndType(level, type, apiKey);
-        }
-        
-        // 스킬명을 포함하는 경우 검색
-        const gemLevel = `${level}레벨`;
-        const gemName = `${gemLevel} ${type} ${skillName}`;
-        
-        // 요청 본문 생성
-        const requestBody = buildGemRequestBody(gemName);
-        
         // API 요청 전송
         const response = await sendApiRequest(requestBody, apiKey);
         
         // 결과가 없는 경우
         if (!response || response.length === 0) {
-            console.warn(`보석 '${gemName}'에 대한 결과가 없습니다. 스킬명 없이 재시도합니다.`);
-            return await getGemPriceByLevelAndType(level, type, apiKey);
+            console.warn(`보석 '${gemName}'에 대한 결과가 없습니다.`);
+            return null;
         }
         
         // 최저가 정보 반환
@@ -170,7 +156,8 @@ async function getGemPriceWithSkill(level, type, skillName, apiKey) {
             price: response[0].CurrentMinPrice,
             name: response[0].Name,
             icon: response[0].Icon,
-            skillName: skillName
+            level: level,
+            type: type
         };
     } catch (error) {
         console.error('보석 가격 조회 중 오류 발생:', error);
@@ -183,6 +170,5 @@ export default {
     GEM_LEVELS,
     getGemPrice,
     getGemPriceByLevelAndType,
-    getGemPriceWithSkill,
     buildGemRequestBody
 };

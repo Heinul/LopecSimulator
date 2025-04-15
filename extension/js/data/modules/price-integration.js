@@ -335,7 +335,6 @@ const PriceIntegration = (function() {
           // item에서 레벨과 보석 타입 정보 추출
           let gemLevel = 0;
           let gemType = "";
-          let skillName = "";
           
           // 레벨 추출
           if (item.from && typeof item.from === 'string') {
@@ -345,40 +344,83 @@ const PriceIntegration = (function() {
             }
           }
           
-          // gemType 및 skillName 추출
+          // gemType 추출
           if (item.gemType) {
             // 직접 필드가 있는 경우
             gemType = item.gemType;
-            skillName = item.skillName || "";
           } else if (item.item && typeof item.item === 'string') {
-            // item에서 추출
-            const typeMatch = item.item.match(/\(([^\)]+)\s([^\)]+)\)/);
-            if (typeMatch && typeMatch.length >= 3) {
-              gemType = typeMatch[1].trim();
-              skillName = typeMatch[2].trim();
+            // 디버그 로그 추가
+            console.log(`보석 아이템 문자열:`, item.item);
+            
+            // 이름에서 보석 타입(겁화, 멸화, 홍염, 작열) 추출 시도
+            if (item.item.includes('겁화')) {
+              gemType = '겁화';
+            } else if (item.item.includes('멸화')) {
+              gemType = '멸화';
+            } else if (item.item.includes('홍염')) {
+              gemType = '홍염';
+            } else if (item.item.includes('작열')) {
+              gemType = '작열';
+            }
+            
+            // 정규식 시도 - 작열, 멸화, 겁화, 홍염
+            if (!gemType) {
+              const allTypeRegex = /(멸화|겁화|홍염|작열)/;
+              const typeMatch = item.item.match(allTypeRegex);
+              if (typeMatch && typeMatch[1]) {
+                gemType = typeMatch[1];
+                console.log(`[가격 통합] 정규식으로 보석 타입 추출: ${gemType}`);
+              }
             }
           }
           
           // 유효한 레벨과 타입이 있는 경우에만 검색
           if (gemLevel > 0 && gemType) {
-            console.log(`[가격 통합] 보석 가격 검색: ${gemLevel}레벨 ${gemType} (${skillName})`);
-            try {
-              // API로 가격 검색
-              const priceResult = await window.LopecScanner.API.GemSearch.searchGemWithSkill(
-                gemLevel, gemType, skillName
+            console.log(`[가격 통합] 보석 가격 검색: ${gemLevel}레벨 ${gemType}`);
+            
+            // 같은 레벨/타입의 보석이 이미 검색되었는지 확인(캐싱)
+            const cacheKey = `gem_${gemLevel}_${gemType}`;
+            let priceResult = null;
+            
+            // 캐싱된 결과가 있는지 확인
+            if (priceInfo._cache && priceInfo._cache[cacheKey]) {
+              priceResult = priceInfo._cache[cacheKey];
+              console.log(`[가격 통합] 캐싱된 보석 가격 사용: ${gemLevel}레벨 ${gemType}`);
+            } else {
+              try {
+                // API로 가격 검색 - 고정 형식 "N레벨 타입"
+                console.log(`[가격 통합] 보석 검색 시간: 레벨=${gemLevel}, 타입=${gemType}`);
+                
+                // 실제 검색어는 함수 내부에서 "N레벨 타입" 형식으로 고정
+                priceResult = await window.LopecScanner.API.GemSearch.searchGem(gemLevel, gemType);
+                
+                // 결과 캐싱 추가
+                if (priceResult) {
+                  if (!priceInfo._cache) priceInfo._cache = {};
+                  priceInfo._cache[cacheKey] = priceResult;
+                }
+              } catch (error) {
+                console.error(`[가격 통합] 보석 가격 검색 오류:`, error);
+              }
+            }
+            
+            if (priceResult && priceResult.price) {
+              itemPrice = priceResult.price;
+              
+              // 이미 같은 보석이 추가되었는지 확인
+              const existingGem = priceInfo.gems.find(g => 
+                g.level === gemLevel && g.type === gemType
               );
               
-              if (priceResult && priceResult.price) {
-                itemPrice = priceResult.price;
-                
+              if (!existingGem) {
                 priceInfo.gems.push({
-                  name: `${gemType} ${gemLevel}레벨 (${skillName || '스킬명 없음'})`,
+                  name: `${gemType} ${gemLevel}레벨`,
+                  level: gemLevel,
+                  type: gemType,
                   price: itemPrice,
                   score: item.difference
                 });
               }
-            } catch (error) {
-              console.error(`[가격 통합] 보석 가격 검색 오류:`, error);
             }
           }
         } 
