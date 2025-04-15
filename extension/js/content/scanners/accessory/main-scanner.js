@@ -251,7 +251,7 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         type: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
         combo: combo.label,
         item: `${itemName} - ${comboDescription}`,
-        from: `원래 옵션: ${originalOptionTexts.join(', ')}`,
+        from: `원래 옵션: ${originalOptionTexts.slice(0, 3).join(', ')}`,
         to: `${combo.label} 조합: ${appliedOptions.join(', ')}`,
         score: currentScore,
         difference: difference

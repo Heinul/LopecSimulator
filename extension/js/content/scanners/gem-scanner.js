@@ -100,9 +100,9 @@ LopecScanner.Scanners.GemScanner = (function() {
         BaseScanner.state.scanResults[resultKey] = {
           type: 'gem',  // type을 'gem'으로 변경 (스캔 결과의 'type' 필드가 영문 카테고리 이름이어야 함)
           index: i,
-          item: `${gemType} ${skillName}`,
-          from: currentValue,
-          to: newValue,
+          item: `${gemType} - ${skillName}`,
+          from: `${currentValue}레벨 (${gemType} ${skillName})`,
+          to: `${newValue}레벨 (${gemType} ${skillName})`,
           score: result.score,
           difference: result.difference
         };
