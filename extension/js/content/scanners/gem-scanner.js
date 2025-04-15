@@ -112,6 +112,8 @@ LopecScanner.Scanners.GemScanner = (function() {
           to: `${newValue}레벨`,
           gemType: gemType,      // 보석 타입 추가
           skillName: skillName,  // 스킬 이름 추가
+          fromLevel: currentValue, // 원래 레벨 추가
+          toLevel: newValue,      // 변경 레벨 추가
           score: result.score,
           difference: result.difference
         };

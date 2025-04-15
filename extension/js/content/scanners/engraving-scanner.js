@@ -169,9 +169,15 @@ function prepareEngravingScan(elements) {
           
           // 결과 저장
           BaseScanner.state.scanResults[`engraving-${currentGrade}-${i}-${level}`] = {
-            type: '각인',
+            type: 'engraving',
             grade: currentGrade,
             index: i,
+            engravingName: currentName,  // 각인서 이름
+            engravingLevel: level,      // 각인서 레벨
+            fromGrade: currentGrade,    // 원래 등급
+            fromLevel: currentLevel,    // 원래 레벨
+            toGrade: currentGrade,      // 변경 등급
+            toLevel: level,             // 변경 레벨
             item: `${currentGrade} ${currentName} Lv.${level}`,
             from: `${currentGrade} ${currentName} Lv.${currentLevel}`,
             to: `${currentGrade} ${currentName} Lv.${level}`,
@@ -203,9 +209,15 @@ function prepareEngravingScan(elements) {
             
             // 결과 저장
             BaseScanner.state.scanResults[`engraving-${nextGrade}-${i}-${level}`] = {
-              type: '각인',
+              type: 'engraving',
               grade: nextGrade,
               index: i,
+              engravingName: currentName,  // 각인서 이름
+              engravingLevel: level,      // 각인서 레벨
+              fromGrade: currentGrade,    // 원래 등급
+              fromLevel: currentLevel,    // 원래 레벨
+              toGrade: nextGrade,         // 변경 등급
+              toLevel: level,             // 변경 레벨
               item: `${nextGrade} ${currentName} Lv.${level}`,
               from: `${currentGrade} ${currentName} Lv.${currentLevel}`,
               to: `${nextGrade} ${currentName} Lv.${level}`,

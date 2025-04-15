@@ -10,12 +10,79 @@ const DataManager = {
   // 처리된 데이터 (필터링 및 정렬 적용)
   processedData: [],
   
+  // 구조화된 데이터 저장
+  structuredData: {},
+  
   // 스토리지에서 데이터 로드
   loadData(callback) {
     chrome.storage.local.get(['scanData'], (result) => {
       this.scanData = result.scanData || {};
       console.log('Loaded data:', Object.keys(this.scanData).length, 'items');
+      
+      // 구조화된 데이터 처리 (스캐너 향상 모듈이 있는 경우)
+      if (window.LopecScanner && window.LopecScanner.ScannerEnhancement) {
+        this.structuredData = window.LopecScanner.ScannerEnhancement.processRawScanData(this.scanData);
+        console.log('Enhanced data structure created:', this.structuredData);
+      }
+      
       callback && callback();
+    });
+  },
+  
+  /**
+   * 각인서 가격 계산
+   * @param {string} engravingName - 각인 이름
+   * @param {string} grade - 각인서 등급
+   * @param {number} price - 각인서 가격 
+   * @param {number} level - 각인서 레벨
+   * @returns {number} - 총 가격
+   */
+  calculateEngravingPrice(engravingName, grade, price, level) {
+    // 각 각인서는 레벨당 5장씩 소요
+    const bookPerLevel = 5;
+    const totalBooks = level * bookPerLevel;
+    return price * totalBooks;
+  },
+  
+  /**
+   * 구조화된 데이터에서 각인서 가격 정보 가져오기
+   * @param {string} gradeFilter - 등급 필터 (선택적)
+   * @returns {Array} - 각인서 가격 정보 배열
+   */
+  getEnhancedEngravingInfo(gradeFilter = null) {
+    // 구조화된 데이터가 없으면 빈 배열 반환
+    if (!this.structuredData || !this.structuredData.engraving) {
+      return [];
+    }
+    
+    const engravings = this.structuredData.engraving;
+    
+    // 등급 필터링 (지정된 경우)
+    let filteredEngravings = engravings;
+    if (gradeFilter) {
+      filteredEngravings = engravings.filter(item => 
+        item.toGrade === gradeFilter || item.fromGrade === gradeFilter
+      );
+    }
+    
+    return filteredEngravings.map(engraving => {
+      // 필요 개수 계산 (5장/레벨)
+      const fromCount = engraving.fromLevel * 5;
+      const toCount = engraving.toLevel * 5;
+      const diffCount = Math.max(0, toCount - fromCount);
+      
+      return {
+        name: engraving.engravingName || '',
+        fromGrade: engraving.fromGrade || '',
+        toGrade: engraving.toGrade || '',
+        fromLevel: engraving.fromLevel || 0,
+        toLevel: engraving.toLevel || 0,
+        fromCount: fromCount,
+        toCount: toCount,
+        diffCount: diffCount,
+        score: engraving.score || 0,
+        difference: engraving.difference || 0
+      };
     });
   },
   

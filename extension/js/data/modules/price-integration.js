@@ -457,8 +457,25 @@ const PriceIntegration = (function() {
               if (priceResult && priceResult.price) {
                 itemPrice = priceResult.price;
                 
-                // 각인서 레벨 추출
-                let level = 1;
+                // 구조화된 데이터 사용 시도
+              const enhancedData = window.DataManager && window.DataManager.structuredData;
+              let enhancedLevel = 0;
+              
+              if (enhancedData && enhancedData.engraving) {
+                // 구조화된 데이터에서 레벨 가져오기 시도
+                const matchedItem = enhancedData.engraving.find(eng => 
+                  eng.engravingName === engravingName && eng.toGrade === engravingGrade
+                );
+                
+                if (matchedItem && matchedItem.toLevel > 0) {
+                  enhancedLevel = matchedItem.toLevel;
+                  console.log(`구조화된 데이터에서 각인서 레벨 찾음: ${engravingName} ${engravingGrade} Lv.${enhancedLevel}`);
+                }
+              }
+              
+              // 각인서 레벨 추출
+              let level = enhancedLevel || 1;
+              if (!enhancedLevel) {
                 if (item.level) {
                   level = parseInt(item.level);
                 } else if (item.item && typeof item.item === 'string') {
@@ -467,6 +484,7 @@ const PriceIntegration = (function() {
                     level = parseInt(lvMatch[1]);
                   }
                 }
+              }
                 
                 // 필요 개수 계산 (레벨당 5장)
                 const count = level * 5;
