@@ -40,7 +40,6 @@
         "js/data/modules/APIManager.js",
         "js/data/modules/APIStatus.js",
         "js/data/modules/pricing/PriceManager.js",
-        "js/data/modules/pricing/PriceScanner.js",
         "js/data/modules/pricing/PriceStorage.js",
         "js/data/modules/pricing/index.js",
         "js/data/modules/PriceIntegration.js"

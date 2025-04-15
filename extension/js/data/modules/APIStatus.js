@@ -542,49 +542,246 @@ const APIStatus = (function() {
    * @param {string} apiKey - API 키
    */
   async function processEngravingItems(items, apiKey) {
+    // 각인 API 모듈 임포트
+    let EngravingAPI;
+    try {
+      const moduleImport = await import('./api/engraving-api.js');
+      EngravingAPI = moduleImport.default;
+      console.log('각인서 API 모듈이 성공적으로 로드되었습니다.');
+    } catch (error) {
+      console.error('각인서 API 모듈을 불러오는데 실패했습니다:', error);
+      console.log('기본 내장 요청 방식으로 대체합니다.');
+      
+      // 내장 기능 사용
+      EngravingAPI = null;
+    }
+    
+    // 캠시 유효 시간 (6시간, 밀리초 단위)
+    const CACHE_TTL = 6 * 60 * 60 * 1000;
+    // 현재 시간
+    const now = Date.now();
+    
     // 거래소 API로 각인서 가격 조회
     const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.marketItems;
     
+    // 완료된 요청 추적
+    let completedRequests = 0;
+    
     for (const item of items) {
       try {
-        // API 요청 작성
-        const requestBody = {
-          Sort: "GRADE",
-          CategoryCode: API_CONFIG.categoryCodes.market.engraving, // 각인서 카테고리
-          ItemName: item.item, // 각인서 이름
-          ItemGrade: API_CONFIG.itemGrades.legendary, // 전설 각인서 기본
-          SortCondition: "ASC", // 오름차순
-          PageNo: 1
-        };
+        // 각인서 이름과 등급 추출
+        const nameMatch = item.item.match(/(\w+)\s*(\d+)\s*(Lv\.)?([0-9]+)/);
+        let engravingName = item.item;
+        let fromGrade = 'legendary'; // 기본 등급
+        let toGrade = 'legendary';
+        let fromLevel = 0;
+        let toLevel = 0;
         
-        // API 요청 수행
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            ...API_CONFIG.headers,
-            'authorization': `bearer ${apiKey}`
-          },
-          body: JSON.stringify(requestBody)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.Items && data.Items.length > 0) {
-            // 최저가 기준으로 가격 정보 가져오기
-            const lowestPrice = data.Items[0].CurrentMinPrice;
-            item.goldCost = lowestPrice;
-            console.log(`각인서 '${item.item}' 가격 조회 성공:`, lowestPrice);
+        // 각인서 이름, 레벨 정보 추출
+        if (item.from && item.to) {
+          // from과 to가 둘 다 있는 경우
+          const fromParts = item.from.match(/([^\d]+)(\d+)/);
+          const toParts = item.to.match(/([^\d]+)(\d+)/);
+          
+          if (fromParts && toParts) {
+            fromGrade = fromParts[1].trim(); // 예: 전설, 유물 등
+            toGrade = toParts[1].trim();
+            fromLevel = parseInt(fromParts[2]);
+            toLevel = parseInt(toParts[2]);
+            
+            // 이름 추출
+            const nameMatch = item.item.match(/([^\s]+)/);
+            if (nameMatch) {
+              engravingName = nameMatch[1];
+            }
           }
-        } else {
-          console.error(`각인서 이름 '${item.item}' 조회 실패:`, response.status);
+        }
+        
+        // 캠시키 생성
+        const cacheKey = `${engravingName}_${fromGrade}_${fromLevel}_${toGrade}_${toLevel}`;
+        
+        // 캠시에서 가격 확인
+        const cachedData = API_CACHE.engravings[cacheKey];
+        const lastUpdate = API_CACHE.lastUpdate[cacheKey] || 0;
+        
+        // 캠시 데이터가 있고, 유효 시간 내인 경우 캠시된 값 사용
+        if (cachedData && (now - lastUpdate) < CACHE_TTL) {
+          console.log(`캠시에서 각인서 가격 가져옴: ${cacheKey} = ${cachedData}`);
+          item.goldCost = cachedData;
+          completedRequests++;
+          continue; // 다음 아이템으로 진행
+        }
+        
+        if (EngravingAPI) {
+          // API 모듈을 통한 검색
+          try {
+            // 전설/유물 등의 영문 등급으로 변환
+            const fromGradeEng = getGradeCode(fromGrade);
+            const toGradeEng = getGradeCode(toGrade);
+            
+            // 유효한 각인서/등급/레벨 정보가 있는 경우 계산
+            if (engravingName && fromGradeEng && toGradeEng && fromLevel >= 0 && toLevel >= 0) {
+              // 원 등급 각인서 가격 조회
+              const originalPrice = await EngravingAPI.getEngravingPrice(engravingName, fromGrade, apiKey);
+              
+              if (originalPrice && originalPrice.price) {
+                // 필요한 책 수량 계산
+                const bookCount = calculateEngravingBooks(fromGradeEng, fromLevel, toGradeEng, toLevel);
+                
+                // 총 가격 계산
+                const totalCost = originalPrice.price * bookCount;
+                
+                // 캠시에 저장
+                API_CACHE.engravings[cacheKey] = totalCost;
+                API_CACHE.lastUpdate[cacheKey] = now;
+                
+                // 아이템에 가격 설정
+                item.goldCost = totalCost;
+                item.engravingBooks = bookCount; // 책 수량 저장
+                
+                console.log(`각인서 ${engravingName} ${fromGrade}${fromLevel} → ${toGrade}${toLevel}: ${bookCount}개 = ${totalCost}G`);
+              }
+            }
+          } catch (error) {
+            console.error(`각인서 API 사용 중 오류:`, error);
+            // 오류 발생시 기본 방식으로 빠져나감
+          }
+        }
+        
+        // API 모듈을 사용할 수 없을 경우 또는 API 모듈 사용 중 오류가 발생하면 기본 요청 사용
+        if (!item.goldCost) {
+          // API 요청 작성
+          const requestBody = {
+            Sort: "BUY_PRICE", // 가격순으로 변경
+            CategoryCode: API_CONFIG.categoryCodes.market.engraving, // 각인서 카테고리
+            ItemName: engravingName, // 추출한 각인서 이름
+            Grade: fromGrade, // 원본 각인서 등급 사용
+            SortCondition: "ASC", // 오름차순
+            PageNo: 1
+          };
+          
+          // API 요청 수행
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              ...API_CONFIG.headers,
+              'authorization': `bearer ${apiKey}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.Items && data.Items.length > 0) {
+              // 최저가 기준으로 가격 정보 가져오기
+              const lowestPrice = data.Items[0].CurrentMinPrice;
+              
+              // 필요한 책 수량 계산
+              const bookCount = calculateEngravingBooks(fromGradeEng || 'legendary', fromLevel || 0, toGradeEng || 'legendary', toLevel || 0);
+              
+              // 총 가격 계산
+              const totalCost = lowestPrice * bookCount;
+              
+              // 캠시에 저장
+              API_CACHE.engravings[cacheKey] = totalCost;
+              API_CACHE.lastUpdate[cacheKey] = now;
+              
+              // 아이템에 가격 설정
+              item.goldCost = totalCost;
+              item.engravingBooks = bookCount; // 책 수량 저장
+              
+              console.log(`각인서 '${engravingName}' 가격 조회 성공: ${lowestPrice}G x ${bookCount}개 = ${totalCost}G`);
+            }
+          } else {
+            console.error(`각인서 이름 '${engravingName}' 조회 실패:`, response.status);
+          }
         }
       } catch (error) {
         console.error(`각인서 '${item.item}' 처리 중 오류:`, error);
       }
       
+      completedRequests++;
+      // API 요청 전체 진행률 로그
+      if (completedRequests % 3 === 0 || completedRequests === items.length) {
+        console.log(`각인서 가격 처리 진행률: ${completedRequests}/${items.length} (${Math.round(completedRequests/items.length*100)}%)`);
+      }
+      
       // API 요청 간 지연
       await new Promise(resolve => setTimeout(resolve, 200));
     }
+  }
+  
+  /**
+   * 등급 코드 변환 (한글 -> 영문)
+   * @param {string} grade - 등급 한글명 (예: 전설, 유물)
+   * @returns {string} 등급 영문명 (예: legendary, relic)
+   */
+  function getGradeCode(grade) {
+    const gradeMap = {
+      '전설': 'legendary',
+      '유물': 'relic',
+      '고대': 'ancient',
+      '영웅': 'epic',
+      '희귀': 'rare',
+      '고급': 'uncommon'
+    };
+    return gradeMap[grade] || grade; // 일치하는 것이 없으면 원본 반환
+  }
+  
+  /**
+   * 각인서 필요 수량 계산
+   * @param {string} fromGrade - 시작 등급 (예: legendary, relic)
+   * @param {number} fromLevel - 시작 레벨 (0-4)
+   * @param {string} toGrade - 목표 등급 (예: legendary, relic)
+   * @param {number} toLevel - 목표 레벨 (0-4)
+   * @returns {number} 필요한 각인서 책 수량
+   */
+  function calculateEngravingBooks(fromGrade, fromLevel, toGrade, toLevel) {
+    // 등급 순서
+    const gradeOrder = ['uncommon', 'rare', 'epic', 'legendary', 'relic', 'ancient'];
+    
+    // 등급 인덱스
+    const fromGradeIndex = gradeOrder.indexOf(fromGrade);
+    const toGradeIndex = gradeOrder.indexOf(toGrade);
+    
+    // 유효한 등급 확인
+    if (fromGradeIndex === -1 || toGradeIndex === -1) {
+      console.error('유효하지 않은 등급입니다:', fromGrade, toGrade);
+      return 0;
+    }
+    
+    // 레벨 확인 (0~3 사이)
+    if (fromLevel < 0 || fromLevel > 4 || toLevel < 0 || toLevel > 4) {
+      console.error('유효하지 않은 레벨입니다:', fromLevel, toLevel);
+      return 0;
+    }
+    
+    // 상향 조건 확인
+    if (fromGradeIndex > toGradeIndex || (fromGradeIndex === toGradeIndex && fromLevel >= toLevel)) {
+      console.error('상향 조건이 충족되지 않습니다:', fromGrade, fromLevel, '->', toGrade, toLevel);
+      return 0;
+    }
+    
+    // 필요한 책 수량 계산
+    let requiredBooks = 0;
+    
+    // 같은 등급 내 레벨 업그레이드
+    if (fromGradeIndex === toGradeIndex) {
+      requiredBooks = (toLevel - fromLevel) * 5;
+    } else {
+      // 시작 등급에서 다음 등급 0레벨까지 업그레이드
+      requiredBooks = (4 - fromLevel) * 5;
+      
+      // 중간 등급들 건너뛰기
+      for (let i = fromGradeIndex + 1; i < toGradeIndex; i++) {
+        requiredBooks += 20; // 한 등급 전체 건너뛰기 (0->4)는 20장
+      }
+      
+      // 마지막 등급에서 목표 레벨까지 업그레이드
+      requiredBooks += toLevel * 5;
+    }
+    
+    return requiredBooks;
   }
   
   /**
@@ -633,7 +830,12 @@ const APIStatus = (function() {
       
       // 골드 소요량 정보가 있는 경우
       if (item.goldCost) {
-        goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span>`;
+        // 각인서의 경우 책 수량도 표시
+        if (item.type === 'engraving' && item.engravingBooks) {
+          goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span> <span class="book-count">(${item.engravingBooks}개)</span>`;
+        } else {
+          goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span>`;
+        }
         goldCell.style.color = '#F9A825'; // 골드 색상
         goldCell.style.fontWeight = 'bold';
       } else {
@@ -674,6 +876,13 @@ const APIStatus = (function() {
         border-radius: 50%;
         margin-right: 4px;
         vertical-align: middle;
+      }
+      
+      .book-count {
+        font-size: 0.9em;
+        color: #4CAF50;
+        margin-left: 4px;
+        font-weight: normal;
       }
     `;
     
