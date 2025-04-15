@@ -475,7 +475,6 @@ const APIStatus = (function() {
         if (cachedData && (now - lastUpdate) < CACHE_TTL) {
           console.log(`캐시에서 가격 가져옴: ${cacheKey} = ${cachedData}`);
           item.goldCost = cachedData;
-          item.fromCache = true; // 캐시에서 가져왔음을 표시
           completedRequests++;
           continue; // 다음 아이템으로 진행
         }
@@ -512,22 +511,6 @@ const APIStatus = (function() {
             // 아이템에 가격 설정
             item.goldCost = lowestPrice;
             console.log(`보석 '${searchGemName}' 가격 조회 성공:`, lowestPrice);
-            
-            // localStorage에도 캐시 저장 (세션 간 유지)
-            try {
-              // 현재 캐시 로드
-              const savedCache = localStorage.getItem('lopecScanner_gemCache');
-              let gemCache = savedCache ? JSON.parse(savedCache) : { gems: {}, lastUpdate: {} };
-              
-              // 새 데이터 추가
-              gemCache.gems[cacheKey] = lowestPrice;
-              gemCache.lastUpdate[cacheKey] = now;
-              
-              // 다시 저장
-              localStorage.setItem('lopecScanner_gemCache', JSON.stringify(gemCache));
-            } catch (e) {
-              console.warn('캐시를 localStorage에 저장하는 데 실패했습니다:', e);
-            }
           } else {
             console.warn(`보석 '${searchGemName}' 검색 결과가 없습니다.`);
           }
@@ -650,12 +633,7 @@ const APIStatus = (function() {
       
       // 골드 소요량 정보가 있는 경우
       if (item.goldCost) {
-        // 캐시에서 가져온 값인지 표시
-        if (item.fromCache) {
-          goldCell.innerHTML = `<span class="gold-value cached">${item.goldCost.toLocaleString()}G</span><span class="cache-indicator" title="캐시에서 가져온 값">💾</span>`;
-        } else {
-          goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span>`;
-        }
+        goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span>`;
         goldCell.style.color = '#F9A825'; // 골드 색상
         goldCell.style.fontWeight = 'bold';
       } else {
@@ -697,18 +675,6 @@ const APIStatus = (function() {
         margin-right: 4px;
         vertical-align: middle;
       }
-      
-      .cache-indicator {
-        display: inline-block;
-        font-size: 14px;
-        margin-left: 4px;
-        color: #0277BD;
-        cursor: help;
-      }
-      
-      .gold-value.cached {
-        border-bottom: 1px dotted #0277BD;
-      }
     `;
     
     document.head.appendChild(styleElement);
@@ -740,34 +706,6 @@ const APIStatus = (function() {
    * 초기화 함수
    */
   function initialize() {
-    // 이전 세션 로드
-    try {
-      const savedCache = localStorage.getItem('lopecScanner_gemCache');
-      if (savedCache) {
-        const gemCache = JSON.parse(savedCache);
-        // 유효 기간이 지나지 않은 아이템만 로드 (기본 6시간)
-        const now = Date.now();
-        const CACHE_TTL = 6 * 60 * 60 * 1000;
-        
-        // 유효한 아이템만 유지
-        let cacheCount = 0;
-        if (gemCache.gems && gemCache.lastUpdate) {
-          Object.keys(gemCache.gems).forEach(key => {
-            const lastUpdate = gemCache.lastUpdate[key] || 0;
-            if ((now - lastUpdate) < CACHE_TTL) {
-              API_CACHE.gems[key] = gemCache.gems[key];
-              API_CACHE.lastUpdate[key] = lastUpdate;
-              cacheCount++;
-            }
-          });
-        }
-        
-        console.log(`이전 세션의 보석 캐시 ${cacheCount}개 로드됨`);
-      }
-    } catch (e) {
-      console.warn('이전 캐시시 로드 중 오류:', e);
-    }
-    
     // API 키 업데이트 메시지 리스너 설정
     setupApiKeyUpdateListener();
     

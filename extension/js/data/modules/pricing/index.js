@@ -10,7 +10,6 @@ const PricingSystem = (function() {
   function checkModulesLoaded() {
     return (
       typeof PriceManager !== 'undefined' &&
-      typeof PriceScanner !== 'undefined' &&
       typeof PriceStorage !== 'undefined'
     );
   }
@@ -128,15 +127,10 @@ const PricingSystem = (function() {
   }
   
   /**
-   * 가격 스캐너 시작
+   * 다른 결제 기능
    */
   function startPriceScanner() {
-    if (!checkModulesLoaded()) {
-      console.error('필요한 모듈이 로드되지 않았습니다.');
-      return;
-    }
-    
-    PriceScanner.startAutoScan();
+    console.log('가격 스캐니 이 삭제되었습니다.');
   }
   
   /**
@@ -467,7 +461,6 @@ const PricingSystem = (function() {
       } else {
         console.error('일부 가격 모듈이 로드되지 않았습니다:', {
           PriceManager: typeof PriceManager !== 'undefined',
-          PriceScanner: typeof PriceScanner !== 'undefined',
           PriceStorage: typeof PriceStorage !== 'undefined'
         });
       }
@@ -476,7 +469,6 @@ const PricingSystem = (function() {
     // 모든 하위 모듈 참조 제공
     modules: {
       manager: PriceManager,
-      scanner: PriceScanner,
       storage: PriceStorage
     }
   };
