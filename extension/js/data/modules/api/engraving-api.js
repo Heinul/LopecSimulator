@@ -40,6 +40,12 @@ function buildEngravingRequestBody(engravingName, grade = '유물') {
  */
 async function sendApiRequest(requestBody, apiKey) {
     try {
+        if (!apiKey) {
+            throw new Error('API 키가 제공되지 않았습니다.');
+        }
+        
+        console.log(`API 요청 주소: ${CONFIG.baseUrl}${CONFIG.endpoints.market}`);
+        
         const response = await fetch(`${CONFIG.baseUrl}${CONFIG.endpoints.market}`, {
             method: 'POST',
             headers: {
@@ -49,11 +55,24 @@ async function sendApiRequest(requestBody, apiKey) {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) {
-            throw new Error(`API 요청 실패: ${response.status} ${response.statusText}`);
+        console.log('API 응답 상태코드:', response.status);
+        
+        if (response.ok) {
+            console.log(`API 성공 응답(${requestBody.ItemName})`);
+            const data = await response.json();
+            return data;
+        } else {
+            const errorMessage = `API 요청 실패(${requestBody.ItemName}): ${response.status} ${response.statusText}`;
+            console.error(errorMessage);
+            
+            // 응답 본문 정보 출력
+            try {
+                const errorText = await response.text();
+                console.error('오류 응답 본문:', errorText.substring(0, 300));
+            } catch (e) {}
+            
+            throw new Error(errorMessage);
         }
-
-        return await response.json();
     } catch (error) {
         console.error('API 요청 중 오류 발생:', error);
         throw error;
@@ -71,23 +90,52 @@ async function getEngravingPrice(engravingName, grade, apiKey) {
     try {
         // 요청 본문 생성
         const requestBody = buildEngravingRequestBody(engravingName, grade);
+        console.log('각인서 API 요청 본문:', JSON.stringify(requestBody));
         
         // API 요청 전송
         const response = await sendApiRequest(requestBody, apiKey);
+        console.log('각인서 API 응답 구조:', typeof response, Array.isArray(response));
         
         // 결과가 없는 경우
-        if (!response || response.length === 0) {
+        if (!response) {
             console.warn(`각인서 '${engravingName} (${grade})'에 대한 결과가 없습니다.`);
             return null;
         }
         
-        // 최저가 정보 반환
-        return {
-            price: response[0].CurrentMinPrice,
-            name: response[0].Name,
-            icon: response[0].Icon,
-            grade: grade
-        };
+        // 응답 구조 확인
+        if (response.Items && response.Items.length > 0) {
+            // 응답에 Items 배열이 있는 경우 (API 공식 일반 형식)
+            console.log('각인서 가격 정보 추출:', response.Items[0].Name, response.Items[0].CurrentMinPrice);
+            return {
+                price: response.Items[0].CurrentMinPrice,
+                name: response.Items[0].Name,
+                icon: response.Items[0].Icon || '',
+                grade: grade
+            };
+        } else if (Array.isArray(response) && response.length > 0) {
+            // 응답 자체가 배열인 경우 (만약 이런 형식이라면)
+            console.log('기본 배열 형태의 각인서 가격 정보 추출:', response[0]);
+            return {
+                price: response[0].CurrentMinPrice || response[0].AuctionInfo?.BuyPrice || 0,
+                name: response[0].Name || engravingName,
+                icon: response[0].Icon || '',
+                grade: grade
+            };
+        } else if (response.CurrentMinPrice) {
+            // 단일 항목으로 오는 경우
+            console.log('단일 항목 형태의 각인서 가격 정보 추출:', response.CurrentMinPrice);
+            return {
+                price: response.CurrentMinPrice,
+                name: response.Name || engravingName,
+                icon: response.Icon || '',
+                grade: grade
+            };
+        } else {
+            // 응답 본문 간단히 출력
+            console.warn(`각인서 '${engravingName} (${grade})'에 대한 결과가 없거나 형식이 다릅니다.`);
+            console.warn('응답 구조:', JSON.stringify(response).substring(0, 200));
+            return null;
+        }
     } catch (error) {
         console.error('각인서 가격 조회 중 오류 발생:', error);
         return null;
