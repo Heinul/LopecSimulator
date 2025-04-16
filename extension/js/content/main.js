@@ -7,6 +7,10 @@
 window.LopecScanner = window.LopecScanner || {};
 window.LopecScanner.Scanners = window.LopecScanner.Scanners || {};
 window.LopecScanner.Scanners.Accessory = window.LopecScanner.Scanners.Accessory || {};
+window.LopecScanner.Scanners.Accessory.Detector = window.LopecScanner.Scanners.Accessory.Detector || {};
+window.LopecScanner.Scanners.Accessory.Options = window.LopecScanner.Scanners.Accessory.Options || {};
+window.LopecScanner.Scanners.Accessory.Manipulator = window.LopecScanner.Scanners.Accessory.Manipulator || {};
+window.LopecScanner.Scanners.Accessory.AccessoryScanner = window.LopecScanner.Scanners.Accessory.AccessoryScanner || {};
 
 // 초기화 및 메시지 처리 함수
 (function() {

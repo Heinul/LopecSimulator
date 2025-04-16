@@ -64,10 +64,15 @@ LopecScanner.Scanners.Utils = (function() {
     // DOM 구조 확인을 위한 추가 검사
     console.log('DOM 구조 확인 - 장신구:');
     try {
-      if (LopecScanner.Scanners.Accessory && 
+      // Detector 객체가 존재하고 debugAccessoryStructure 함수가 존재하는지 안전하게 확인
+      if (typeof LopecScanner !== 'undefined' && 
+          LopecScanner.Scanners && 
+          LopecScanner.Scanners.Accessory && 
           LopecScanner.Scanners.Accessory.Detector && 
-          LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure) {
+          typeof LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure === 'function') {
         LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure();
+      } else {
+        console.log('장신구 구조 디버깅 함수가 없습니다.');
       }
     } catch (e) {
       console.warn('장신구 구조 디버깅 함수 오류:', e);
@@ -75,12 +80,21 @@ LopecScanner.Scanners.Utils = (function() {
     
     // 스캔 준비 전 장신구 옵션의 현재 값을 로그로 확인
     console.log('스캔 준비 전 장신구 옵션 값 확인:');
-    accessoryOptionElements.forEach((element, index) => {
-      const selectedOption = element.options[element.selectedIndex];
-      const selectedText = selectedOption ? selectedOption.textContent : '없음';
-      const selectedValue = element.value;
-      console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
-    });
+    if (accessoryOptionElements && accessoryOptionElements.length > 0) {
+      accessoryOptionElements.forEach((element, index) => {
+        // element가 유효한 DOM 요소인지 확인
+        if (element && element.options && typeof element.selectedIndex !== 'undefined') {
+          const selectedOption = element.options[element.selectedIndex];
+          const selectedText = selectedOption ? selectedOption.textContent : '없음';
+          const selectedValue = element.value;
+          console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
+        } else {
+          console.log(`장신구 옵션 [${index}]: 유효하지 않은 요소`);
+        }
+      });
+    } else {
+      console.log('장신구 옵션 요소가 없습니다.');
+    }
     
     // 팔찌 관련 엘리먼트 (bangle 클래스가 있는지 먼저 확인)
     let bangleStatElements = [];
@@ -159,28 +173,41 @@ LopecScanner.Scanners.Utils = (function() {
     
     // 스캔 준비 후 장신구 옵션의 현재 값을 다시 로그로 확인
     console.log('스캔 준비 후 장신구 옵션 값 확인:');
-    accessoryOptionElements.forEach((element, index) => {
-      const selectedOption = element.options[element.selectedIndex];
-      const selectedText = selectedOption ? selectedOption.textContent : '없음';
-      const selectedValue = element.value;
-      
-      // 원래 값 확인
-      const originalKey = `accessory-option-${index}`;
-      const originalValue = BaseScanner.state.originalValues[originalKey];
-      
-      // 원래 값과 현재 값이 다르면 경고
-      if (originalValue && originalValue !== selectedValue) {
-        console.warn(`장신구 옵션 [${index}] 값이 변경됨: ${originalValue} -> ${selectedValue}`);
-        
-        // 원래 값으로 복원 시도
-        console.log(`원래 값으로 복원 시도: ${originalValue}`);
-        element.value = originalValue;
-        const event = new Event('change', { bubbles: true });
-        element.dispatchEvent(event);
-      } else {
-        console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
-      }
-    });
+    if (accessoryOptionElements && accessoryOptionElements.length > 0) {
+      accessoryOptionElements.forEach((element, index) => {
+        // element가 유효한 DOM 요소인지 확인
+        if (element && element.options && typeof element.selectedIndex !== 'undefined') {
+          const selectedOption = element.options[element.selectedIndex];
+          const selectedText = selectedOption ? selectedOption.textContent : '없음';
+          const selectedValue = element.value;
+          
+          // 원래 값 확인
+          const originalKey = `accessory-option-${index}`;
+          const originalValue = BaseScanner.state.originalValues[originalKey];
+          
+          // 원래 값과 현재 값이 다르면 경고
+          if (originalValue && originalValue !== selectedValue) {
+            console.warn(`장신구 옵션 [${index}] 값이 변경됨: ${originalValue} -> ${selectedValue}`);
+            
+            // 원래 값으로 복원 시도
+            console.log(`원래 값으로 복원 시도: ${originalValue}`);
+            try {
+              element.value = originalValue;
+              const event = new Event('change', { bubbles: true });
+              element.dispatchEvent(event);
+            } catch (e) {
+              console.error(`옵션 복원 시 오류: ${e.message}`);
+            }
+          } else {
+            console.log(`장신구 옵션 [${index}]: ${selectedText} (${selectedValue})`);
+          }
+        } else {
+          console.log(`장신구 옵션 [${index}]: 유효하지 않은 요소`);
+        }
+      });
+    } else {
+      console.log('장신구 옵션 요소가 없습니다.');
+    }
     
     // 각인 스캔 항목 계산
     const engravingElements = {

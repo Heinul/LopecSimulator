@@ -7,6 +7,7 @@
 window.LopecScanner = window.LopecScanner || {};
 window.LopecScanner.Scanners = window.LopecScanner.Scanners || {};
 window.LopecScanner.Scanners.Accessory = window.LopecScanner.Scanners.Accessory || {};
+window.LopecScanner.Scanners.Accessory.Detector = window.LopecScanner.Scanners.Accessory.Detector || {};
 
 // 장신구 탐지 모듈
 LopecScanner.Scanners.Accessory.Detector = (function() {
@@ -89,51 +90,93 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
    * @return {Object} - 타입별로 그룹화된 장신구 정보
    */
   function groupAccessoriesByType(elements) {
-    // 타입별 그룹화를 위한 객체
-    let accessoryGroups = {
-      necklace: { elements: [], indices: [] },
-      earring: { elements: [], indices: [] },
-      ring: { elements: [], indices: [] }
-    };
-    
-    // 0. 전체 장신구 요소 가져오기
-    const accessoryList = document.querySelector('.accessory-list');
-    const accessoryItems = accessoryList ? accessoryList.querySelectorAll('.accessory-item.accessory') : [];
-    
-    // 1. 장신구 아이템만큼 반복 (각 장신구 아이템에 대해)
-    Array.from(accessoryItems).forEach((item, index) => {
-      // 이 장신구 아이템에 연관된 옵션 요소들 찾기
-      const optionElements = item.querySelectorAll('.option-box .grinding-wrap .option.tooltip-text');
+    try {
+      // 타입별 그룹화를 위한 객체
+      let accessoryGroups = {
+        necklace: { elements: [], indices: [] },
+        earring: { elements: [], indices: [] },
+        ring: { elements: [], indices: [] }
+      };
       
-      // 장신구 타입 확인 (인덱스 기반 - 가장 안정적)
-      let accessoryType;
-      if (index === 0) {
-        accessoryType = 'necklace'; // 목걸이
-      } else if (index === 1 || index === 2) {
-        accessoryType = 'earring'; // 귀걸이
-      } else if (index === 3 || index === 4) {
-        accessoryType = 'ring'; // 반지
-      } else {
-        accessoryType = 'unknown';
+      if (!elements || elements.length === 0) {
+        console.log('그룹화할 장신구 옵션 요소가 없습니다.');
+        return accessoryGroups;
       }
       
-      // 옵션 요소들을 해당 타입에 추가
-      Array.from(optionElements).forEach(optElement => {
-        // 이 장신구 옵션이 elements 배열에 있는지 확인
-        // NodeList나 HTMLCollection을 배열로 변환
-        const elementsArray = Array.from(elements);
-        const elementIndex = elementsArray.indexOf(optElement);
-        if (elementIndex !== -1) {
-          // 배열에 있는 요소만 그룹에 추가
-          if (accessoryType !== 'unknown') {
-            accessoryGroups[accessoryType].elements.push(optElement);
-            accessoryGroups[accessoryType].indices.push(elementIndex);
+      // 0. 전체 장신구 요소 가져오기
+      const accessoryList = document.querySelector('.accessory-list');
+      if (!accessoryList) {
+        console.log('.accessory-list 요소를 찾을 수 없습니다.');
+        return accessoryGroups;
+      }
+      
+      const accessoryItems = accessoryList.querySelectorAll('.accessory-item.accessory');
+      if (!accessoryItems || accessoryItems.length === 0) {
+        console.log('장신구 아이템 요소를 찾을 수 없습니다.');
+        return accessoryGroups;
+      }
+      
+      // 1. 장신구 아이템만큼 반복 (각 장신구 아이템에 대해)
+      Array.from(accessoryItems).forEach((item, index) => {
+        if (!item) return;
+        
+        try {
+          // 이 장신구 아이템에 연관된 옵션 요소들 찾기
+          const optionElements = item.querySelectorAll('.option-box .grinding-wrap .option.tooltip-text');
+          if (!optionElements || optionElements.length === 0) return;
+          
+          // 장신구 타입 확인 (인덱스 기반 - 가장 안정적)
+          let accessoryType;
+          if (index === 0) {
+            accessoryType = 'necklace'; // 목걸이
+          } else if (index === 1 || index === 2) {
+            accessoryType = 'earring'; // 귀걸이
+          } else if (index === 3 || index === 4) {
+            accessoryType = 'ring'; // 반지
+          } else {
+            accessoryType = 'unknown';
           }
+          
+          if (accessoryType === 'unknown') return;
+          
+          // 옵션 요소들을 해당 타입에 추가
+          Array.from(optionElements).forEach(optElement => {
+            // 이 장신구 옵션이 elements 배열에 있는지 확인
+            // NodeList나 HTMLCollection을 배열로 변환
+            try {
+              if (!optElement) return;
+              
+              const elementsArray = Array.from(elements);
+              const elementIndex = elementsArray.indexOf(optElement);
+              if (elementIndex !== -1) {
+                // 배열에 있는 요소만 그룹에 추가
+                accessoryGroups[accessoryType].elements.push(optElement);
+                accessoryGroups[accessoryType].indices.push(elementIndex);
+              }
+            } catch (e) {
+              console.error(`장신구 옵션 요소 처리 중 오류:`, e);
+            }
+          });
+        } catch (e) {
+          console.error(`장신구 아이템 ${index} 처리 중 오류:`, e);
         }
       });
-    });
-    
-    return accessoryGroups;
+      
+      // 각 타입별 요소 수 로그
+      console.log(`그룹화 결과: 목걸이 ${accessoryGroups.necklace.elements.length}개, ` + 
+                 `귀걸이 ${accessoryGroups.earring.elements.length}개, ` + 
+                 `반지 ${accessoryGroups.ring.elements.length}개`);
+      
+      return accessoryGroups;
+      
+    } catch (e) {
+      console.error('장신구 그룹화 중 오류:', e);
+      return {
+        necklace: { elements: [], indices: [] },
+        earring: { elements: [], indices: [] },
+        ring: { elements: [], indices: [] }
+      };
+    }
   }
   
   /**
@@ -141,50 +184,70 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
    * @return {Array} 선택된 옵션 정보 배열
    */
   function getSelectedAccessoryOptions() {
-    // 장신구 종류 순서
-    const accessoryTypes = ['necklace', 'earring', 'earring', 'ring', 'ring'];
-    
-    // 모든 장신구 아이템(li) 요소 찾기
-    const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
-    
-    // 반환할 결과 배열
-    const result = [];
-    
-    // 각 장신구 아이템에서 선택 요소와 옵션 찾기
-    accessoryItems.forEach((item, index) => {
-      // 장신구 타입 확인
-      const typeIndex = index < accessoryTypes.length ? index : 0;
-      const accessoryType = accessoryTypes[typeIndex];
+    try {
+      // 장신구 종류 순서
+      const accessoryTypes = ['necklace', 'earring', 'earring', 'ring', 'ring'];
       
-      // 모든 option select 요소 찾기
-      const optionSelects = item.querySelectorAll('.option.tooltip-text');
+      // 모든 장신구 아이템(li) 요소 찾기
+      const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
+      if (!accessoryItems || accessoryItems.length === 0) {
+        console.log('장신구 아이템을 찾을 수 없습니다.');
+        return [];
+      }
       
-      // 각 선택 요소에서 값 찾기
-      optionSelects.forEach((select, selectIndex) => {
-        // 현재 선택된 옵션
-        const selectedOption = select.options[select.selectedIndex];
-        if (!selectedOption) {
-          return;
+      // 반환할 결과 배열
+      const result = [];
+      
+      // 각 장신구 아이템에서 선택 요소와 옵션 찾기
+      accessoryItems.forEach((item, index) => {
+        if (!item) return;
+        
+        try {
+          // 장신구 타입 확인
+          const typeIndex = index < accessoryTypes.length ? index : 0;
+          const accessoryType = accessoryTypes[typeIndex];
+          
+          // 모든 option select 요소 찾기
+          const optionSelects = item.querySelectorAll('.option.tooltip-text');
+          if (!optionSelects || optionSelects.length === 0) return;
+          
+          // 각 선택 요소에서 값 찾기
+          optionSelects.forEach((select, selectIndex) => {
+            if (!select || !select.options || typeof select.selectedIndex === 'undefined') return;
+            
+            // 현재 선택된 옵션
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption) return;
+            
+            try {
+              // 장신구 등급 (상/중/하)
+              const grindingWrap = select.closest('.grinding-wrap');
+              const qualitySpan = grindingWrap ? grindingWrap.querySelector('.quality') : null;
+              const grade = qualitySpan ? qualitySpan.textContent : '알 수 없음';
+              
+              // 결과에 추가
+              result.push({
+                item: index + 1,              // 장신구 번호
+                optionIndex: selectIndex + 1, // 장신구 옵션 번호
+                type: accessoryType,          // 장신구 타입
+                grade,                        // 장신구 등급
+                selectedValue: select.value,  // 선택된 값
+                selectedText: selectedOption.textContent // 선택된 텍스트
+              });
+            } catch (e) {
+              console.error(`장신구 ${index+1} 옵션 ${selectIndex+1} 처리 중 오류:`, e);
+            }
+          });
+        } catch (e) {
+          console.error(`장신구 ${index+1} 처리 중 오류:`, e);
         }
-        
-        // 장신구 등급 (상/중/하)
-        const grindingWrap = select.closest('.grinding-wrap');
-        const qualitySpan = grindingWrap ? grindingWrap.querySelector('.quality') : null;
-        const grade = qualitySpan ? qualitySpan.textContent : '알 수 없음';
-        
-        // 결과에 추가
-        result.push({
-          item: index + 1,              // 장신구 번호
-          optionIndex: selectIndex + 1, // 장신구 옵션 번호
-          type: accessoryType,          // 장신구 타입
-          grade,                        // 장신구 등급
-          selectedValue: select.value,  // 선택된 값
-          selectedText: selectedOption.textContent // 선택된 텍스트
-        });
       });
-    });
-    
-    return result;
+      
+      return result;
+    } catch (e) {
+      console.error('선택된 장신구 옵션 정보 가져오기 오류:', e);
+      return [];
+    }
   }
   
   /**

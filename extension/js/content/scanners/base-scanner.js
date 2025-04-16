@@ -243,11 +243,22 @@ LopecScanner.Scanners.BaseScanner = (function() {
           
           if (!isNaN(index) && index >= 0 && index < nameSelects.length) {
             const value = state.originalValues[key];
-            nameSelects[index].value = value;
-            const event = new Event('change', { bubbles: true });
-            nameSelects[index].dispatchEvent(event);
-            await LopecScanner.Utils.delay(100);
-            console.log(`장비 이름 복원 성공: 인덱스 ${index}, 값 ${value}`);
+            try {
+              nameSelects[index].value = value;
+              
+              // createTooltip 오류 방지를 위해 변경된 이벤트 방식 사용
+              // 이벤트 리스너를 직접 호출하지 않고 bubbling만 활성화
+              const event = new Event('change', { bubbles: true, cancelable: false });
+              
+              // 이벤트를 저수준으로 발생시켜 버블링만 사용
+              // bubbling을 통해 상위 핸들러가 처리하도록 함
+              nameSelects[index].dispatchEvent(event);
+              
+              await LopecScanner.Utils.delay(100);
+              console.log(`장비 이름 복원 성공: 인덱스 ${index}, 값 ${value}`);
+            } catch (e) {
+              console.error(`장비 이름 변경 중 오류:`, e);
+            }
           } else {
             console.warn(`장비 이름 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 요소: ${nameSelects.length})`);
           }
@@ -269,11 +280,18 @@ LopecScanner.Scanners.BaseScanner = (function() {
           
           if (!isNaN(index) && index >= 0 && index < upgradeSelects.length) {
             const value = state.originalValues[key];
-            upgradeSelects[index].value = value;
-            const event = new Event('change', { bubbles: true });
-            upgradeSelects[index].dispatchEvent(event);
-            await LopecScanner.Utils.delay(100);
-            console.log(`장비 강화도 복원 성공: 인덱스 ${index}, 값 ${value}`);
+            try {
+              upgradeSelects[index].value = value;
+              
+              // createTooltip 오류 방지를 위해 변경된 이벤트 방식 사용
+              const event = new Event('change', { bubbles: true, cancelable: false });
+              upgradeSelects[index].dispatchEvent(event);
+              
+              await LopecScanner.Utils.delay(100);
+              console.log(`장비 강화도 복원 성공: 인덱스 ${index}, 값 ${value}`);
+            } catch (e) {
+              console.error(`장비 강화도 변경 중 오류:`, e);
+            }
           } else {
             console.warn(`장비 강화도 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 요소: ${upgradeSelects.length})`);
           }
@@ -326,11 +344,19 @@ LopecScanner.Scanners.BaseScanner = (function() {
           
           if (!isNaN(index) && index >= 0 && index < gemLevelElements.length) {
             const value = state.originalValues[key];
-            gemLevelElements[index].value = value;
-            const event = new Event('change', { bubbles: true });
-            gemLevelElements[index].dispatchEvent(event);
-            await LopecScanner.Utils.delay(80);
-            console.log(`보석 복원 성공: ${key} (인덱스: ${index}, 값: ${value})`);
+            try {
+              console.log(`보석 ${index} 복원 시도: ${value}`);
+              gemLevelElements[index].value = value;
+              
+              // createTooltip 오류 방지를 위해 변경된 이벤트 방식 사용
+              const event = new Event('change', { bubbles: true, cancelable: false });
+              gemLevelElements[index].dispatchEvent(event);
+              
+              await LopecScanner.Utils.delay(80);
+              console.log(`보석 복원 성공: ${key} (인덱스: ${index}, 값: ${value})`);
+            } catch (e) {
+              console.error(`보석 ${index} 복원 중 오류:`, e);
+            }
           } else {
             console.warn(`보석 인덱스 범위 초과 또는 유효하지 않음: ${key} (인덱스: ${index}, 총 보석: ${gemLevelElements.length})`);
           }
