@@ -284,7 +284,7 @@ const APIStatus = (function() {
       console.log('골드 데이터 요청 시작...');
       console.log('처리할 데이터 항목 수:', filteredData.length);
       
-      // API 캐시 초기화 (없는 경우에 대비)
+      // API 캐시 초기화
       if (!API_CACHE.engravings) API_CACHE.engravings = {};
       if (!API_CACHE.gems) API_CACHE.gems = {};
       if (!API_CACHE.lastUpdate) API_CACHE.lastUpdate = {};
@@ -704,50 +704,10 @@ const APIStatus = (function() {
       console.log('각인서 API 모듈이 성공적으로 로드되었습니다.');
     } catch (error) {
       console.error('각인서 API 모듈을 불러오는데 실패했습니다:', error);
-      console.log('기본 내장 요청 방식으로 대체합니다.');
-      
-      // 내장 기능 사용 - 더미 API 오브젝트 생성
-      EngravingAPI = {
-        getEngravingPrice: async function(name, grade, apiKey) {
-          // 직접 API 요청 구현
-          const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.marketItems;
-          const requestBody = {
-            Sort: "BUY_PRICE",
-            CategoryCode: API_CONFIG.categoryCodes.market.engraving,
-            ItemName: name,
-            Grade: grade,
-            SortCondition: "ASC",
-            PageNo: 1
-          };
-          
-          try {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              headers: {
-                ...API_CONFIG.headers,
-                'authorization': `bearer ${apiKey}`
-              },
-              body: JSON.stringify(requestBody)
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data && data.Items && data.Items.length > 0) {
-                return { price: data.Items[0].CurrentMinPrice };
-              }
-            }
-            return null;
-          } catch (e) {
-            console.error('내장 각인서 API 요청 중 오류:', e);
-            return null;
-          }
-        }
-      };
-      console.log('내장 각인서 API 핸들러 생성됨');
     }
     
     // 캐시 유효 시간 (6시간, 밀리초 단위)
-    const CACHE_TTL = 6 * 60 * 60 * 1000;
+    const CACHE_TTL = 1 * 60 * 60 * 1000;
     // 현재 시간
     const now = Date.now();
     
@@ -759,47 +719,12 @@ const APIStatus = (function() {
     
     for (const item of items) {
       try {
-        // 각인서 이름과 등급 추출
-        const nameMatch = item.item.match(/(\w+)\s*(\d+)\s*(Lv\.)?([0-9]+)/);
-        let engravingName = item.item;
-        let fromGrade = 'legendary'; // 기본 등급
-        let toGrade = 'legendary';
-        let fromLevel = 0;
-        let toLevel = 0;
-        
-        // 각인서 이름, 레벨 정보 추출
-        if (item.from && item.to) {
-          console.log('원본 from/to 값:', item.from, item.to);
-          // from과 to가 둘 다 있는 경우
-          const fromParts = item.from.match(/([^\d\s]+)[\s]*([\d]+)/);
-          const toParts = item.to.match(/([^\d\s]+)[\s]*([\d]+)/);
-          
-          if (fromParts && fromParts.length >= 3) {
-            fromGrade = fromParts[1].trim(); // 예: 전설, 유물 등
-            fromLevel = parseInt(fromParts[2]);
-            console.log(`from 분석 결과: 등급="${fromGrade}", 레벨=${fromLevel}`);
-          }
-          
-          if (toParts && toParts.length >= 3) {
-            toGrade = toParts[1].trim();
-            toLevel = parseInt(toParts[2]);
-            console.log(`to 분석 결과: 등급="${toGrade}", 레벨=${toLevel}`);
-          }
-          
-          // 이름 추출 - item.item에서 이름만 추출
-          const itemParts = item.item.split(' ');
-          if (itemParts.length > 0) {
-            // '각인' 타입인 경우 첫 번째 부분을 제외한 나머지를 이름으로 간주
-            if (item.type === '각인' && itemParts.length >= 2) {
-              engravingName = itemParts[itemParts.length - 2];
-              console.log(`이름 추출 결과(한글 타입): '${item.item}' -> '${engravingName}'`);
-            } else {
-              // 다른 경우에는 extractEngravingName 함수 사용
-              engravingName = extractEngravingName(item.item);
-              console.log(`이름 추출 결과(일반): '${item.item}' -> '${engravingName}'`);
-            }
-          }
-        }
+        // 각인서 정보 획득득
+        let engravingName = item.engravingName;
+        let fromGrade = item.fromGrade;
+        let toGrade =  item.toGrade;
+        let fromLevel = item.fromLevel;
+        let toLevel = item.toLevel;
         
         // 캐시키 생성
         const cacheKey = `${engravingName}_${fromGrade}_${fromLevel}_${toGrade}_${toLevel}`;
@@ -819,33 +744,84 @@ const APIStatus = (function() {
         if (EngravingAPI) {
           // API 모듈을 통한 검색
           try {
-            // 전설/유물 등의 영문 등급으로 변환
-            const fromGradeEng = getGradeCode(fromGrade);
-            const toGradeEng = getGradeCode(toGrade);
-            
             // 유효한 각인서/등급/레벨 정보가 있는 경우 계산
-            if (engravingName && fromGradeEng && toGradeEng && fromLevel >= 0 && toLevel >= 0) {
+            if (engravingName && fromGrade && toGrade && fromLevel >= 0 && toLevel >= 0) {
               // 원 등급 각인서 가격 조회
-              console.log(`각인서 가격 조회 시도: ${engravingName}, ${fromGrade}`);
-              const originalPrice = await EngravingAPI.getEngravingPrice(engravingName, fromGrade, apiKey);
-              console.log(`각인서 가격 조회 결과:`, originalPrice);
+              console.log(`각인서 가격 조회 시도: ${engravingName}`);
+              const priceData = await EngravingAPI.getEngravingPrice(engravingName, null, apiKey);
+              console.log(`각인서 가격 조회 결과:`, priceData);
               
-              if (originalPrice && originalPrice.price) {
-                // 필요한 책 수량 계산
-                const bookCount = calculateEngravingBooks(fromGradeEng, fromLevel, toGradeEng, toLevel);
+              if (priceData) {
+                // 등급별 필요 책 수량 계산
+                const booksDetail = calculateDetailedEngravingBooks(fromGrade, fromLevel, toGrade, toLevel);
                 
-                // 총 가격 계산
-                const totalCost = originalPrice.price * bookCount;
-                
-                // 캐시에 저장
-                API_CACHE.engravings[cacheKey] = totalCost;
-                API_CACHE.lastUpdate[cacheKey] = now;
-                
-                // 아이템에 가격 설정
-                item.goldCost = totalCost;
-                item.engravingBooks = bookCount; // 책 수량 저장
-                
-                console.log(`각인서 ${engravingName} ${fromGrade}${fromLevel} → ${toGrade}${toLevel}: ${bookCount}개 = ${totalCost}G`);
+                if (booksDetail.totalBooks > 0) {
+                  // 등급별 가격 정보 초기화
+                  const costDetails = {
+                    byGrade: {},
+                    totalCost: 0
+                  };
+                  
+                  // 각 등급별 계산
+                  let totalCost = 0;
+                  
+                  // 각 등급별로 필요한 책 수와 가격 계산
+                  for (const grade in booksDetail.byGrade) {
+                    const booksNeeded = booksDetail.byGrade[grade];
+                    
+                    // 해당 등급의 가격 정보 확인
+                    if (priceData[grade] && priceData[grade].price) {
+                      const gradePrice = priceData[grade].price;
+                      const gradeCost = gradePrice * booksNeeded;
+                      
+                      // 세부 정보 저장
+                      costDetails.byGrade[grade] = {
+                        price: gradePrice,
+                        books: booksNeeded,
+                        cost: gradeCost
+                      };
+                      
+                      // 총 가격에 추가
+                      totalCost += gradeCost;
+                    } else {
+                      console.warn(`각인서 ${engravingName}의 ${grade} 등급 가격 정보를 찾을 수 없습니다.`);
+                      costDetails.byGrade[grade] = {
+                        price: 0,
+                        books: booksNeeded,
+                        cost: 0
+                      };
+                    }
+                  }
+                  
+                  // 총 가격 설정
+                  costDetails.totalCost = totalCost;
+                  
+                  // 캐시에 저장
+                  API_CACHE.engravings[cacheKey] = {
+                    totalCost: totalCost,
+                    costDetails: costDetails,
+                    totalBooks: booksDetail.totalBooks
+                  };
+                  API_CACHE.lastUpdate[cacheKey] = now;
+                  
+                  // 아이템에 가격 설정
+                  item.goldCost = totalCost;
+                  item.costDetails = costDetails;
+                  item.engravingBooks = booksDetail.totalBooks;
+                  
+                  // 로그 메시지
+                  let logMessage = `각인서 ${engravingName} ${fromGrade}${fromLevel} → ${toGrade}${toLevel}: 총 ${booksDetail.totalBooks}개 = ${totalCost}G\n`;
+                  
+                  // 등급별 세부 정보 로그
+                  for (const grade in costDetails.byGrade) {
+                    const detail = costDetails.byGrade[grade];
+                    logMessage += `  - ${grade} 등급: ${detail.books}개 x ${detail.price}G = ${detail.cost}G\n`;
+                  }
+                  
+                  console.log(logMessage);
+                } else {
+                  console.warn(`각인서 ${engravingName} 필요한 책 수량이 0입니다.`);
+                }
               } else {
                 console.warn(`각인서 ${engravingName} 가격 조회 실패 또는 가격 정보 없음`);
               }
@@ -853,128 +829,6 @@ const APIStatus = (function() {
           } catch (error) {
             console.error(`각인서 API 사용 중 오류:`, error);
             // 오류 발생시 기본 방식으로 빠져나감
-          }
-        }
-        
-        // API 모듈을 사용할 수 없을 경우 또는 API 모듈 사용 중 오류가 발생하면 기본 요청 사용
-        if (!item.goldCost) {
-          // fromGrade, toGrade 처리 - 일단 기본 변환
-          const fromGradeEng = getGradeCode(fromGrade || '전설');
-          const toGradeEng = getGradeCode(toGrade || '전설');
-          
-          // 각인서 이름과 등급 정제
-          let fixedName = engravingName;
-          let fixedGrade = fromGrade || '전설';
-          
-          // 이름 수정
-          if (fixedName.includes('전설') || fixedName.includes('유물') || 
-              fixedName.includes('Lv') || fixedName === '알 수 없음') {
-              
-            // 각인서 이름 목록에서 찾기
-            const knownEngravings = [
-              '타격의 대가', '강화 방패', '기동방박', '금지 패턴',
-              '아드레날린', '시너지', '창수의 기술', '실드 스트라이크',
-              '주술의 대가', '전문가', '금공장', '기동거', '얼괴마루', '조절', '상장'
-            ];
-            
-            // 알려진 각인서와 일치하는지 확인
-            for (const name of knownEngravings) {
-              if (item.item.includes(name)) {
-                fixedName = name;
-                break;
-              }
-            }
-            
-            // 이름에서 Lv 와 숫자 제거
-            fixedName = fixedName.replace(/Lv\.?\s*\d+/g, '').trim();
-            fixedName = fixedName.replace(/\s+\d+/g, '').trim();
-            
-            // 직접 각인서 이름 확인
-            if (item.item.includes('타격의 대가')) {
-              fixedName = '타격의 대가';
-            } else if (item.item.includes('주술의 대가')) {
-              fixedName = '주술의 대가';
-            } else if (item.item.includes('금지 패턴')) {
-              fixedName = '금지 패턴';
-            }
-            
-            console.log('각인서 이름 및 등급 정제 결과:', { fixedName, fixedGrade });
-          }
-          
-          // API 요청 작성
-          const requestBody = {
-            Sort: "BUY_PRICE", // 가격순으로 변경
-            CategoryCode: API_CONFIG.categoryCodes.market.engraving, // 각인서 카테고리
-            ItemName: fixedName, // 정제된 각인서 이름
-            Grade: fixedGrade, // 정제된 등급
-            SortCondition: "ASC", // 오름차순
-            PageNo: 1
-          };
-          
-          console.log(`각인서 API 요청:`, JSON.stringify(requestBody, null, 2));
-          
-          // API 요청 수행
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              ...API_CONFIG.headers,
-              'authorization': `bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('각인서 API 응답:', JSON.stringify(data).substring(0, 300) + '...');
-            
-            if (data && data.Items && data.Items.length > 0) {
-              // 최저가 기준으로 가격 정보 가져오기
-              const lowestPrice = data.Items[0].CurrentMinPrice;
-              console.log(`각인서 '${fixedName}' 가격 조회 성공:`, lowestPrice);
-              
-              // 필요한 책 수량 계산 전 유효성 검사
-              if (fromLevel === undefined || toLevel === undefined ||
-                  isNaN(fromLevel) || isNaN(toLevel) ||
-                  fromGradeEng === undefined || toGradeEng === undefined) {
-                console.warn(`각인서 ${fixedName} 레벨/등급 정보 유효하지 않음:`, 
-                            { fromLevel, toLevel, fromGradeEng, toGradeEng });
-                continue; // 다음 아이템으로 진행
-              }
-              
-              // 필요한 책 수량 계산
-              const bookCount = calculateEngravingBooks(fromGradeEng, fromLevel || 0, toGradeEng, toLevel || 0);
-              
-              if (bookCount <= 0) {
-                console.warn(`각인서 ${fixedName} 필요 책 수량이 0개 이하입니다:`, bookCount);
-                continue; // 다음 아이템으로 진행
-              }
-              
-              // 총 가격 계산
-              const totalCost = lowestPrice * bookCount;
-              
-              // 캐시에 저장
-              API_CACHE.engravings = API_CACHE.engravings || {}; // 없는 경우 초기화
-              API_CACHE.lastUpdate = API_CACHE.lastUpdate || {}; // 없는 경우 초기화
-              API_CACHE.engravings[cacheKey] = totalCost;
-              API_CACHE.lastUpdate[cacheKey] = now;
-              
-              // 아이템에 가격 설정
-              item.goldCost = totalCost;
-              item.engravingBooks = bookCount; // 책 수량 저장
-              
-              console.log(`각인서 '${fixedName}' 가격 조회 성공: ${lowestPrice}G x ${bookCount}개 = ${totalCost}G`);
-            } else {
-              console.warn(`각인서 '${fixedName}' 검색 결과가 없습니다.`);
-            }
-          } else {
-            const errorMessage = `각인서 이름 '${fixedName}' 조회 실패: ${response.status}`;
-            console.error(errorMessage);
-            
-            // 응답 본문 출력 시도
-            try {
-              const errorBody = await response.text();
-              console.error('응답 본문:', errorBody.substring(0, 500));
-            } catch (e) {}
           }
         }
       } catch (error) {
@@ -991,46 +845,7 @@ const APIStatus = (function() {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
-  
-  /**
-   * 등급 코드 변환 (한글 -> 영문)
-   * @param {string} grade - 등급 한글명 (예: 전설, 유물)
-   * @returns {string} 등급 영문명 (예: legendary, relic)
-   */
-  function getGradeCode(grade) {
-    // 초기에 trim 처리
-    const trimmedGrade = grade.trim();
-    
-    const gradeMap = {
-      '전설': 'legendary',
-      '유물': 'relic',
-      '고대': 'ancient',
-      '영웅': 'epic',
-      '희귀': 'rare',
-      '고급': 'uncommon'
-    };
-    
-    // 정확한 매칭
-    const result = gradeMap[trimmedGrade];
-    if (result) return result;
-    
-    // 일부만 포함되어 있는 경우 처리
-    for (const [key, value] of Object.entries(gradeMap)) {
-      if (trimmedGrade.includes(key)) {
-        console.log(`등급 변환: '${trimmedGrade}' -> '${value}'`);
-        return value;
-      }
-    }
-    
-    // 그래도 매칭이 없으면, 입력값이 이미 영문이면 그대로 사용
-    if (['legendary', 'relic', 'ancient', 'epic', 'rare', 'uncommon'].includes(trimmedGrade.toLowerCase())) {
-      return trimmedGrade.toLowerCase();
-    }
-    
-    // 아무것도 찾지 못했으면 기본값 legendary 반환
-    console.warn(`알 수 없는 등급 '${trimmedGrade}', legendary가 기본값으로 사용됩니다.`);
-    return 'legendary';
-  }
+
   
   /**
    * 각인서 필요 수량 계산
@@ -1040,13 +855,19 @@ const APIStatus = (function() {
    * @param {number} toLevel - 목표 레벨 (0-4)
    * @returns {number} 필요한 각인서 책 수량
    */
-  function calculateEngravingBooks(fromGrade, fromLevel, toGrade, toLevel) {
+  function calculateDetailedEngravingBooks(fromGrade, fromLevel, toGrade, toLevel) {
     // 등급 순서
-    const gradeOrder = ['uncommon', 'rare', 'epic', 'legendary', 'relic', 'ancient'];
+    const gradeOrder = ['영웅', '전설', '유물'];
     
     // 등급 인덱스
     const fromGradeIndex = gradeOrder.indexOf(fromGrade);
     const toGradeIndex = gradeOrder.indexOf(toGrade);
+    
+    // 결과 객체 초기화
+    const result = {
+      totalBooks: 0,
+      byGrade: {} // 각 등급별 필요 책 수량
+    };
     
     // 유효한 등급 확인
     if (fromGradeIndex === -1 || toGradeIndex === -1) {
@@ -1054,7 +875,7 @@ const APIStatus = (function() {
       return 0;
     }
     
-    // 레벨 확인 (0~3 사이)
+    // 레벨 확인 (0~4 사이)
     if (fromLevel < 0 || fromLevel > 4 || toLevel < 0 || toLevel > 4) {
       console.error('유효하지 않은 레벨입니다:', fromLevel, toLevel);
       return 0;
@@ -1066,26 +887,31 @@ const APIStatus = (function() {
       return 0;
     }
     
-    // 필요한 책 수량 계산
-    let requiredBooks = 0;
-    
-    // 같은 등급 내 레벨 업그레이드
+     // 같은 등급 내 레벨 업그레이드
     if (fromGradeIndex === toGradeIndex) {
-      requiredBooks = (toLevel - fromLevel) * 5;
+      const booksNeeded = (toLevel - fromLevel) * 5;
+      result.totalBooks = booksNeeded;
+      result.byGrade[fromGrade] = booksNeeded;
     } else {
-      // 시작 등급에서 다음 등급 0레벨까지 업그레이드
-      requiredBooks = (4 - fromLevel) * 5;
+      // 시작 등급에서 남은 레벨 채우기
+      const booksForFromGrade = (4 - fromLevel) * 5;
+      result.totalBooks += booksForFromGrade;
+      result.byGrade[fromGrade] = booksForFromGrade;
       
-      // 중간 등급들 건너뛰기
+      // 중간 등급들
       for (let i = fromGradeIndex + 1; i < toGradeIndex; i++) {
-        requiredBooks += 20; // 한 등급 전체 건너뛰기 (0->4)는 20장
+        const grade = gradeOrder[i];
+        result.byGrade[grade] = 20; // 한 등급 전체 (0->4)는 20장
+        result.totalBooks += 20;
       }
       
-      // 마지막 등급에서 목표 레벨까지 업그레이드
-      requiredBooks += toLevel * 5;
+      // 목표 등급
+      const booksForToGrade = toLevel * 5;
+      result.totalBooks += booksForToGrade;
+      result.byGrade[toGrade] = booksForToGrade;
     }
     
-    return requiredBooks;
+    return result;
   }
   
   /**

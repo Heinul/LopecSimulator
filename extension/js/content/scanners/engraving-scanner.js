@@ -182,7 +182,9 @@ function prepareEngravingScan(elements) {
             from: `${currentGrade} ${currentName} Lv.${currentLevel}`,
             to: `${currentGrade} ${currentName} Lv.${level}`,
             score: result.score,
-            difference: result.difference
+            difference: result.difference,
+            // API 관련 필드 추가
+            priceInfo: null             // 가격 정보는 나중에 채워짐
           };
           
           BaseScanner.updateScanProgress();
@@ -222,7 +224,9 @@ function prepareEngravingScan(elements) {
               from: `${currentGrade} ${currentName} Lv.${currentLevel}`,
               to: `${nextGrade} ${currentName} Lv.${level}`,
               score: result.score,
-              difference: result.difference
+              difference: result.difference,
+              // API 관련 필드 추가
+              priceInfo: null             // 가격 정보는 나중에 채워짐
             };
             
             BaseScanner.updateScanProgress();

@@ -17,15 +17,12 @@ const ENGRAVING_GRADES = {
 /**
  * 각인서 API 요청 생성
  * @param {string} engravingName - 각인 이름 (예: "돌격대장")
- * @param {string} grade - 등급 (예: "유물")
  * @returns {Object} - API 요청 본문
  */
-function buildEngravingRequestBody(engravingName, grade = '유물') {
+function buildEngravingRequestBody(engravingName) {
+    // 오직 카테고리 코드와 이름만 사용
     return {
         CategoryCode: CONFIG.categoryCodes.engraving,
-        SortCondition: "ASC",
-        Sort: "BUY_PRICE",
-        Grade: grade,
         ItemName: engravingName
     };
 }
@@ -80,14 +77,14 @@ async function sendApiRequest(requestBody, apiKey) {
 /**
  * 각인서 최저가 검색
  * @param {string} engravingName - 각인 이름 (예: "돌격대장")
- * @param {string} grade - 각인서 등급 (예: "유물")
+ * @param {string|null} grade - 각인서 등급 (null이면 모든 등급 검색)
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} - 각인서 최저가 정보
  */
 async function getEngravingPrice(engravingName, grade, apiKey) {
     try {
-        // 요청 본문 생성
-        const requestBody = buildEngravingRequestBody(engravingName, grade);
+        // 요청 본문 생성 - 파라미터 2개만 사용(카테고리 코드 + 각인 이름)
+        const requestBody = buildEngravingRequestBody(engravingName);
         console.log('각인서 API 요청 본문:', JSON.stringify(requestBody));
         
         // API 요청 전송
@@ -96,41 +93,43 @@ async function getEngravingPrice(engravingName, grade, apiKey) {
         
         // 결과가 없는 경우
         if (!response) {
-            console.warn(`각인서 '${engravingName} (${grade})'에 대한 결과가 없습니다.`);
+            console.warn(`각인서 '${engravingName}'에 대한 결과가 없습니다.`);
             return null;
         }
         
-        // 응답 구조 확인
-        if (response.Items && response.Items.length > 0) {
-            // 응답에 Items 배열이 있는 경우 (API 공식 일반 형식)
-            console.log('각인서 가격 정보 추출:', response.Items[0].Name, response.Items[0].CurrentMinPrice);
-            return {
-                price: response.Items[0].CurrentMinPrice,
-                name: response.Items[0].Name,
-                icon: response.Items[0].Icon || '',
-                grade: grade
-            };
-        } else if (Array.isArray(response) && response.length > 0) {
-            // 응답 자체가 배열인 경우 (만약 이런 형식이라면)
-            console.log('기본 배열 형태의 각인서 가격 정보 추출:', response[0]);
-            return {
-                price: response[0].CurrentMinPrice || response[0].AuctionInfo?.BuyPrice || 0,
-                name: response[0].Name || engravingName,
-                icon: response[0].Icon || '',
-                grade: grade
-            };
-        } else if (response.CurrentMinPrice) {
-            // 단일 항목으로 오는 경우
-            console.log('단일 항목 형태의 각인서 가격 정보 추출:', response.CurrentMinPrice);
-            return {
-                price: response.CurrentMinPrice,
-                name: response.Name || engravingName,
-                icon: response.Icon || '',
-                grade: grade
-            };
+        // 응답이 Items 배열을 포함하는지 확인
+        if (response.Items && Array.isArray(response.Items)) {
+            // 특정 등급에 대한 결과만 필터링
+            const items = response.Items;
+            console.log(`검색된 각인서 항목 수: ${items.length}`);
+            
+            // 등급별 결과 분리
+            const resultByGrade = {};
+            
+            // 각 아이템을 등급별로 분류
+            items.forEach(item => {
+                resultByGrade[item.Grade] = {
+                    id: item.Id,
+                    name: item.Name,
+                    grade: item.Grade,
+                    icon: item.Icon || '',
+                    // 가격은 RecentPrice 기준으로 사용
+                    price: item.RecentPrice || 0,
+                    ydayAvgPrice: item.YDayAvgPrice || 0,
+                    currentMinPrice: item.CurrentMinPrice || 0
+                };
+            });
+            
+            if (grade) {
+                // 특정 등급에 대한 결과만 반환
+                return resultByGrade[grade] || null;
+            } else {
+                // 모든 등급의 결과 반환
+                return resultByGrade;
+            }
         } else {
-            // 응답 본문 간단히 출력
-            console.warn(`각인서 '${engravingName} (${grade})'에 대한 결과가 없거나 형식이 다릅니다.`);
+            // 응답 구조가 예상과 다른 경우
+            console.warn(`각인서 '${engravingName}'에 대한 응답 형식이 예상과 다릅니다.`);
             console.warn('응답 구조:', JSON.stringify(response).substring(0, 200));
             return null;
         }
@@ -149,19 +148,25 @@ async function getEngravingPrice(engravingName, grade, apiKey) {
  */
 async function getEngravingPricesByGrades(engravingName, grades, apiKey) {
     try {
-        // 각 등급별 검색 결과 Promise 배열
-        const searchPromises = grades.map(grade => getEngravingPrice(engravingName, grade, apiKey));
+        // 한 번의 API 호출로 모든 등급의 가격 정보 가져오기
+        const allGradesResult = await getEngravingPrice(engravingName, null, apiKey);
         
-        // 모든 검색 결과 대기
-        const results = await Promise.all(searchPromises);
+        if (!allGradesResult) {
+            return null;
+        }
         
-        // 결과를 등급별로 맵핑
-        const pricesByGrade = {};
-        grades.forEach((grade, index) => {
-            pricesByGrade[grade] = results[index];
+        // 요청한 등급에 대한 결과만 필터링
+        const filteredResults = {};
+        grades.forEach(grade => {
+            if (allGradesResult[grade]) {
+                filteredResults[grade] = allGradesResult[grade];
+            } else {
+                console.warn(`각인서 '${engravingName}'의 '${grade}' 등급 정보를 찾을 수 없습니다.`);
+                filteredResults[grade] = null;
+            }
         });
         
-        return pricesByGrade;
+        return filteredResults;
     } catch (error) {
         console.error('각인서 가격 조회 중 오류 발생:', error);
         return null;

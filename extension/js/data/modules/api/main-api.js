@@ -285,10 +285,10 @@ const EngravingSearch = {
     /**
      * 각인서 가격 검색
      * @param {string} engravingName - 각인 이름 (예: "돌격대장")
-     * @param {string} grade - 각인서 등급 (예: "유물")
+     * @param {string|null} grade - 각인서 등급 (파라미터 사용하지 않음)
      * @returns {Promise<Object|null>} 각인서 가격 정보
      */
-    async searchEngraving(engravingName, grade = "유물") {
+    async searchEngraving(engravingName, grade = null) {
         const apiKey = await ApiKeyManager.getApiKey();
         if (!apiKey) {
             console.error('API 키가 설정되지 않았습니다.');
@@ -296,9 +296,10 @@ const EngravingSearch = {
         }
         
         try {
-            return await EngravingApi.getEngravingPrice(engravingName, grade, apiKey);
+            // 각인 이름만 사용하여 검색 (등급 무시)
+            return await EngravingApi.getEngravingPrice(engravingName, null, apiKey);
         } catch (error) {
-            console.error(`각인서 검색 중 오류 발생 (${engravingName} ${grade}):`, error);
+            console.error(`각인서 검색 중 오류 발생 (${engravingName}):`, error);
             return null;
         }
     },
@@ -306,10 +307,10 @@ const EngravingSearch = {
     /**
      * 여러 등급의 각인서 가격 검색
      * @param {string} engravingName - 각인 이름 (예: "돌격대장")
-     * @param {Array} grades - 등급 배열 (예: ["유물", "전설", "영웅"])
+     * @param {Array} grades - 등급 배열 (파라미터 사용하지 않음)
      * @returns {Promise<Object|null>} 등급별 각인서 가격 정보
      */
-    async searchEngravingByGrades(engravingName, grades = ["유물", "전설"]) {
+    async searchEngravingByGrades(engravingName, grades = null) {
         const apiKey = await ApiKeyManager.getApiKey();
         if (!apiKey) {
             console.error('API 키가 설정되지 않았습니다.');
@@ -317,7 +318,8 @@ const EngravingSearch = {
         }
         
         try {
-            return await EngravingApi.getEngravingPricesByGrades(engravingName, grades, apiKey);
+            // 각인 이름만 사용하여 모든 등급 정보 한번에 가져오기
+            return await EngravingApi.getEngravingPricesByGrades(engravingName, null, apiKey);
         } catch (error) {
             console.error(`각인서 검색 중 오류 발생 (${engravingName}):`, error);
             return null;
@@ -365,8 +367,9 @@ window.LopecScanner.API.searchGem = async function(level, type) {
 };
 
 // 각인서 검색 함수
-window.LopecScanner.API.searchEngraving = async function(engravingName, grade = "유물") {
-    return EngravingSearch.searchEngraving(engravingName, grade);
+window.LopecScanner.API.searchEngraving = async function(engravingName, grade = null) {
+    // 등급 파라미터는 무시하고 각인 이름만 사용
+    return EngravingSearch.searchEngraving(engravingName, null);
 };
 
 // 트리거 함수 - 리스너 등록용
