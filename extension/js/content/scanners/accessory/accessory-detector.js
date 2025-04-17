@@ -197,6 +197,110 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
   }
   
   /**
+   * 장신구 티어 요소 그룹화 (타입별로)
+   * @param {Array|NodeList} elements - 티어 선택 요소들
+   * @return {Object} - 타입별로 그룹화된 티어 정보
+   */
+  function groupTierElementsByType(elements) {
+    try {
+      // 타입별 그룹화를 위한 객체
+      let tierGroups = {
+        necklace: null,
+        earring1: null,
+        earring2: null,
+        ring1: null,
+        ring2: null
+      };
+      
+      if (!elements || elements.length === 0) {
+        console.log('그룹화할 티어 요소가 없습니다.');
+        return tierGroups;
+      }
+      
+      // 전체 장신구 요소 가져오기
+      const accessoryList = document.querySelector('.accessory-list');
+      if (!accessoryList) {
+        console.log('.accessory-list 요소를 찾을 수 없습니다.');
+        return tierGroups;
+      }
+      
+      const accessoryItems = accessoryList.querySelectorAll('.accessory-item.accessory');
+      if (!accessoryItems || accessoryItems.length === 0) {
+        console.log('장신구 아이템 요소를 찾을 수 없습니다.');
+        return tierGroups;
+      }
+      
+      // 1. 각 장신구 아이템에 대해
+      Array.from(accessoryItems).forEach((item, index) => {
+        if (!item) return;
+        
+        try {
+          // 장신구 타입 확인 (인덱스 기반 - 가장 안정적)
+          let accessoryType;
+          if (index === 0) {
+            accessoryType = 'necklace'; // 목걸이
+          } else if (index === 1) {
+            accessoryType = 'earring1'; // 귀걸이1
+          } else if (index === 2) {
+            accessoryType = 'earring2'; // 귀걸이2
+          } else if (index === 3) {
+            accessoryType = 'ring1'; // 반지1
+          } else if (index === 4) {
+            accessoryType = 'ring2'; // 반지2
+          } else {
+            accessoryType = 'unknown';
+          }
+          
+          if (accessoryType === 'unknown') return;
+          
+          // 해당 장신구의 티어 요소 찾기 (select.tier.accessory)
+          const tierElement = item.querySelector('select.tier.accessory');
+          if (!tierElement) return;
+          
+          // 요소들 같은지 비교
+          const elementsArray = Array.from(elements);
+          const foundIndex = elementsArray.findIndex(el => el === tierElement);
+          
+          if (foundIndex !== -1) {
+            // 티어 요소 정보 저장
+            tierGroups[accessoryType] = {
+              element: tierElement,
+              index: foundIndex,
+              originalValue: tierElement.value,
+              originalText: tierElement.options[tierElement.selectedIndex]?.textContent || ''
+            };
+            
+            console.log(`${accessoryType} 티어 요소 인덱스: ${foundIndex}, 값: ${tierElement.value}`);
+          }
+        } catch (e) {
+          console.error(`장신구 티어 요소 ${index} 처리 중 오류:`, e);
+        }
+      });
+      
+      // 각 타입별 요소 로그
+      console.log(
+        `티어 그룹화 결과: 목걸이 ${tierGroups.necklace ? 'O' : 'X'}, ` + 
+        `귀걸이1 ${tierGroups.earring1 ? 'O' : 'X'}, ` + 
+        `귀걸이2 ${tierGroups.earring2 ? 'O' : 'X'}, ` + 
+        `반지1 ${tierGroups.ring1 ? 'O' : 'X'}, ` + 
+        `반지2 ${tierGroups.ring2 ? 'O' : 'X'}`
+      );
+      
+      return tierGroups;
+      
+    } catch (e) {
+      console.error('티어 요소 그룹화 중 오류:', e);
+      return {
+        necklace: null,
+        earring1: null,
+        earring2: null,
+        ring1: null,
+        ring2: null
+      };
+    }
+  }
+  
+  /**
    * 현재 선택된 장신구 옵션을 가져오는 함수
    * @return {Array} 선택된 옵션 정보 배열
    */
@@ -309,6 +413,11 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       const qualityElements = item.querySelectorAll('.quality');
       const qualities = Array.from(qualityElements).map(q => q.textContent);
       
+      // 티어 요소 추가
+      const tierElement = item.querySelector('select.tier.accessory');
+      const tierValue = tierElement ? tierElement.value : null;
+      const tierText = tierElement ? tierElement.options[tierElement.selectedIndex]?.textContent : null;
+      
       return {
         index,
         type,
@@ -316,7 +425,11 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
         imgAlt,
         optionCount: optionElements.length,
         optionValues,
-        qualities
+        qualities,
+        tier: {
+          value: tierValue,
+          text: tierText
+        }
       };
     });
     
@@ -328,6 +441,7 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
     detectAccessoryType,
     getSelectedAccessoryOptions,
     groupAccessoriesByType,
+    groupTierElementsByType,
     debugAccessoryStructure,
     detectJobType
   };
