@@ -435,7 +435,7 @@ const APIStatus = (function() {
    * @returns {boolean} 각인서 여부
    */
   function isEngravingItem(item) {
-    // 각인서 타입 직접 체크 및 로깅 (한글 '각인' 타입과 영문 'engraving' 타입 모두 지원)
+    // 각인서 타입 직접 체크 및 로깅
     const isEngraving = item.type === 'engraving' || item.type === '각인';
     console.log('각인서 타입 확인:', item.type, isEngraving ? '일치' : '불일치');
     if (isEngraving) {
@@ -746,7 +746,7 @@ const APIStatus = (function() {
           try {
             // 유효한 각인서/등급/레벨 정보가 있는 경우 계산
             if (engravingName && fromGrade && toGrade && fromLevel >= 0 && toLevel >= 0) {
-              // 원 등급 각인서 가격 조회
+              // 각인서 가격 조회
               console.log(`각인서 가격 조회 시도: ${engravingName}`);
               const priceData = await EngravingAPI.getEngravingPrice(engravingName, null, apiKey);
               console.log(`각인서 가격 조회 결과:`, priceData);

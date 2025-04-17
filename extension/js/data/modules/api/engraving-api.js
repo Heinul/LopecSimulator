@@ -139,43 +139,8 @@ async function getEngravingPrice(engravingName, grade, apiKey) {
     }
 }
 
-/**
- * 다양한 등급의 각인서 가격 검색
- * @param {string} engravingName - 각인 이름 (예: "돌격대장")
- * @param {Array<string>} grades - 검색할 등급 배열 (예: ["유물", "전설"])
- * @param {string} apiKey - API 키
- * @returns {Promise<Object|null>} - 각인서 최저가 정보 (등급별)
- */
-async function getEngravingPricesByGrades(engravingName, grades, apiKey) {
-    try {
-        // 한 번의 API 호출로 모든 등급의 가격 정보 가져오기
-        const allGradesResult = await getEngravingPrice(engravingName, null, apiKey);
-        
-        if (!allGradesResult) {
-            return null;
-        }
-        
-        // 요청한 등급에 대한 결과만 필터링
-        const filteredResults = {};
-        grades.forEach(grade => {
-            if (allGradesResult[grade]) {
-                filteredResults[grade] = allGradesResult[grade];
-            } else {
-                console.warn(`각인서 '${engravingName}'의 '${grade}' 등급 정보를 찾을 수 없습니다.`);
-                filteredResults[grade] = null;
-            }
-        });
-        
-        return filteredResults;
-    } catch (error) {
-        console.error('각인서 가격 조회 중 오류 발생:', error);
-        return null;
-    }
-}
-
 export default {
     ENGRAVING_GRADES,
     getEngravingPrice,
-    getEngravingPricesByGrades,
     buildEngravingRequestBody
 };

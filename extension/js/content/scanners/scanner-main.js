@@ -22,7 +22,7 @@ LopecScanner.Scanners.Main = (function() {
   // 리팩토링된 모듈 참조
   console.log('스캐너 초기화 중');
   if (LopecScanner.Scanners.Accessory && LopecScanner.Scanners.Accessory.Options) {
-    console.log('리팩토링된 장신구 스캐너 모듈 출감');  
+    console.log('장신구 스캐너 모듈 로드드');  
   }
   
   // 아바타 스캐너 모듈 확인
@@ -65,22 +65,8 @@ LopecScanner.Scanners.Main = (function() {
     document.body.appendChild(overlay);
     
     try {
-      try {
-        // 장신구/각인 옵션 설정
-        AccessoryScanner.setAccessoryOptions({
-          // 목걸이 옵션 (추가피해, 적에게 주는 피해, 공격력, 무기공격력)
-          necklaceOptions: ['추가피해', '적에게 주는 피해', '공격력', '무기 공격력'],
-          // 귀걸이 옵션 (공격력과 무기공격력 퍼센트와 고정값 모두 포함)
-          earringOptions: ['공격력 +', '무기 공격력 +', '공격력', '무기 공격력'],
-          // 반지 옵션 (치명타 적중률, 치명타 피해, 공격력, 무기공격력)
-          ringOptions: ['치명타 적중률', '치명타 피해', '공격력', '무기 공격력']
-        });
-      } catch (error) {
-        console.error('장신구 옵션 설정 중 오류:', error);
-      }
-      
+
       // 각인은 orange 클래스를 가진 잔류 요소만 스캔
-      
       // 스캔할 요소 준비
       const elements = await ScannerUtils.prepareElementsForScan(scanSettings);
       

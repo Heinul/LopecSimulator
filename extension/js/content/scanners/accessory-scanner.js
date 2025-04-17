@@ -26,18 +26,6 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
   }
   
   /**
-   * 장신구 옵션 설정
-   * @param {Object} options - 장신구 스캐닝 옵션
-   */
-  function setAccessoryOptions(options) {
-    if (hasRefactoredModules) {
-      return LopecScanner.Scanners.Accessory.AccessoryScanner.setAccessoryOptions(options);
-    } else {
-      console.error('장신구 모듈 옵션 설정 실패');
-    }
-  }
-  
-  /**
    * 장신구 스캔 준비
    * @param {Object} elements - 장신구 요소들 모음 객체
    * @return {number} - 스캔 항목 개수
@@ -78,7 +66,6 @@ LopecScanner.Scanners.AccessoryScanner = (function() {
   
   // 공개 API (기존 API와 동일한 인터페이스 유지)
   return {
-    setAccessoryOptions,
     prepareAccessoryScan,
     scanAccessories,
     getSelectedAccessoryOptions
