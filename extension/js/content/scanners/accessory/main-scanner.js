@@ -258,6 +258,22 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       typeDisplayName = '장신구';
     }
     
+    // 원래 장신구 옵션의 점수 계산 (상=3, 중=2, 하=1, 무=0)
+    let currentOptionsScore = 0;
+    originalOptionTexts.forEach(optText => {
+      if (optText.includes('[상]')) {
+        currentOptionsScore += 3;
+      } else if (optText.includes('[중]')) {
+        currentOptionsScore += 2;
+      } else if (optText.includes('[하]')) {
+        currentOptionsScore += 1;
+      }
+      // '무' 인 경우는 0점
+    });
+    
+    console.log(`현재 ${type} 장신구 옵션 점수: ${currentOptionsScore}`);
+    
+    
     // 옵션 가져오기 에러 처리
     if (!qualityCombinations || qualityCombinations.length === 0) {
       console.error(`${jobType} 직업의 ${type} 옵션 조합을 생성할 수 없습니다.`);
@@ -269,7 +285,33 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       return;
     }
     
-    console.log(`${type} 옵션 조합 (${jobType}): ${qualityCombinations.length}개 생성됨`);
+    // 각 개별 옵션 조합들의 점수 계산하고 정렬 (점수 높은 순)
+    for (const combo of qualityCombinations) {
+      // 조합 점수 계산
+      let comboScore = 0;
+      combo.options.forEach(option => {
+        // 상/중/하/무 등급 확인
+        if (option.startsWith('상:')) {
+          comboScore += 3;
+        } else if (option.startsWith('중:')) {
+          comboScore += 2;
+        } else if (option.startsWith('하:')) {
+          comboScore += 1;
+        }
+        // 무 시 점수 추가 없음
+      });
+      
+      // 점수 저장
+      combo.score = comboScore;
+    }
+    
+    // 점수순으로 정렬
+    qualityCombinations.sort((a, b) => b.score - a.score);
+    
+    // 현재 점수보다 높거나 같은 조합만 스캔하도록 필터링
+    const betterCombinations = qualityCombinations.filter(combo => combo.score >= currentOptionsScore);
+    
+    console.log(`현재 점수(${currentOptionsScore}) 이상의 조합만 스캔: ${betterCombinations.length}개 / 전체 ${qualityCombinations.length}개`);
     
     // 원래 값을 배열로 저장 (elements마다 원래 값 저장)
     const originalElements = [];
@@ -295,8 +337,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       }
     });
     
-    // 각 옵션 조합마다 스캔 수행
-    for (const combo of qualityCombinations) {
+    // 각 옵션 조합마다 스캔 수행 (현재 점수보다 높은 조합만 스캔)
+    for (const combo of betterCombinations) {
       if (!BaseScanner.state.isScanning) {
         console.log('스캔이 중지되었습니다.');
         // 스캔 중지시 원래 값으로 복원
@@ -441,6 +483,14 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         console.error(`${type} 장신구 조합 ${combo.label} 스캔 중 오류:`, e);
         BaseScanner.updateScanProgress(); // 오류 발생해도 진행률 업데이트
       }
+    }
+    
+    // 스캔하지 않는 조합들에 대해서도 진행률 업데이트
+    const skippedCombinations = qualityCombinations.filter(combo => combo.score < currentOptionsScore);
+    console.log(`점수가 낮아서 건너뛰는 조합: ${skippedCombinations.length}개`);
+    
+    for (let i = 0; i < skippedCombinations.length; i++) {
+      BaseScanner.updateScanProgress();
     }
     
     // 모든 조합 스캔 후 원래 값으로 만 복원
