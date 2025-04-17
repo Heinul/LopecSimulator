@@ -28,7 +28,7 @@ LopecScanner.Scanners.Accessory.Manipulator = (function() {
     let maxDifference = initialDiff;
     
     while (Math.abs(maxDifference) < 0.011 && attempts > 0) {
-      // 값 변경 후 더 긴 기다림
+      // 값 변경 후 기다림
       await LopecScanner.Utils.delay(400);
       
       // 현재 값 확인
@@ -43,7 +43,7 @@ LopecScanner.Scanners.Accessory.Manipulator = (function() {
       }
       
       // 변동값 확인
-      await LopecScanner.Utils.delay(500);
+      await LopecScanner.Utils.delay(300);
       const newDiff = LopecScanner.Utils.getCurrentDifference();
       
       if (Math.abs(newDiff) > Math.abs(maxDifference)) {

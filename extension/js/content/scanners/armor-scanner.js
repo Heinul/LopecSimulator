@@ -84,7 +84,7 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         // 값이 변경되었지만 변화가 0인 경우 추가 기다림
         if (Math.abs(result.difference) < 0.001) {
           // 추가 딜레이를 적용하고 점수를 다시 확인
-          await LopecScanner.Utils.delay(800);
+          await LopecScanner.Utils.delay(300);
           const updatedResult = {
             score: LopecScanner.Utils.getCurrentScore(),
             difference: LopecScanner.Utils.getCurrentDifference()
@@ -148,7 +148,7 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         // 값이 변경되었지만 변화가 0인 경우 추가 기다림
         if (Math.abs(result.difference) < 0.001) {
           // 추가 딜레이를 적용하고 점수를 다시 확인
-          await LopecScanner.Utils.delay(800);
+          await LopecScanner.Utils.delay(300);
           const updatedResult = {
             score: LopecScanner.Utils.getCurrentScore(),
             difference: LopecScanner.Utils.getCurrentDifference()

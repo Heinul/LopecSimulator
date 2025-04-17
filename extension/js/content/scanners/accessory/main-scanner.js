@@ -287,25 +287,25 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       console.error('원래 요소 정보 저장 오류:', e);
     }
     
+    // 추후 복원을 위해 원래 값 보관
+    const originalValues = [];
+    originalElements.forEach(item => {
+      if (item && item.element) {
+        originalValues.push(item.element.value);
+      }
+    });
+    
     // 각 옵션 조합마다 스캔 수행
     for (const combo of qualityCombinations) {
       if (!BaseScanner.state.isScanning) {
         console.log('스캔이 중지되었습니다.');
+        // 스캔 중지시 원래 값으로 복원
+        await restoreOriginalValues(type, originalElements, originalValues);
         return;
       }
       
       try {
         console.log(`스캔 실행 - ${combo.label}, 옵션: ${JSON.stringify(combo.options)}`);
-        
-        // 각 요소에 옵션 적용 (조합의 모든 옵션을 한번에 적용)
-        const originalValues = [];
-        
-        // 원래 값 저장
-        for (let i = 0; i < originalElements.length; i++) {
-          if (originalElements[i] && originalElements[i].element) {
-            originalValues.push(originalElements[i].element.value);
-          }
-        }
         
         let changed = false;
         
@@ -437,14 +437,15 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         }
         
         BaseScanner.updateScanProgress();
-        
-        // 원래 값으로 복원
-        await restoreOriginalValues(type, originalElements, originalValues);
       } catch (e) {
         console.error(`${type} 장신구 조합 ${combo.label} 스캔 중 오류:`, e);
         BaseScanner.updateScanProgress(); // 오류 발생해도 진행률 업데이트
       }
     }
+    
+    // 모든 조합 스캔 후 원래 값으로 만 복원
+    await restoreOriginalValues(type, originalElements, originalValues);
+    
   } catch (e) {
     console.error(`${type} 장신구 스캔 전체 처리 오류:`, e);
     
