@@ -87,6 +87,8 @@ LopecScanner.Scanners.Accessory.Options = (function() {
         }
         break;
       case 'earring':
+      case 'earring1':
+      case 'earring2':
         if (accessoryOptions.earringOptions) {
           if (accessoryOptions.earringOptions.special) {
             options.push(...accessoryOptions.earringOptions.special);
@@ -97,6 +99,8 @@ LopecScanner.Scanners.Accessory.Options = (function() {
         }
         break;
       case 'ring':
+      case 'ring1':
+      case 'ring2':
         if (accessoryOptions.ringOptions) {
           if (accessoryOptions.ringOptions.special) {
             options.push(...accessoryOptions.ringOptions.special);
@@ -118,8 +122,18 @@ LopecScanner.Scanners.Accessory.Options = (function() {
    * @return {Array} - 생성된 조합
    */
   function generateAllCombinations(jobOptions, accessoryType) {
+    // 장신구 타입을 일반화
+    let baseType = accessoryType;
+    
+    // 귀걸이1/귀걸이2는 귀걸이로, 반지1/반지2는 반지로 통합
+    if (baseType === 'EARRING1' || baseType === 'EARRING2') {
+      baseType = 'EARRING';
+    } else if (baseType === 'RING1' || baseType === 'RING2') {
+      baseType = 'RING';
+    }
+    
     // 실제 DOM에서 장신구 타입별 옵션들의 value를 직접 추출
-    const optionValues = findOptionValuesInDOM(accessoryType);
+    const optionValues = findOptionValuesInDOM(baseType);
     
     if (!optionValues) {
       console.error(`${accessoryType} 옵션을 찾을 수 없습니다.`);
@@ -128,8 +142,26 @@ LopecScanner.Scanners.Accessory.Options = (function() {
     
     // 장신구 이름 설정
     const typeName = accessoryType.toLowerCase();
-    const displayName = typeName === 'necklace' ? '목걸이' : 
-                         typeName === 'earring' ? '귀걸이' : '반지';
+    let displayName;
+    
+    // 개별 장신구 타입에 맞게 표시 이름 설정
+    if (typeName === 'necklace') {
+      displayName = '목걸이';
+    } else if (typeName === 'earring1') {
+      displayName = '귀걸이1';
+    } else if (typeName === 'earring2') {
+      displayName = '귀걸이2';
+    } else if (typeName === 'ring1') {
+      displayName = '반지1';
+    } else if (typeName === 'ring2') {
+      displayName = '반지2';
+    } else if (typeName === 'earring') {
+      displayName = '귀걸이';
+    } else if (typeName === 'ring') {
+      displayName = '반지';
+    } else {
+      displayName = '장신구';
+    }
     
     // 장신구 조합.txt의 정보를 바탕으로 조합 생성
     const combinations = [
@@ -246,7 +278,47 @@ LopecScanner.Scanners.Accessory.Options = (function() {
           opt2: ['weaponAtkPlus'] // 무기공격력 +
         }
       },
+      EARRING1: {
+        DEALER: {
+          opt1: ['weaponAtkPer'], // 무기공격력 %
+          opt2: ['atkPer'] // 공격력 %
+        },
+        SUPPORTER: {
+          opt1: ['weaponAtkPer'], // 무기공격력 %
+          opt2: ['weaponAtkPlus'] // 무기공격력 +
+        }
+      },
+      EARRING2: {
+        DEALER: {
+          opt1: ['weaponAtkPer'], // 무기공격력 %
+          opt2: ['atkPer'] // 공격력 %
+        },
+        SUPPORTER: {
+          opt1: ['weaponAtkPer'], // 무기공격력 %
+          opt2: ['weaponAtkPlus'] // 무기공격력 +
+        }
+      },
       RING: {
+        DEALER: {
+          opt1: ['criticalDamagePer'], // 치명타 피해
+          opt2: ['criticalChancePer'] // 치명타 적중률
+        },
+        SUPPORTER: {
+          opt1: ['atkBuff'], // 아군 공격력 강화 효과
+          opt2: ['damageBuff'] // 아군 피해량 강화 효과
+        }
+      },
+      RING1: {
+        DEALER: {
+          opt1: ['criticalDamagePer'], // 치명타 피해
+          opt2: ['criticalChancePer'] // 치명타 적중률
+        },
+        SUPPORTER: {
+          opt1: ['atkBuff'], // 아군 공격력 강화 효과
+          opt2: ['damageBuff'] // 아군 피해량 강화 효과
+        }
+      },
+      RING2: {
         DEALER: {
           opt1: ['criticalDamagePer'], // 치명타 피해
           opt2: ['criticalChancePer'] // 치명타 적중률
@@ -352,7 +424,10 @@ LopecScanner.Scanners.Accessory.Options = (function() {
     
     // 내장된 기존 조합 반환 (호환성 유지)
     if (allCombinations.length === 0) {
-      switch (accessoryType) {
+      // accessoryType에서 숫자 제거 (earring1 -> earring)
+      const baseType = accessoryType.replace(/[0-9]/g, '');
+      
+      switch (baseType) {
         case 'necklace':
           return accessoryOptions.necklaceCombinations || [];
         case 'earring':

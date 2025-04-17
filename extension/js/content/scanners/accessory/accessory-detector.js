@@ -43,7 +43,7 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
   /**
    * 장신구 타입 감지
    * @param {HTMLElement} element - 장신구 옵션 요소
-   * @return {string} - 감지된 장신구 타입 (necklace, earring, ring 또는 unknown)
+   * @return {string} - 감지된 장신구 타입 (necklace, earring1, earring2, ring1, ring2 또는 unknown)
    */
   function detectAccessoryType(element) {
     // 1. 장신구 실제 DOM 구조 확인
@@ -57,13 +57,17 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
     
     // 인덱스 기반 구분 (가장 안정적인 방법)
     if (itemIndex >= 0) {
-      // 일반적으로 첫 번째는 목걸이, 두번째와 세번째는 귀걸이, 네번째와 다섯번째는 반지
+      // 5개 장신구 구분: 목걸이, 귀걸이1, 귀걸이2, 반지1, 반지2
       if (itemIndex === 0) {
         return 'necklace'; // 목걸이
-      } else if (itemIndex === 1 || itemIndex === 2) {
-        return 'earring'; // 귀걸이
-      } else if (itemIndex === 3 || itemIndex === 4) {
-        return 'ring'; // 반지
+      } else if (itemIndex === 1) {
+        return 'earring1'; // 귀걸이1
+      } else if (itemIndex === 2) {
+        return 'earring2'; // 귀걸이2
+      } else if (itemIndex === 3) {
+        return 'ring1'; // 반지1
+      } else if (itemIndex === 4) {
+        return 'ring2'; // 반지2
       }
     }
     
@@ -75,9 +79,12 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       if (textContent.includes('목걸이')) {
         return 'necklace';
       } else if (textContent.includes('귀걸이')) {
-        return 'earring';
+        // 귀걸이의 경우 텍스트만으론 1, 2를 구분하기 어려움
+        // 인덱스나 다른 구분 방법이 필요
+        return 'earring1'; // 기본값
       } else if (textContent.includes('반지')) {
-        return 'ring';
+        // 반지도 텍스트만으론 1, 2를 구분하기 어려움
+        return 'ring1'; // 기본값
       }
     }
     
@@ -91,11 +98,13 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
    */
   function groupAccessoriesByType(elements) {
     try {
-      // 타입별 그룹화를 위한 객체
+      // 타입별 그룹화를 위한 객체 (5개 장신구 모두 개별 처리)
       let accessoryGroups = {
         necklace: { elements: [], indices: [] },
-        earring: { elements: [], indices: [] },
-        ring: { elements: [], indices: [] }
+        earring1: { elements: [], indices: [] },
+        earring2: { elements: [], indices: [] },
+        ring1: { elements: [], indices: [] },
+        ring2: { elements: [], indices: [] }
       };
       
       if (!elements || elements.length === 0) {
@@ -129,10 +138,14 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
           let accessoryType;
           if (index === 0) {
             accessoryType = 'necklace'; // 목걸이
-          } else if (index === 1 || index === 2) {
-            accessoryType = 'earring'; // 귀걸이
-          } else if (index === 3 || index === 4) {
-            accessoryType = 'ring'; // 반지
+          } else if (index === 1) {
+            accessoryType = 'earring1'; // 귀걸이1
+          } else if (index === 2) {
+            accessoryType = 'earring2'; // 귀걸이2
+          } else if (index === 3) {
+            accessoryType = 'ring1'; // 반지1
+          } else if (index === 4) {
+            accessoryType = 'ring2'; // 반지2
           } else {
             accessoryType = 'unknown';
           }
@@ -164,8 +177,10 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       
       // 각 타입별 요소 수 로그
       console.log(`그룹화 결과: 목걸이 ${accessoryGroups.necklace.elements.length}개, ` + 
-                 `귀걸이 ${accessoryGroups.earring.elements.length}개, ` + 
-                 `반지 ${accessoryGroups.ring.elements.length}개`);
+                 `귀걸이1 ${accessoryGroups.earring1.elements.length}개, ` + 
+                 `귀걸이2 ${accessoryGroups.earring2.elements.length}개, ` + 
+                 `반지1 ${accessoryGroups.ring1.elements.length}개, ` + 
+                 `반지2 ${accessoryGroups.ring2.elements.length}개`);
       
       return accessoryGroups;
       
@@ -173,8 +188,10 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       console.error('장신구 그룹화 중 오류:', e);
       return {
         necklace: { elements: [], indices: [] },
-        earring: { elements: [], indices: [] },
-        ring: { elements: [], indices: [] }
+        earring1: { elements: [], indices: [] },
+        earring2: { elements: [], indices: [] },
+        ring1: { elements: [], indices: [] },
+        ring2: { elements: [], indices: [] }
       };
     }
   }
@@ -186,7 +203,7 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
   function getSelectedAccessoryOptions() {
     try {
       // 장신구 종류 순서
-      const accessoryTypes = ['necklace', 'earring', 'earring', 'ring', 'ring'];
+      const accessoryTypes = ['necklace', 'earring1', 'earring2', 'ring1', 'ring2'];
       
       // 모든 장신구 아이템(li) 요소 찾기
       const accessoryItems = document.querySelectorAll('.accessory-item.accessory');
@@ -273,8 +290,10 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       // 타입 확인
       let type = 'unknown';
       if (index === 0) type = 'necklace';
-      else if (index === 1 || index === 2) type = 'earring';
-      else if (index === 3 || index === 4) type = 'ring';
+      else if (index === 1) type = 'earring1';
+      else if (index === 2) type = 'earring2';
+      else if (index === 3) type = 'ring1';
+      else if (index === 4) type = 'ring2';
       
       // 옵션 요소
       const optionElements = item.querySelectorAll('.option-box .grinding-wrap .option.tooltip-text');

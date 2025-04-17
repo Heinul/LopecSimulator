@@ -97,8 +97,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
     // 장신구 조합.txt 파일에 따른 16개의 조합(상상, 상중, 중상, ..., 무무)
     const combinationsPerType = 16;
     
-    // 목걸이, 귀걸이, 반지 총 3가지 타입
-    scanCount = 3 * combinationsPerType; // 총 48개
+    // 목걸이, 귀걸이1, 귀걸이2, 반지1, 반지2 총 5가지 타입
+    scanCount = 5 * combinationsPerType; // 총 80개
     
     return scanCount;
   }
@@ -131,47 +131,72 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         // 상상, 상중, 상하, 중중, 중하, 하하, 상무, 무상, 중무, 무중, 하무, 무하, 무무 조합 방식으로 사용
         console.log(`${jobType} 리스트 사용하여 스캔 실행`);
         
-        // 각 장신구 타입별로 옵션 조합 스캔 실행
+        // 각 장신구 타입별로 옵션 조합 스캔 실행 (5개 전부 개별 스캔)
         if (accessoryGroups.necklace && accessoryGroups.necklace.elements && accessoryGroups.necklace.elements.length > 0) {
           await scanAccessoryByType('necklace', accessoryGroups.necklace, currentSelectedOptions, jobType);
         } else {
           console.log('목걸이 요소가 없어 건너뛰기');
-          // 목걸이 스캔 건너뜀 시 진행률 반영
+          // 목걸이 스캔 건너뛰 시 진행률 반영
           for (let i = 0; i < 16; i++) {
             BaseScanner.updateScanProgress();
           }
         }
         
-        if (accessoryGroups.earring && accessoryGroups.earring.elements && accessoryGroups.earring.elements.length > 0) {
-          await scanAccessoryByType('earring', accessoryGroups.earring, currentSelectedOptions, jobType);
+        // 귀걸이1 스캔
+        if (accessoryGroups.earring1 && accessoryGroups.earring1.elements && accessoryGroups.earring1.elements.length > 0) {
+          await scanAccessoryByType('earring1', accessoryGroups.earring1, currentSelectedOptions, jobType);
         } else {
-          console.log('귀걸이 요소가 없어 건너뛰기');
-          // 귀걸이 스캔 건너뜀 시 진행률 반영
+          console.log('귀걸이1 요소가 없어 건너뛰기');
+          // 귀걸이1 스캔 건너뛰 시 진행률 반영
           for (let i = 0; i < 16; i++) {
             BaseScanner.updateScanProgress();
           }
         }
         
-        if (accessoryGroups.ring && accessoryGroups.ring.elements && accessoryGroups.ring.elements.length > 0) {
-          await scanAccessoryByType('ring', accessoryGroups.ring, currentSelectedOptions, jobType);
+        // 귀걸이2 스캔
+        if (accessoryGroups.earring2 && accessoryGroups.earring2.elements && accessoryGroups.earring2.elements.length > 0) {
+          await scanAccessoryByType('earring2', accessoryGroups.earring2, currentSelectedOptions, jobType);
         } else {
-          console.log('반지 요소가 없어 건너뛰기');
-          // 반지 스캔 건너뜀 시 진행률 반영
+          console.log('귀걸이2 요소가 없어 건너뛰기');
+          // 귀걸이2 스캔 건너뛰 시 진행률 반영
           for (let i = 0; i < 16; i++) {
             BaseScanner.updateScanProgress();
           }
         }
+        
+        // 반지1 스캔
+        if (accessoryGroups.ring1 && accessoryGroups.ring1.elements && accessoryGroups.ring1.elements.length > 0) {
+          await scanAccessoryByType('ring1', accessoryGroups.ring1, currentSelectedOptions, jobType);
+        } else {
+          console.log('반지1 요소가 없어 건너뛰기');
+          // 반지1 스캔 건너뛰 시 진행률 반영
+          for (let i = 0; i < 16; i++) {
+            BaseScanner.updateScanProgress();
+          }
+        }
+        
+        // 반지2 스캔
+        if (accessoryGroups.ring2 && accessoryGroups.ring2.elements && accessoryGroups.ring2.elements.length > 0) {
+          await scanAccessoryByType('ring2', accessoryGroups.ring2, currentSelectedOptions, jobType);
+        } else {
+          console.log('반지2 요소가 없어 건너뛰기');
+          // 반지2 스캔 건너뛰 시 진행률 반영
+          for (let i = 0; i < 16; i++) {
+            BaseScanner.updateScanProgress();
+          }
+        }
+        
       } catch (e) {
         console.error('장신구 스캔 중 오류 발생:', e);
         // 오류 발생 시 남은 스캔 처리
-        for (let i = 0; i < 48; i++) { // 3개 장신구 타입 * 16개 조합
+        for (let i = 0; i < 80; i++) { // 5개 장신구 타입 * 16개 조합
           BaseScanner.updateScanProgress();
         }
       }
     } else {
       console.log('장신구 옵션 요소가 없어 건너뛰기');
-      // 장신구 스캔 건너뜀 시 진행률 반영
-      for (let i = 0; i < 48; i++) { // 3개 장신구 타입 * 16개 조합
+      // 장신구 스캔 건너뛰 시 진행률 반영
+      for (let i = 0; i < 80; i++) { // 5개 장신구 타입 * 16개 조합
         BaseScanner.updateScanProgress();
       }
     }
@@ -179,7 +204,7 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
   
   /**
    * 특정 타입의 장신구 스캔 실행
-   * @param {string} type - 장신구 타입 (necklace, earring, ring)
+   * @param {string} type - 장신구 타입 (necklace, earring1, earring2, ring1, ring2)
    * @param {Object} group - 장신구 그룹 정보
    * @param {Array} currentSelectedOptions - 현재 선택된 옵션 정보
    * @param {string} jobType - 직업 타입 ('DEALER' 또는 'SUPPORTER')
@@ -218,7 +243,20 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
     }
     
     // 화면에 표시할 때 사용하는 타입 이름
-    const typeDisplayName = type === 'necklace' ? '목걸이' : type === 'earring' ? '귀걸이' : '반지';
+    let typeDisplayName;
+    if (type === 'necklace') {
+      typeDisplayName = '목걸이';
+    } else if (type === 'earring1') {
+      typeDisplayName = '귀걸이1';
+    } else if (type === 'earring2') {
+      typeDisplayName = '귀걸이2';
+    } else if (type === 'ring1') {
+      typeDisplayName = '반지1';
+    } else if (type === 'ring2') {
+      typeDisplayName = '반지2';
+    } else {
+      typeDisplayName = '장신구';
+    }
     
     // 옵션 가져오기 에러 처리
     if (!qualityCombinations || qualityCombinations.length === 0) {
