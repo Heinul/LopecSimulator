@@ -61,22 +61,7 @@ LopecScanner.Scanners.Utils = (function() {
       - ${accessoryQualityElements.length}개의 등급 요소 
       - ${accessoryOptionElements.length}개의 옵션 요소 있음`);
     
-    // DOM 구조 확인을 위한 추가 검사
-    console.log('DOM 구조 확인 - 장신구:');
-    try {
-      // Detector 객체가 존재하고 debugAccessoryStructure 함수가 존재하는지 안전하게 확인
-      if (typeof LopecScanner !== 'undefined' && 
-          LopecScanner.Scanners && 
-          LopecScanner.Scanners.Accessory && 
-          LopecScanner.Scanners.Accessory.Detector && 
-          typeof LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure === 'function') {
-        LopecScanner.Scanners.Accessory.Detector.debugAccessoryStructure();
-      } else {
-        console.log('장신구 구조 디버깅 함수가 없습니다.');
-      }
-    } catch (e) {
-      console.warn('장신구 구조 디버깅 함수 오류:', e);
-    }
+    // 장신구 DOM 구조 확인 로그 삭제
     
     // 스캔 준비 전 장신구 옵션의 현재 값을 로그로 확인
     console.log('스캔 준비 전 장신구 옵션 값 확인:');

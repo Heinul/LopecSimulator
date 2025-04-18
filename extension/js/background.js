@@ -49,23 +49,7 @@ const MessageHandler = {
       return true; // 비동기 응답을 위해 true 반환
     }
     
-    // API 키 변경 알림 처리
-    else if (request.action === 'apiKeyChanged') {
-      console.log('변경된 API 키 확인:', request.apiKey ? (request.apiKey.substring(0, 3) + '...') : 'null');
-      
-      // 열린 탭에 변경된 API 키 알림
-      chrome.tabs.query({}, function(tabs) {
-        tabs.forEach(function(tab) {
-          if (tab.url && tab.url.includes('chrome-extension://') && tab.url.includes('data.html')) {
-            console.log('API 키 변경 메시지 전송:', tab.id);
-            chrome.tabs.sendMessage(tab.id, {
-              action: 'apiKeyUpdated',
-              apiKey: request.apiKey
-            }).catch(err => console.log('메시지 전송 오류:', err.message));
-          }
-        });
-      });
-    }
+    
   }
 };
 

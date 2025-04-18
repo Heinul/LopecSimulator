@@ -71,23 +71,6 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
       }
     }
     
-    // 3. text-box 또는 title 텍스트 확인 (인덱스 실패 시)
-    const textBox = parentLi.querySelector('.text-box');
-    if (textBox) {
-      const textContent = textBox.textContent.toLowerCase();
-      
-      if (textContent.includes('목걸이')) {
-        return 'necklace';
-      } else if (textContent.includes('귀걸이')) {
-        // 귀걸이의 경우 텍스트만으론 1, 2를 구분하기 어려움
-        // 인덱스나 다른 구분 방법이 필요
-        return 'earring1'; // 기본값
-      } else if (textContent.includes('반지')) {
-        // 반지도 텍스트만으론 1, 2를 구분하기 어려움
-        return 'ring1'; // 기본값
-      }
-    }
-    
     return 'unknown';
   }
   
@@ -371,70 +354,7 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
     }
   }
   
-  /**
-   * 현재 페이지의 장신구 DOM 구조 디버깅
-   * @return {Object} - 페이지의 장신구 구조 정보
-   */
-  function debugAccessoryStructure() {
-    const accessoryList = document.querySelector('.accessory-list');
-    if (!accessoryList) {
-      return { error: '장신구 리스트 없음' };
-    }
-    
-    // 장신구 아이템 확인
-    const accessoryItems = accessoryList.querySelectorAll('.accessory-item.accessory');
-    
-    // 각 장신구의 옵션 요소 확인
-    const accessoryDetails = Array.from(accessoryItems).map((item, index) => {
-      // 이미지 정보
-      const imgElement = item.querySelector('.img-box img');
-      const imgSrc = imgElement ? imgElement.src : 'no-image';
-      const imgAlt = imgElement ? imgElement.alt : '';
-      
-      // 타입 확인
-      let type = 'unknown';
-      if (index === 0) type = 'necklace';
-      else if (index === 1) type = 'earring1';
-      else if (index === 2) type = 'earring2';
-      else if (index === 3) type = 'ring1';
-      else if (index === 4) type = 'ring2';
-      
-      // 옵션 요소
-      const optionElements = item.querySelectorAll('.option-box .grinding-wrap .option.tooltip-text');
-      const optionValues = Array.from(optionElements).map(opt => {
-        const selectedOption = opt.options[opt.selectedIndex];
-        return {
-          value: opt.value,
-          text: selectedOption ? selectedOption.textContent : 'none'
-        };
-      });
-      
-      // 탁돈 등급
-      const qualityElements = item.querySelectorAll('.quality');
-      const qualities = Array.from(qualityElements).map(q => q.textContent);
-      
-      // 티어 요소 추가
-      const tierElement = item.querySelector('select.tier.accessory');
-      const tierValue = tierElement ? tierElement.value : null;
-      const tierText = tierElement ? tierElement.options[tierElement.selectedIndex]?.textContent : null;
-      
-      return {
-        index,
-        type,
-        imgSrc,
-        imgAlt,
-        optionCount: optionElements.length,
-        optionValues,
-        qualities,
-        tier: {
-          value: tierValue,
-          text: tierText
-        }
-      };
-    });
-    
-    return accessoryDetails;
-  }
+
   
   // 공개 API
   return {
@@ -442,7 +362,6 @@ LopecScanner.Scanners.Accessory.Detector = (function() {
     getSelectedAccessoryOptions,
     groupAccessoriesByType,
     groupTierElementsByType,
-    debugAccessoryStructure,
     detectJobType
   };
 })();
