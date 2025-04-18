@@ -568,6 +568,25 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
           return;
         }
         
+        // 티어 옵션 변경 여부 확인 - 원래 티어와 비교
+        const originalTierText = tierElement && tierElement.originalText ? tierElement.originalText.toLowerCase() : '';
+        const currentTierText = tierOption.text ? tierOption.text.toLowerCase() : '';
+        // 티어 변경 시 모든 조합 검색 플래그
+        let scanAllCombinations = false;
+        
+        // 유물 -> 고대로 등급 상승 시 모든 조합 검색
+        if (originalTierText !== currentTierText) {
+          // 더 높은 등급으로 변경 시 모든 조합 검색
+          const isUpgrade = 
+            (originalTierText.includes('유물') && currentTierText.includes('고대')) ||
+            (!originalTierText.includes('고대') && currentTierText.includes('고대'));
+            
+          if (isUpgrade) {
+            console.log(`티어 업그레이드 감지: ${originalTierText} -> ${currentTierText}, 모든 조합 검색 실행`);
+            scanAllCombinations = true;
+          }
+        }
+        
         // 티어 값이 있으면 먼저 변경
         let tierChanged = false;
         if (tierOption.value && tierElement && tierElement.element) {
@@ -585,8 +604,17 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
           }
         }
         
-        // 각 옵션 조합마다 스캔 수행 (현재 점수보다 높은 조합만 스캔)
-        for (const combo of combinationsToScan) {
+        // 티어 변경 로직에 따라 스캔할 조합 다시 필터링
+        let combinationsToScanForTier = [...combinationsToScan]; // 기본값은 원래 필터링된 조합들
+        
+        // 티어 업그레이드 시 모든 조합 검색
+        if (scanAllCombinations) {
+          console.log(`티어 업그레이드로 인해 모든 조합 검색: 기존 ${combinationsToScanForTier.length}개 -> 전체 ${qualityCombinations.length}개`);
+          combinationsToScanForTier = qualityCombinations;
+        }
+        
+        // 각 옵션 조합마다 스캔 수행
+        for (const combo of combinationsToScanForTier) {
           if (!BaseScanner.state.isScanning) {
             console.log('스캔이 중지되었습니다.');
             // 스캔 중지시 티어 복원 후 원래 값으로 복원
@@ -744,10 +772,11 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
         } // combinationsToScan 반복문 종료
         
         // 스캔하지 않는 조합들에 대해서도 진행률 업데이트
+        const scannedCombinationLabels = combinationsToScanForTier.map(combo => combo.label);
         const skippedCombinations = qualityCombinations.filter(combo => 
-          !combinationsToScan.some(c => c.label === combo.label)
+          !scannedCombinationLabels.includes(combo.label)
         );
-        console.log(`점수가 낮아서 건너뛰는 조합: ${skippedCombinations.length}개`);
+        console.log(`이 티어에서 검색한 조합: ${combinationsToScanForTier.length}개, 건너뛰는 조합: ${skippedCombinations.length}개`);
         
         for (let i = 0; i < skippedCombinations.length; i++) {
           BaseScanner.updateScanProgress();
