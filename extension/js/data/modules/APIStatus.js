@@ -1,67 +1,4 @@
-  /**
-   * 각인서 API 요청 파라미터 수정
-   * 잘못된 파라미터를 개선하는 함수
-   * @param {Object} item - 각인서 아이템
-   * @param {string} itemName - 추출된 이름
-   * @param {string} grade - 등급(전설, 유물 등)
-   * @returns {Object} 수정된 파라미터
-   */
-  function fixEngravingAPIRequest(item, itemName, grade) {
-    console.log('각인서 API 요청 수정 전:', { itemName, grade });
-    
-    // 이름 수정
-    let fixedName = itemName;
-    let fixedGrade = grade || '전설';
-    
-    // 이름에 등급이 포함된 경우 수정
-    if (fixedName.includes('전설') || fixedName.includes('유물')) {
-      // 각인서 이름 목록에서 찾기
-      const knownEngravings = [
-        '타격의 대가', '강화 방패', '기동방박', '금지 패턴',
-        '아드레날린', '시너지', '창수의 기술', '실드 스트라이크',
-        '주술의 대가', '전문가', '금공장', '기동거', '얼괴마루', '조절', '상장'
-      ];
-      
-      // 알려진 각인서와 일치하는지 확인
-      for (const name of knownEngravings) {
-        if (item.item.includes(name)) {
-          fixedName = name;
-          break;
-        }
-      }
-      
-      // 여전히 이름에 등급이 포함된 경우
-      if (fixedName.includes('전설')) {
-        // 전설 제거
-        fixedName = fixedName.replace('전설', '').trim();
-        fixedGrade = '전설';
-      } else if (fixedName.includes('유물')) {
-        // 유물 제거
-        fixedName = fixedName.replace('유물', '').trim();
-        fixedGrade = '유물';
-      }
-    }
-    
-    // 직접 각인서 이름 확인
-    if (item.item.includes('타격의 대가')) {
-      fixedName = '타격의 대가';
-    } else if (item.item.includes('주술의 대가')) {
-      fixedName = '주술의 대가';
-    } else if (item.item.includes('금지 패턴')) {
-      fixedName = '금지 패턴';
-    }
-    
-    // Lv. 또는 숫자 제거
-    fixedName = fixedName.replace(/Lv\.?\s*\d+/g, '').trim();
-    fixedName = fixedName.replace(/\s+\d+/, '').trim();
-    
-    console.log('각인서 API 요청 수정 후:', { fixedName, fixedGrade });
-    
-    return {
-      name: fixedName,
-      grade: fixedGrade
-    };
-  }// API 캐시 저장소 (전역 변수)
+// API 캐시 저장소 (전역 변수)
 const API_CACHE = {
   gems: {}, // 보석 가격 캐싱 (예: '9레벨 겁화': 785000)
   engravings: {}, // 각인서 가격 캐싱
@@ -73,38 +10,8 @@ const API_CACHE = {
  * API 상태 업데이트 및 표시를 담당합니다.
  */
 
-// API 관련 상수 정의
-const API_CONFIG = {
-  baseUrl: "https://developer-lostark.game.onstove.com",
-  headers: {
-    "content-type": "application/json;charset=UTF-8",
-    "accept": "application/json",
-  },
-  endpoints: {
-    auctionOptions: "/auctions/options",
-    auctionItems: "/auctions/items", // 경매장 아이템 검색 (장신구, 보석 등)
-    marketItems: "/markets/items",   // 거래소 아이템 검색 (각인서 등)
-  },
-  // 아이템 유형별 카테고리 코드
-  categoryCodes: {
-    // 경매장 카테고리
-    auction: {
-      accessory: 200000,  // 장신구 (Code: 200000, CodeName: 장신구)
-      gem: 210000,       // 보석 (Code: 210000, CodeName: 보석)
-    },
-    // 거래소 카테고리
-    market: {
-      engraving: 40000,   // 각인서 (Code: 40000, CodeName: 각인서)
-    }
-  },
-  // 아이템 등급
-  itemGrades: {
-    legendary: "전설", // 전설
-    relic: "유물",     // 유물
-    ancient: "고대",   // 고대
-    epic: "영웅"       // 영웅
-  }
-};
+// API 관련 상수 가져오기
+import API_CONFIG from './APIConfig.js';
 
 // API 상태 관리 모듈
 const APIStatus = (function() {
@@ -326,28 +233,7 @@ const APIStatus = (function() {
     }
   }
   
-  /**
-   * 가짜 골드 데이터 생성 (개발용)
-   * @param {Array} items - 아이템 데이터 배열
-   */
-  async function mockGoldDataFetch(items) {
-    return new Promise(resolve => {
-      // 1초 대기하여 로딩 상태 테스트
-      setTimeout(() => {
-        // 각 아이템에 가짜 골드 정보 추가
-        items.forEach(item => {
-          // difference가 양수인 경우에만 골드 정보 추가
-          if (item.difference > 0) {
-            // 랜덤 골드 값 생성 (100 ~ 10000)
-            const goldCost = Math.floor(Math.random() * 9900) + 100;
-            item.goldCost = goldCost;
-          }
-        });
-        
-        resolve();
-      }, 1000);
-    });
-  }
+
   
   /**
    * 실제 로스트아크 API를 통해 골드 데이터 가져오기
@@ -450,48 +336,7 @@ const APIStatus = (function() {
     return isEngraving;
   }
   
-  /**
-   * 각인서 정보에서 이름만 추출
-   * @param {string} itemText - 각인서 전체 텍스트
-   * @returns {string} 추출된 각인서 이름
-   */
-  function extractEngravingName(itemText) {
-    if (!itemText) return '알 수 없음';
-    
-    
-    // 패턴 1: 첫 번째 한글 단어를 각인 이름으로 가정
-    const pattern1 = /^\s*([\uac00-\ud7a3A-Za-z0-9]+)\s/;
-    const match1 = itemText.match(pattern1);
-    
-    if (match1 && match1[1]) {
-      return match1[1].trim();
-    }
-    
-    // 패턴 2: 등급을 제외한 첫 번째 단어
-    const pattern2 = /^\s*(?:\uc804\uc124|\uc720\ubb3c|\uc601\uc6c5|\uace0\ub300)\s+([\uac00-\ud7a3A-Za-z0-9]+)/;
-    const match2 = itemText.match(pattern2);
-    
-    if (match2 && match2[1]) {
-      return match2[1].trim();
-    }
-    
-    // 패턴 3: Lv 패턴 제거
-    const pattern3 = /^\s*([\uac00-\ud7a3A-Za-z0-9]+)\s+Lv\./;
-    const match3 = itemText.match(pattern3);
-    
-    if (match3 && match3[1]) {
-      return match3[1].trim();
-    }
-    
-    // 그 외의 경우 공백으로 분리해서 첫 번째 단어 사용
-    const parts = itemText.split(/\s+/);
-    if (parts.length > 0) {
-      return parts[0].trim();
-    }
-    
-    // 여전히 추출 실패시 전체 사용
-    return itemText;
-  }
+
   
   /**
    * 장신구 아이템 처리
@@ -1101,3 +946,9 @@ const APIStatus = (function() {
 
 // 모듈이 로드되면 자동으로 초기화
 document.addEventListener('DOMContentLoaded', APIStatus.initialize);
+
+// 모듈을 전역 객체에 노출 (기존 코드와의 호환성을 위해)
+window.APIStatus = APIStatus;
+
+// 모듈 내보내기
+export default APIStatus;

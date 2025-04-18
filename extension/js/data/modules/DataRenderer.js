@@ -3,6 +3,9 @@
  * 요약 정보 및 데이터 테이블 렌더링을 담당합니다.
  */
 
+// APIStatus 모듈 가져오기
+import APIStatus from './APIStatus.js';
+
 // 데이터 렌더러 모듈
 const DataRenderer = (function() {
   /**
@@ -277,3 +280,9 @@ const DataRenderer = (function() {
 
 // 모듈이 로드되면 자동으로 초기화
 document.addEventListener('DOMContentLoaded', DataRenderer.initialize);
+
+// 모듈을 전역 객체에 노출
+window.DataRenderer = DataRenderer;
+
+// 모듈 내보내기
+export default DataRenderer;

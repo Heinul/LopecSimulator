@@ -3,6 +3,9 @@
  * API 키 설정, 저장, 테스트 및 API 관련 UI 처리를 담당합니다.
  */
 
+// API_CONFIG 가져오기
+import API_CONFIG from './APIConfig.js';
+
 // API 관리자 모듈
 const APIManager = (function() {
   /**
@@ -360,3 +363,9 @@ const APIManager = (function() {
 
 // 모듈이 로드되면 자동으로 초기화
 document.addEventListener('DOMContentLoaded', APIManager.initialize);
+
+// 모듈을 전역 객체에 노출 (기존 코드와의 호환성을 위해)
+window.APIManager = APIManager;
+
+// 모듈 내보내기
+export default APIManager;

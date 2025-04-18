@@ -4,6 +4,8 @@
  */
 
 // UI 컨트롤러 모듈
+// 참고: 해당 모듈은 APIStatus와 DataManager, DataRenderer를 사용함
+// 해당 모듈들이 앞서 로드되어야 함
 const UIController = (function() {
   /**
    * 모달 스타일 추가

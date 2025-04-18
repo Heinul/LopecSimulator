@@ -252,3 +252,9 @@ const DataManager = {
     return result;
   }
 };
+
+// 전역 객체에 노출
+window.DataManager = DataManager;
+
+// 모듈 내보내기
+export default DataManager;
