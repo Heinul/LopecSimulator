@@ -22,6 +22,32 @@ import {
  * 장신구 최저가 검색 API
  */
 export const AccessoryApi = {
+    // 캐시 저장소
+    _cache: {},
+    
+    // 캐시 키 생성 함수
+    _createCacheKey(categoryCode, combinationType, options, itemGrade) {
+        return `${categoryCode}-${combinationType}-${JSON.stringify(options)}-${itemGrade}`;
+    },
+    
+    // 캐시에서 데이터 가져오기
+    _getFromCache(cacheKey) {
+        return this._cache[cacheKey];
+    },
+    
+    // 캐시에 데이터 저장
+    _saveToCache(cacheKey, data) {
+        this._cache[cacheKey] = {
+            data: data,
+            timestamp: Date.now()
+        };
+    },
+    
+    // 캐시 유효성 검사 (예: 1시간 이내 데이터만 유효)
+    _isCacheValid(cacheEntry) {
+        const cacheLifetime = 60 * 60 * 1000; // 1시간 (밀리초)
+        return cacheEntry && (Date.now() - cacheEntry.timestamp) < cacheLifetime;
+    },
     /**
      * 장신구 최저가 검색
      * @param {number} categoryCode - 장신구 카테고리 코드
@@ -32,6 +58,16 @@ export const AccessoryApi = {
      */
     async searchLowestPrice(categoryCode, combinationType, options, itemGrade = "고대") {
         try {
+            // 캐시 키 생성
+            const cacheKey = this._createCacheKey(categoryCode, combinationType, options, itemGrade);
+            
+            // 캐시에서 데이터 확인
+            const cachedEntry = this._getFromCache(cacheKey);
+            if (this._isCacheValid(cachedEntry)) {
+                console.log(`캐시에서 데이터 로드: ${cacheKey}`);
+                return cachedEntry.data;
+            }
+            
             // 장신구 타입 판별
             let accessoryType;
             switch(categoryCode) {
@@ -58,18 +94,26 @@ export const AccessoryApi = {
             const response = await ApiClient.sendAuctionRequest(requestData);
             
             // 결과가 없는 경우
-            if (!response || response.length === 0) {
+            if (!response || !response.Items || response.Items.length === 0) {
                 return null;
             }
+            
             // 최저가 아이템 반환
-            if (response && response.Items[0].AuctionInfo) {
-                return {
-                    price: response.Items[0].AuctionInfo.BuyPrice
+            let result = null;
+            if (response.Items[0] && response.Items[0].AuctionInfo) {
+                result = {
+                    price: response.Items[0].AuctionInfo.BuyPrice,
+                    quality: response.Items[0].GradeQuality,
+                    itemName: response.Items[0].Name
                 };
+                
+                // 결과 캐시에 저장
+                this._saveToCache(cacheKey, result);
             } else {
-                console.warn('응답에 AuctionInfo가 없습니다:', response[0]);
-                return null;
+                console.warn('응답에 AuctionInfo가 없습니다:', response.Items ? response.Items[0] : 'Items 없음');
             }
+            
+            return result;
         } catch (error) {
             console.error('장신구 최저가 검색 중 오류 발생:', error);
             throw error;
@@ -86,6 +130,16 @@ export const AccessoryApi = {
      */
     async searchByClass(classType, accessoryType, combinationType, itemGrade = "고대") {
         try {
+            // 캐시 키 생성
+            const cacheKey = `class-${classType}-${accessoryType}-${combinationType}-${itemGrade}`;
+            
+            // 캐시에서 데이터 확인
+            const cachedEntry = this._getFromCache(cacheKey);
+            if (this._isCacheValid(cachedEntry)) {
+                console.log(`캐시에서 데이터 로드: ${cacheKey}`);
+                return cachedEntry.data;
+            }
+            
             // 해당 클래스/장신구의 옵션 가져오기
             const options = getOptionsForClass(classType, accessoryType);
             if (!options || options.length === 0) {
@@ -109,7 +163,14 @@ export const AccessoryApi = {
             }
             
             // 최저가 검색
-            return await this.searchLowestPrice(categoryCode, combinationType, options, itemGrade);
+            const result = await this.searchLowestPrice(categoryCode, combinationType, options, itemGrade);
+            
+            // 결과가 있으면 캐시에 저장
+            if (result) {
+                this._saveToCache(cacheKey, result);
+            }
+            
+            return result;
         } catch (error) {
             console.error(`${classType} ${accessoryType} 검색 중 오류 발생:`, error);
             throw error;
@@ -126,6 +187,16 @@ export const AccessoryApi = {
      */
     async searchByStringType(classTypeString, accessoryTypeString, combinationTypeString, itemGrade = "고대") {
         try {
+            // 캐시 키 생성
+            const cacheKey = `string-${classTypeString}-${accessoryTypeString}-${combinationTypeString}-${itemGrade}`;
+            
+            // 캐시에서 데이터 확인
+            const cachedEntry = this._getFromCache(cacheKey);
+            if (this._isCacheValid(cachedEntry)) {
+                console.log(`캐시에서 데이터 로드: ${cacheKey}`);
+                return cachedEntry.data;
+            }
+            
             // 문자열을 키로 변환
             const classType = CLASS_TYPE_MAPPING[classTypeString];
             const accessoryType = ACCESSORY_TYPE_MAPPING[accessoryTypeString];
@@ -135,7 +206,14 @@ export const AccessoryApi = {
             }
             
             // 클래스 타입과 장신구 타입으로 검색
-            return await this.searchByClass(classType, accessoryType, combinationTypeString, itemGrade);
+            const result = await this.searchByClass(classType, accessoryType, combinationTypeString, itemGrade);
+            
+            // 결과가 있으면 캐시에 저장
+            if (result) {
+                this._saveToCache(cacheKey, result);
+            }
+            
+            return result;
         } catch (error) {
             console.error(`${classTypeString} ${accessoryTypeString} ${combinationTypeString} 검색 중 오류 발생:`, error);
             throw error;
@@ -150,27 +228,42 @@ export const AccessoryApi = {
      */
     async searchWithRequestData(requestData, isAuction = true) {
         try {
+            // 캐시 키 생성 (요청 데이터를 기반으로 키 생성)
+            const cacheKey = `request-${isAuction ? 'auction' : 'market'}-${JSON.stringify(requestData)}`;
+            
+            // 캐시에서 데이터 확인
+            const cachedEntry = this._getFromCache(cacheKey);
+            if (this._isCacheValid(cachedEntry)) {
+                console.log(`캐시에서 데이터 로드: ${cacheKey.substring(0, 50)}...`);
+                return cachedEntry.data;
+            }
+            
             // API 요청 전송
             const response = isAuction 
                 ? await ApiClient.sendAuctionRequest(requestData)
                 : await ApiClient.sendMarketRequest(requestData);
             
             // 결과가 없는 경우
-            if (!response || response.length === 0) {
+            if (!response || !response.Items || response.Items.length === 0) {
                 return null;
             }
             
             // 최저가 아이템 반환
-            if (response[0] && response[0].AuctionInfo) {
-                return {
-                    price: response[0].AuctionInfo.BuyPrice,
-                    quality: response[0].Quality,
-                    itemName: response[0].Name
+            let result = null;
+            if (response.Items[0] && response.Items[0].AuctionInfo) {
+                result = {
+                    price: response.Items[0].AuctionInfo.BuyPrice,
+                    quality: response.Items[0].GradeQuality,
+                    itemName: response.Items[0].Name
                 };
+                
+                // 결과 캐시에 저장
+                this._saveToCache(cacheKey, result);
             } else {
-                console.warn('응답에 AuctionInfo가 없습니다:', response[0]);
-                return null;
+                console.warn('응답에 AuctionInfo가 없습니다:', response.Items ? response.Items[0] : 'Items 없음');
             }
+            
+            return result;
         } catch (error) {
             console.error('장신구 최저가 검색 중 오류 발생:', error);
             throw error;
@@ -225,6 +318,32 @@ export const AccessoryApi = {
      */
     async searchSupporter(accessoryType, combinationType) {
         return this.searchByClass("SUPPORTER", accessoryType, combinationType);
+    },
+    
+    /**
+     * 캐시 정보 초기화/정리
+     * @returns {number} 삭제된 항목 수
+     */
+    clearCache() {
+        const count = Object.keys(this._cache).length;
+        this._cache = {};
+        return count;
+    },
+    
+    /**
+     * 캐시 사용 통계 확인
+     * @returns {Object} 캐시 통계 정보
+     */
+    getCacheStats() {
+        const cacheKeys = Object.keys(this._cache);
+        const validEntries = cacheKeys.filter(key => this._isCacheValid(this._cache[key]));
+        
+        return {
+            totalEntries: cacheKeys.length,
+            validEntries: validEntries.length,
+            expiredEntries: cacheKeys.length - validEntries.length,
+            cacheSize: JSON.stringify(this._cache).length / 1024 // KB 단위
+        };
     },
     
     // 상수 객체
