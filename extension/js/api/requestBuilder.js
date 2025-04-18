@@ -136,67 +136,97 @@ export function convertToEtcOptions(options) {
  * @param {Array} options - 옵션 배열 [{FirstOption, SecondOption}, ...]
  * @param {string} combinationType - 옵션 조합 타입 (예: "상상", "상중")
  * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
+ * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
  * @returns {Array} EtcOptions 형식의 배열
  */
-export function createAccessoryEtcOptions(options, combinationType, accessoryType) {
+export function createAccessoryEtcOptions(options, combinationType, accessoryType, itemGrade = "고대") {
     // 조합 타입에 따른 등급 배열 가져오기
     const grades = GRADE_MAPPING[combinationType] || ["상", "상"];
+    
+    // 전투 특성 옵션 값 설정 (FirstOption: 8, SecondOption: 1)
+    let specialStatValue = 0;
+    if (accessoryType === "NECKLACE") {
+        specialStatValue = itemGrade === "고대" ? 13 : 10;
+    } else { // EARRING 또는 RING
+        specialStatValue = itemGrade === "고대" ? 12 : 9;
+    }
+    
+    // 전투 특성 옵션 생성
+    const specialStatOption = {
+        FirstOption: 8,
+        SecondOption: 1,
+        MinValue: specialStatValue,
+        MaxValue: specialStatValue
+    };
     
     // 옵션이 2개 이상인 경우
     if (options && options.length >= 2) {
         const etcOptions = [];
         
+        // 전투 특성 옵션 추가
+        etcOptions.push(specialStatOption);
+        
         // 첫 번째 옵션
         const firstOption = options[0];
         const firstGrade = getGradeTypeByString(grades[0]);
-        const firstValues = getOptionValueByGrade(accessoryType, firstOption.SecondOption, firstGrade);
         
-        if (firstValues) {
-            etcOptions.push({
-                FirstOption: firstOption.FirstOption,
-                SecondOption: firstOption.SecondOption,
-                MinValue: firstValues.MinValue,
-                MaxValue: firstValues.MaxValue
-            });
-        } else {
-            etcOptions.push({
-                FirstOption: firstOption.FirstOption,
-                SecondOption: firstOption.SecondOption,
-                MinValue: 0,
-                MaxValue: 0
-            });
+        // 첫 번째 옵션이 '무' 등급이 아닌 경우에만 추가
+        if (grades[0] !== "무") {
+            const firstValues = getOptionValueByGrade(accessoryType, firstOption.SecondOption, firstGrade);
+            
+            if (firstValues) {
+                etcOptions.push({
+                    FirstOption: firstOption.FirstOption,
+                    SecondOption: firstOption.SecondOption,
+                    MinValue: firstValues.MinValue,
+                    MaxValue: firstValues.MaxValue
+                });
+            } else {
+                etcOptions.push({
+                    FirstOption: firstOption.FirstOption,
+                    SecondOption: firstOption.SecondOption,
+                    MinValue: 0,
+                    MaxValue: 0
+                });
+            }
         }
         
         // 두 번째 옵션
         const secondOption = options[1];
         const secondGrade = getGradeTypeByString(grades[1]);
-        const secondValues = getOptionValueByGrade(accessoryType, secondOption.SecondOption, secondGrade);
         
-        if (secondValues) {
-            etcOptions.push({
-                FirstOption: secondOption.FirstOption,
-                SecondOption: secondOption.SecondOption,
-                MinValue: secondValues.MinValue,
-                MaxValue: secondValues.MaxValue
-            });
-        } else {
-            etcOptions.push({
-                FirstOption: secondOption.FirstOption,
-                SecondOption: secondOption.SecondOption,
-                MinValue: 0,
-                MaxValue: 0
-            });
+        // 두 번째 옵션이 '무' 등급이 아닌 경우에만 추가
+        if (grades[1] !== "무") {
+            const secondValues = getOptionValueByGrade(accessoryType, secondOption.SecondOption, secondGrade);
+            
+            if (secondValues) {
+                etcOptions.push({
+                    FirstOption: secondOption.FirstOption,
+                    SecondOption: secondOption.SecondOption,
+                    MinValue: secondValues.MinValue,
+                    MaxValue: secondValues.MaxValue
+                });
+            } else {
+                etcOptions.push({
+                    FirstOption: secondOption.FirstOption,
+                    SecondOption: secondOption.SecondOption,
+                    MinValue: 0,
+                    MaxValue: 0
+                });
+            }
         }
         
-        // 마지막 슬롯 (빈 슬롯)
-        etcOptions.push({ FirstOption: 7, SecondOption: null, MinValue: "", MaxValue: "" });
+        // 남은 슬롯 채우기 (옵션이 3개가 될 때까지)
+        while (etcOptions.length < 3) {
+            etcOptions.push({ FirstOption: 7, SecondOption: null, MinValue: "", MaxValue: "" });
+        }
         
         return etcOptions;
     }
     
-    // 기본적으로 빈 슬롯 3개 반환
+    // 기본적으로 전투 특성 옵션과 빈 슬롯 2개 반환
     return [
-        { FirstOption: 7, SecondOption: null, MinValue: "", MaxValue: "" },
+        specialStatOption,
         { FirstOption: 7, SecondOption: null, MinValue: "", MaxValue: "" },
         { FirstOption: 7, SecondOption: null, MinValue: "", MaxValue: "" }
     ];
@@ -229,7 +259,7 @@ export function buildMarketRequestData(categoryCode, etcOptions, extraParams = {
     return {
         CategoryCode: categoryCode,
         SortCondition: "ASC",
-        ItemGrade: "고대",
+        ItemGrade: extraParams.ItemGrade || "고대",
         Sort: "BUY_PRICE",
         ItemLevelMax: null,
         ItemName: "",
@@ -255,7 +285,7 @@ export function buildAuctionRequestData(categoryCode, etcOptions, extraParams = 
     return {
         CategoryCode: categoryCode,
         SortCondition: "ASC",
-        ItemGrade: "고대",
+        ItemGrade: extraParams.ItemGrade || "고대",
         Sort: "BUY_PRICE",
         ItemLevelMax: null,
         ItemName: "",
@@ -266,7 +296,7 @@ export function buildAuctionRequestData(categoryCode, etcOptions, extraParams = 
         ItemLevelMin: 0,
         EtcOptions: etcOptions,
         SkillOptions: [],
-        AuctionStatusType: 1, // 진행중
+        AuctionStatusType: 1, // 경매 진행중인 아이템만 검색 (1: 진행중, 2: 종료)
         ...extraParams
     };
 }
@@ -276,9 +306,10 @@ export function buildAuctionRequestData(categoryCode, etcOptions, extraParams = 
  * @param {string} classTypeString - 클래스 타입 문자열 ("딜러" 또는 "서포터")
  * @param {string} accessoryTypeString - 장신구 타입 문자열 ("목걸이", "귀걸이", "반지")
  * @param {string} combinationTypeString - 옵션 조합 타입 문자열 (예: "상상", "상중")
- * @returns {Object} 마켓 API 요청 데이터
+ * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
+ * @returns {Object} 경매장 API 요청 데이터
  */
-export function buildRequestByStringType(classTypeString, accessoryTypeString, combinationTypeString) {
+export function buildRequestByStringType(classTypeString, accessoryTypeString, combinationTypeString, itemGrade = "고대") {
     // 문자열을 키로 변환
     const classType = CLASS_TYPE_MAPPING[classTypeString];
     const accessoryType = ACCESSORY_TYPE_MAPPING[accessoryTypeString];
@@ -297,10 +328,10 @@ export function buildRequestByStringType(classTypeString, accessoryTypeString, c
     }
     
     // EtcOptions 생성
-    const etcOptions = createAccessoryEtcOptions(options, combinationTypeString, accessoryType);
+    const etcOptions = createAccessoryEtcOptions(options, combinationTypeString, accessoryType, itemGrade);
     
-    // 마켓 요청 데이터 생성
-    return buildMarketRequestData(categoryCode, etcOptions);
+    // 경매장 요청 데이터 생성
+    return buildAuctionRequestData(categoryCode, etcOptions, { ItemGrade: itemGrade });
 }
 
 export default {

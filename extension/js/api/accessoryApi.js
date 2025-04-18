@@ -15,7 +15,7 @@ import {
     createAccessoryEtcOptions,
     getOptionsForClass,
     getAccessoryCodeByString,
-    buildRequestByStringType
+    buildAuctionRequestData
 } from './requestBuilder.js';
 
 /**
@@ -27,9 +27,10 @@ export const AccessoryApi = {
      * @param {number} categoryCode - 장신구 카테고리 코드
      * @param {string} combinationType - 옵션 조합 타입 (예: "상상", "상중")
      * @param {Array} options - 옵션 배열 [{FirstOption, SecondOption}, ...]
+     * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
      * @returns {Promise<Object|null>} 최저가 정보 또는 null
      */
-    async searchLowestPrice(categoryCode, combinationType, options) {
+    async searchLowestPrice(categoryCode, combinationType, options, itemGrade = "고대") {
         try {
             // 장신구 타입 판별
             let accessoryType;
@@ -48,13 +49,13 @@ export const AccessoryApi = {
             }
             
             // EtcOptions 생성
-            const etcOptions = createAccessoryEtcOptions(options, combinationType, accessoryType);
+            const etcOptions = createAccessoryEtcOptions(options, combinationType, accessoryType, itemGrade);
             
             // 요청 데이터 생성
-            const requestData = buildMarketRequestData(categoryCode, etcOptions);
+            const requestData = buildAuctionRequestData(categoryCode, etcOptions, { ItemGrade: itemGrade });
             
             // API 요청 전송
-            const response = await ApiClient.sendMarketRequest(requestData);
+            const response = await ApiClient.sendAuctionRequest(requestData);
             
             // 결과가 없는 경우
             if (!response || response.length === 0) {
@@ -78,9 +79,10 @@ export const AccessoryApi = {
      * @param {string} classType - 클래스 타입 ("DEALER" 또는 "SUPPORTER")
      * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
      * @param {string} combinationType - 옵션 조합 타입 (예: "상상", "상중")
+     * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
      * @returns {Promise<Object|null>} 최저가 정보 또는 null
      */
-    async searchByClass(classType, accessoryType, combinationType) {
+    async searchByClass(classType, accessoryType, combinationType, itemGrade = "고대") {
         try {
             // 해당 클래스/장신구의 옵션 가져오기
             const options = getOptionsForClass(classType, accessoryType);
@@ -105,7 +107,7 @@ export const AccessoryApi = {
             }
             
             // 최저가 검색
-            return await this.searchLowestPrice(categoryCode, combinationType, options);
+            return await this.searchLowestPrice(categoryCode, combinationType, options, itemGrade);
         } catch (error) {
             console.error(`${classType} ${accessoryType} 검색 중 오류 발생:`, error);
             throw error;
@@ -117,9 +119,10 @@ export const AccessoryApi = {
      * @param {string} classTypeString - 클래스 타입 문자열 ("딜러" 또는 "서포터")
      * @param {string} accessoryTypeString - 장신구 타입 문자열 ("목걸이", "귀걸이", "반지")
      * @param {string} combinationTypeString - 옵션 조합 타입 문자열 (예: "상상", "상중")
+     * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
      * @returns {Promise<Object|null>} 최저가 정보 또는 null
      */
-    async searchByStringType(classTypeString, accessoryTypeString, combinationTypeString) {
+    async searchByStringType(classTypeString, accessoryTypeString, combinationTypeString, itemGrade = "고대") {
         try {
             // 문자열을 키로 변환
             const classType = CLASS_TYPE_MAPPING[classTypeString];
@@ -130,7 +133,7 @@ export const AccessoryApi = {
             }
             
             // 클래스 타입과 장신구 타입으로 검색
-            return await this.searchByClass(classType, accessoryType, combinationTypeString);
+            return await this.searchByClass(classType, accessoryType, combinationTypeString, itemGrade);
         } catch (error) {
             console.error(`${classTypeString} ${accessoryTypeString} ${combinationTypeString} 검색 중 오류 발생:`, error);
             throw error;
@@ -140,12 +143,15 @@ export const AccessoryApi = {
     /**
      * 직접 요청 데이터로 최저가 검색
      * @param {Object} requestData - API 요청 데이터
+     * @param {boolean} isAuction - 경매장 요청 여부 (true: 경매장, false: 마켓)
      * @returns {Promise<Object|null>} 최저가 정보 또는 null
      */
-    async searchWithRequestData(requestData) {
+    async searchWithRequestData(requestData, isAuction = true) {
         try {
             // API 요청 전송
-            const response = await ApiClient.sendMarketRequest(requestData);
+            const response = isAuction 
+                ? await ApiClient.sendAuctionRequest(requestData)
+                : await ApiClient.sendMarketRequest(requestData);
             
             // 결과가 없는 경우
             if (!response || response.length === 0) {

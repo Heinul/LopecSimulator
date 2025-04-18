@@ -371,6 +371,7 @@ const APIStatus = (function() {
     const batchSize = 10;
     const batches = [];
     
+
     // 배치로 나누기
     for (let i = 0; i < items.length; i += batchSize) {
       batches.push(items.slice(i, i + batchSize));
@@ -385,7 +386,7 @@ const APIStatus = (function() {
       const accessoryItems = batch.filter(item => isAccessoryItem(item));
       const gemItems = batch.filter(item => isGemItem(item));
       const engravingItems = batch.filter(item => isEngravingItem(item));
-      
+
       // 각 아이템 그룹 처리
       try {
         if (accessoryItems.length > 0) {
@@ -417,7 +418,9 @@ const APIStatus = (function() {
    * @returns {boolean} 장신구 여부
    */
   function isAccessoryItem(item) {
-    return item.type === 'accessory';
+    const accessoryTypes = ['accessory', 'earring1', 'earring2', 'ring1', 'ring2', 'necklace'];
+    console.log('장신구 타입 확인:', item.item);
+    return accessoryTypes.includes(item.accessoryType);
   }
   
   /**
@@ -435,12 +438,15 @@ const APIStatus = (function() {
    * @returns {boolean} 각인서 여부
    */
   function isEngravingItem(item) {
-    // 각인서 타입 직접 체크 및 로깅
+    // 각인서 타입 직접 체크
     const isEngraving = item.type === 'engraving' || item.type === '각인';
-    console.log('각인서 타입 확인:', item.type, isEngraving ? '일치' : '불일치');
-    if (isEngraving) {
+    
+    if (!isEngraving) {
+      console.log('각인서 타입 확인:', item.item, '불일치 (현재 타입: ' + item.type + ')');
+    } else {
       console.log('각인서 아이템 감지:', item);
     }
+    
     return isEngraving;
   }
   
@@ -452,9 +458,6 @@ const APIStatus = (function() {
   function extractEngravingName(itemText) {
     if (!itemText) return '알 수 없음';
     
-    // 예시: "주술의 전설서" -> "주술의"
-    // 예시: "전설 주술의 Lv.3" -> "주술의"
-    // 다양한 패턴 지원
     
     // 패턴 1: 첫 번째 한글 단어를 각인 이름으로 가정
     const pattern1 = /^\s*([\uac00-\ud7a3A-Za-z0-9]+)\s/;
@@ -496,50 +499,85 @@ const APIStatus = (function() {
    * @param {string} apiKey - API 키
    */
   async function processAccessoryItems(items, apiKey) {
-    // 경매장 API로 장신구 가격 조회
-    const endpoint = API_CONFIG.baseUrl + API_CONFIG.endpoints.auctionItems;
-    
-    for (const item of items) {
+    console.log('items11111111111111')
+    console.log(items)
+    try {
+      // 새 API 모듈 불러오기 시도
+      let AccessoryApi;
       try {
-        // API 요청 작성
-        const requestBody = {
-          ItemLevelMin: 0,
-          ItemLevelMax: 0,
-          ItemGradeQuality: null,
-          ItemName: item.item, // 아이템 이름
-          CategoryCode: API_CONFIG.categoryCodes.auction.accessory, // 장신구 카테고리
-          Sort: "BIDSTART_PRICE", // 가격 순 정렬
-          SortCondition: "ASC", // 오름차순
-          PageNo: 1
-        };
-        
-        // API 요청 수행
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            ...API_CONFIG.headers,
-            'authorization': `bearer ${apiKey}`
-          },
-          body: JSON.stringify(requestBody)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.Items && data.Items.length > 0) {
-            // 최저가 기준으로 가격 정보 가져오기
-            const lowestPrice = data.Items[0].AuctionInfo.BuyPrice;
-            item.goldCost = lowestPrice;
-            console.log(`장신구 '${item.item}' 가격 조회 성공:`, lowestPrice);
-          }
-        } else {
-          console.error(`장신구 이름 '${item.item}' 조회 실패:`, response.status);
-        }
-      } catch (error) {
-        console.error(`장신구 '${item.item}' 처리 중 오류:`, error);
+        // 새 API 모듈 임포트 시도
+        const moduleImport = await import('../../../../js/api/accessoryApi.js');
+        AccessoryApi = moduleImport.default;
+        console.log('새 장신구 API 모듈이 성공적으로 로드되었습니다.');
+      } catch (importError) {
+        console.error('새 장신구 API 모듈을 불러오는데 실패했습니다:', importError);
       }
       
-      // API 요청 간 지연
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // 각 장신구 아이템 처리
+      for (const item of items) {
+        try {
+          // 장신구 타입 추출 (목걸이, 귀걸이, 반지)
+          let accessoryType = '';
+          
+          // 장신구 타입 추출
+          if (item.item.includes('necklace')) accessoryType = '목걸이';
+          else if (item.item.includes('earring')) accessoryType = '귀걸이';
+          else if (item.item.includes('ring')) accessoryType = '반지';
+          else {
+            console.warn(`알 수 없는 장신구 타입: ${item.item}`);
+            continue;
+          }
+          
+          // 클래스 타입 (기본값 딜러)
+          const classType = '딜러';
+          
+          // 옵션 조합 추출 (기본값 상상)
+          let combinationType = '상상';
+          
+          // 조합 타입 추출
+          const itemNameParts = item.item.split(' ');
+          for (const part of itemNameParts) {
+            if (part === '상상' || part === '상중' || part === '중상' || 
+                part === '상하' || part === '하상' || part === '상무' || 
+                part === '무상' || part === '중중' || part === '중하' || 
+                part === '하중' || part === '중무' || part === '무중' || 
+                part === '하하' || part === '하무' || part === '무하' || 
+                part === '무무') {
+              combinationType = part;
+              break;
+            }
+          }
+          
+          // 아이템 등급 추출 (고대, 유물)
+          let itemGrade = '고대'; // 기본값
+          if (item.grade) {
+            itemGrade = item.grade;
+          } else if (item.item.includes('유물')) {
+            itemGrade = '유물';
+          }
+          
+          console.log(`장신구 검색: ${accessoryType} (${classType}, ${combinationType}, ${itemGrade})`);
+          
+          // 새 API 모듈을 사용하여 검색
+          const result = await AccessoryApi.searchByStringType(classType, accessoryType, combinationType, itemGrade);
+          
+          if (result && result.price) {
+            // 최저가 기준으로 가격 정보 가져오기
+            item.goldCost = result.price;
+            console.log(`장신구 '${item.item}' 가격 조회 성공:`, result.price, `(품질: ${result.quality || 0})`);
+          } else {
+            console.warn(`장신구 '${item.item}' 가격 조회 실패 또는 가격 정보 없음`);
+          }
+        } catch (error) {
+          console.error(`장신구 '${item.item}' 처리 중 오류:`, error);
+        }
+        
+        // API 요청 간 지연
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+    } catch (error) {
+      console.error('장신구 처리 중 오류:', error);
     }
   }
   
@@ -1047,6 +1085,9 @@ const APIStatus = (function() {
   function initialize() {
     // API 키 업데이트 메시지 리스너 설정
     setupApiKeyUpdateListener();
+    
+    // API 상태 자동 업데이트 시도
+    setTimeout(() => updateApiStatusSummary(), 1000);
     
     console.log('APIStatus 모듈 초기화됨');
   }

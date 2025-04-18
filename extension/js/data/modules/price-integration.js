@@ -512,6 +512,7 @@ const PriceIntegration = (function() {
           let accessoryType = "";
           let combinationType = "상상";
           let classType = "딜러";
+          let itemGrade = "고대"; // 기본값
           
           // 장신구 타입 추출 (목걸이, 귀걸이, 반지)
           if (item.accessoryType) {
@@ -536,19 +537,42 @@ const PriceIntegration = (function() {
             }
           }
           
+          // 아이템 등급 추출 (고대/유물)
+          if (item.grade) {
+            itemGrade = item.grade;
+          } else if (item.item && typeof item.item === 'string') {
+            if (item.item.includes('유물')) itemGrade = '유물';
+          }
+          
           if (accessoryType) {
-            console.log(`[가격 통합] 장신구 가격 검색: ${accessoryType} (${classType}, ${combinationType})`);
+            console.log(`[가격 통합] 장신구 가격 검색: ${accessoryType} (${classType}, ${combinationType}, ${itemGrade})`);
             try {
-              // API로 가격 검색
-              const priceResult = await window.LopecScanner.API.AccessorySearch.searchByStringType(
-                classType, accessoryType, combinationType, [4.0, 4.0] // 기본 옵션 값 (API에서 실제 사용 시 조정 필요)
-              );
+              // 새 API 모듈을 사용하여 검색 시도
+              let priceResult = null;
+              // 새 API가 있는 경우
+              if (window.AccessoryApi) {
+                priceResult = await window.AccessoryApi.searchByStringType(
+                  classType, accessoryType, combinationType, itemGrade
+                );
+              } 
+              // LopecScanner.API 내에 AccessoryApi가 있는 경우
+              else if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.AccessoryApi) {
+                priceResult = await window.LopecScanner.API.AccessoryApi.searchByStringType(
+                  classType, accessoryType, combinationType, itemGrade
+                );
+              }
+              // 기존 API 사용 (호환성 유지)
+              else if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.AccessorySearch) {
+                priceResult = await window.LopecScanner.API.AccessorySearch.searchByStringType(
+                  classType, accessoryType, combinationType
+                );
+              }
               
               if (priceResult && priceResult.price) {
                 itemPrice = priceResult.price;
                 
                 priceInfo.accessories.push({
-                  name: `${accessoryType} (${combinationType})`,
+                  name: `${accessoryType} (${combinationType}) ${itemGrade}`,
                   price: itemPrice,
                   quality: priceResult.quality || 0,
                   score: item.difference
