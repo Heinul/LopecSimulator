@@ -439,6 +439,22 @@ LopecScanner.Scanners.Accessory.Options = (function() {
       }
     }
     
+    // 각 조합에 점수 설정 (상=3, 중=2, 하=1, 무=0)
+    allCombinations.forEach(combo => {
+      let score = 0;
+      combo.options.forEach(option => {
+        if (option.startsWith('상:')) {
+          score += 3;
+        } else if (option.startsWith('중:')) {
+          score += 2;
+        } else if (option.startsWith('하:')) {
+          score += 1;
+        }
+        // 무: 는 0점
+      });
+      combo.score = score;
+    });
+    
     return allCombinations;
   }
   

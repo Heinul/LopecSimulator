@@ -439,27 +439,90 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
       qualityCombinations.sort((a, b) => b.score - a.score);
       
       // 스캔할 조합을 분류하여 선택
-      // 1. 현재 조합(등급) 보다 점수가 높은 모든 조합 선택
-      const betterCombinations = qualityCombinations.filter(combo => combo.score > currentOptionsScore);
+      // 현재 옵션의 점수 확인 (상=3, 중=2, 하=1, 무=0)
+      console.log(`현재 ${type} 장신구 옵션 점수: ${currentOptionsScore}`);
       
-      // 2. 현재 조합과 점수가 같지만 다른 구성의 조합 선택 (예: 상중 -> 중상 등)
+      // 특정 점수 이상의 모든 조합 찾기
+      // 하하옵션이면 합계 2점이므로 2점 이상 모든 조합 스캔
+      // 중중옵션이면 합계 4점이므로 4점 이상 모든 조합 스캔
+      // 상단일이면 3점 이상인 조합들을 부게
+      
+      // 현재 옵션 구성에 따른 최소 점수 계산
+      // 요구사항에 따라, 현재 점수가 아닌 특정 점수 기준으로 조합 선택
+
+      // 상=3, 중=2, 하=1, 무=0의 가중치로 계산
+      // 하하=1+1=2, 중중=2+2=4, 하중=1+2=3, 상하=3+1=4 등
+      let minimumScoreThreshold = 2; // 기본값은 2점 (하하 기준)
+
+      // originalLabel 및 현재 점수에 따라 점수 기준 설정
+      if (originalLabel.includes('하하')) {
+        minimumScoreThreshold = 2; // 하하 = 1+1 = 2
+      } else if (originalLabel.includes('중하') || originalLabel.includes('하중')) {
+        minimumScoreThreshold = 3; // 중하 = 2+1 = 3
+      } else if (originalLabel.includes('중중') || originalLabel.includes('상하') || originalLabel.includes('하상')) {
+        minimumScoreThreshold = 4; // 중중 = 2+2 = 4, 상하 = 3+1 = 4
+      } else if (originalLabel.includes('상중') || originalLabel.includes('중상')) {
+        minimumScoreThreshold = 5; // 상중 = 3+2 = 5
+      } else if (originalLabel.includes('상상')) {
+        minimumScoreThreshold = 6; // 상상 = 3+3 = 6
+      } else if (originalLabel.includes('상무') || originalLabel.includes('무상')) {
+        minimumScoreThreshold = 3; // 상무 = 3+0 = 3
+      } else if (originalLabel.includes('중무') || originalLabel.includes('무중')) {
+        minimumScoreThreshold = 2; // 중무 = 2+0 = 2
+      } else if (originalLabel.includes('하무') || originalLabel.includes('무하')) {
+        minimumScoreThreshold = 1; // 하무 = 1+0 = 1
+      } else if (originalLabel.includes('무무')) {
+        minimumScoreThreshold = 0; // 무무 = 0+0 = 0
+      } else {
+        // 라벨을 찾지 못하면 현재 점수 사용
+        minimumScoreThreshold = currentOptionsScore;
+      }
+
+      console.log(`원래 라벨 추정: ${originalLabel}, 현재 점수: ${currentOptionsScore}, 일치 기준 점수: ${minimumScoreThreshold}`);
+
+      console.log(`옵션 조합 점수 테스트 - 각 조합 점수:`);
+      qualityCombinations.forEach(combo => {
+        console.log(`${combo.label}: ${combo.score}점`);
+      });
+      
+      // 엔진 검색 전략을 용도에 맞게 수정
+      // 최소 점수 기준 이상인 모든 조합 선택
+      const betterCombinations = qualityCombinations.filter(combo => {
+        return combo.score >= minimumScoreThreshold;
+      });
+      
+      console.log(`점수 ${minimumScoreThreshold} 이상 조합 개수: ${betterCombinations.length}`);
+      
+      // 현재 조합과 점수가 같지만 다른 구성의 조합 선택 (예: 상중 -> 중상 등)
+      // 이미 minimumScoreThreshold에 포함되어 있을 수 있으므로 현재 점수 기준으로 변경
       const equalScoreCombinations = qualityCombinations.filter(combo => {
         // 점수가 같고 라벨이 서로 다른 조합만 추가
         return combo.score === currentOptionsScore && combo.label !== originalLabel;
       });
       
-      // 3. 두 조합 병합 (중복 제거)
-      let combinationsToScan = [...betterCombinations];
+      // 필터링된 조합 병합 (중복 제거)
+      let combinationsToScan = [];
       
-      // 같은 점수의 다른 조합 추가
+      // 모든 betterCombinations 추가
+      betterCombinations.forEach(combo => {
+        if (!combinationsToScan.some(c => c.label === combo.label)) {
+          combinationsToScan.push(combo);
+        }
+      });
+      
+      // 같은 점수의 다른 구성 조합 추가 (이미 betterCombinations에 있을 수 있음)
       equalScoreCombinations.forEach(combo => {
         if (!combinationsToScan.some(c => c.label === combo.label)) {
           combinationsToScan.push(combo);
         }
       });
       
+      console.log(`최종 스캔 조합 개수: ${combinationsToScan.length}`);
+      
       // 점수순으로 다시 정렬
       combinationsToScan.sort((a, b) => b.score - a.score);
+      
+      console.log(`현재 ${type} 장신구 옵션 최소 점수: ${minimumScoreThreshold}`);
       
       console.log(`스캔할 조합: 높은 점수 ${betterCombinations.length}개 + 같은 점수 다른 구성 ${equalScoreCombinations.length}개 = 총 ${combinationsToScan.length}개`);
       console.log(`전체 ${qualityCombinations.length}개 중 ${combinationsToScan.length}개 스캔 예정`);
