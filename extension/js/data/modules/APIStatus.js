@@ -499,8 +499,6 @@ const APIStatus = (function() {
    * @param {string} apiKey - API 키
    */
   async function processAccessoryItems(items, apiKey) {
-    console.log('items11111111111111')
-    console.log(items)
     try {
       // 새 API 모듈 불러오기 시도
       let AccessoryApi;
@@ -564,7 +562,7 @@ const APIStatus = (function() {
           if (result && result.price) {
             // 최저가 기준으로 가격 정보 가져오기
             item.goldCost = result.price;
-            console.log(`장신구 '${item.item}' 가격 조회 성공:`, result.price, `(품질: ${result.quality || 0})`);
+            console.log(`장신구 '${item.item}' 가격 조회 성공:`, result.price);
           } else {
             console.warn(`장신구 '${item.item}' 가격 조회 실패 또는 가격 정보 없음`);
           }

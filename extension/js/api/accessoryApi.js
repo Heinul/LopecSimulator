@@ -61,13 +61,15 @@ export const AccessoryApi = {
             if (!response || response.length === 0) {
                 return null;
             }
-            
             // 최저가 아이템 반환
-            return {
-                price: response[0].AuctionInfo.BuyPrice,
-                quality: response[0].Quality,
-                itemName: response[0].Name
-            };
+            if (response && response.Items[0].AuctionInfo) {
+                return {
+                    price: response.Items[0].AuctionInfo.BuyPrice
+                };
+            } else {
+                console.warn('응답에 AuctionInfo가 없습니다:', response[0]);
+                return null;
+            }
         } catch (error) {
             console.error('장신구 최저가 검색 중 오류 발생:', error);
             throw error;
@@ -159,11 +161,16 @@ export const AccessoryApi = {
             }
             
             // 최저가 아이템 반환
-            return {
-                price: response[0].AuctionInfo.BuyPrice,
-                quality: response[0].Quality,
-                itemName: response[0].Name
-            };
+            if (response[0] && response[0].AuctionInfo) {
+                return {
+                    price: response[0].AuctionInfo.BuyPrice,
+                    quality: response[0].Quality,
+                    itemName: response[0].Name
+                };
+            } else {
+                console.warn('응답에 AuctionInfo가 없습니다:', response[0]);
+                return null;
+            }
         } catch (error) {
             console.error('장신구 최저가 검색 중 오류 발생:', error);
             throw error;
