@@ -758,6 +758,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
                 accessoryType: type,           // 장신구 타입 추가
                 originalOptions: originalOptionTexts.slice(0, maxOptionsToShow),  // 원래 옵션 배열
                 appliedOptions: appliedOptions.slice(0, maxOptionsToShow),       // 적용된 옵션 배열
+                fromGrade: tierElement && tierElement.originalText ? tierElement.originalText : '', // 원래 등급 추가
+                toGrade: tierText, // 변경 등급 추가
                 score: currentScore,
                 difference: difference
               };

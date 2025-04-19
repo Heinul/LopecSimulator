@@ -219,7 +219,7 @@ const DataRenderer = (function() {
       }
       
       // 장신구의 경우
-      if (item.type && item.type.includes('장신구') && item.item) {
+      if (item.type && (item.type === 'accessory' || item.type.includes('장신구')) && item.item) {
         // 장신구 정보 세분화
         let accessoryType = '';
         
@@ -233,6 +233,45 @@ const DataRenderer = (function() {
           }
           
           item.item = `${accessoryType} - ${item.item}`;
+        }
+        
+        // 등급 정보 추출
+        let fromGrade = '';
+        let toGrade = '';
+        
+        // 1. 직접 fromGrade/toGrade 속성에서 가져오기
+        if (item.fromGrade) {
+          fromGrade = item.fromGrade;
+        } 
+        // 2. from 텍스트에서 추출
+        else if (item.from && typeof item.from === 'string') {
+          if (item.from.includes('고대')) fromGrade = '고대';
+          else if (item.from.includes('유물')) fromGrade = '유물';
+          else if (item.from.includes('전설')) fromGrade = '전설';
+          else if (item.from.includes('T4')) fromGrade = 'T4';
+          else if (item.from.includes('T3')) fromGrade = 'T3';
+        }
+        
+        // 1. 직접 fromGrade/toGrade 속성에서 가져오기
+        if (item.toGrade) {
+          toGrade = item.toGrade;
+        } 
+        // 2. to 텍스트에서 추출
+        else if (item.to && typeof item.to === 'string') {
+          if (item.to.includes('고대')) toGrade = '고대';
+          else if (item.to.includes('유물')) toGrade = '유물';
+          else if (item.to.includes('전설')) toGrade = '전설';
+          else if (item.to.includes('T4')) toGrade = 'T4';
+          else if (item.to.includes('T3')) toGrade = 'T3';
+        }
+        
+        // 등급 정보 추가
+        if (fromGrade && !fromDisplay.includes(fromGrade)) {
+          fromDisplay = `${fromGrade} ${fromDisplay}`;
+        }
+        
+        if (toGrade && !toDisplay.includes(toGrade)) {
+          toDisplay = `${toGrade} ${toDisplay}`;
         }
       }
       
