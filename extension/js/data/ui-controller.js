@@ -328,6 +328,7 @@ const UIController = (function() {
   };
 })();
 
-// DOMContentLoaded 이벤트 리스너는 main.js와 중복되므로 제거
-// UIController 객체를 전역으로 노출하여 main.js에서 접근할 수 있도록 함
-window.UIController = UIController;
+// 페이지 로드 시 UI 초기화
+document.addEventListener('DOMContentLoaded', () => {
+  UIController.initializeAll();
+});
