@@ -125,6 +125,7 @@ const DataRenderer = (function() {
             <th>변경값</th>
             <th>점수변동</th>
             <th class="gold-cost-header">골드 소요량</th>
+            <th class="gold-per-point-header">1점당 골드</th>
           </tr>
         </thead>
         <tbody>
@@ -237,27 +238,43 @@ const DataRenderer = (function() {
       
       // 골드 정보 추가
       let goldCostHTML = '';
+      let goldPerPointHTML = '';
+      let goldCost = 0;
+      let goldPerPoint = 0;
       
       // 골드 정보가 현재 데이터에 있는 경우
       if (item.goldCost) {
+        goldCost = item.goldCost;
+        // 1점당 골드 계산 (점수변동이 0이면 무한대로 표시)
+        goldPerPoint = item.difference > 0 ? Math.round(goldCost / item.difference) : 0;
+        
         // 각인서의 경우 책 수량도 표시
         if (item.type === 'engraving' && item.engravingBooks) {
-          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${item.goldCost.toLocaleString()}G</span> <span class="book-count">(${item.engravingBooks}개)</span></td>`;
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${goldCost.toLocaleString()}G</span> <span class="book-count">(${item.engravingBooks}개)</span></td>`;
         } else {
-          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${item.goldCost.toLocaleString()}G</span></td>`;
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${goldCost.toLocaleString()}G</span></td>`;
         }
+        // 1점당 골드 표시
+        goldPerPointHTML = `<td class="gold-per-point-cell">${goldPerPoint > 0 ? goldPerPoint.toLocaleString() + 'G' : '-'}</td>`;
       }
       // 원본 scanData에서 골드 정보 가져오기
       else if (item.key && DataManager.scanData[item.key] && DataManager.scanData[item.key].goldCost) {
         const scanItem = DataManager.scanData[item.key];
+        goldCost = scanItem.goldCost;
+        // 1점당 골드 계산
+        goldPerPoint = item.difference > 0 ? Math.round(goldCost / item.difference) : 0;
+        
         // 각인서의 경우 책 수량도 표시
         if (item.type === 'engraving' && scanItem.engravingBooks) {
-          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span> <span class="book-count">(${scanItem.engravingBooks}개)</span></td>`;
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${goldCost.toLocaleString()}G</span> <span class="book-count">(${scanItem.engravingBooks}개)</span></td>`;
         } else {
-          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span></td>`;
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${goldCost.toLocaleString()}G</span></td>`;
         }
+        // 1점당 골드 표시
+        goldPerPointHTML = `<td class="gold-per-point-cell">${goldPerPoint > 0 ? goldPerPoint.toLocaleString() + 'G' : '-'}</td>`;
       } else {
         goldCostHTML = `<td class="gold-cost-cell" style="color: #999;">-</td>`;
+        goldPerPointHTML = `<td class="gold-per-point-cell">-</td>`;
       }
       
       tableHTML += `
@@ -268,6 +285,7 @@ const DataRenderer = (function() {
           <td class="item-to">${toDisplay}</td>
           <td class="item-difference ${scoreClass}">${item.difference.toFixed(2)}</td>
           ${goldCostHTML}
+          ${goldPerPointHTML}
         </tr>
       `;
     });
@@ -294,7 +312,8 @@ const DataRenderer = (function() {
     const styleElement = document.createElement('style');
     styleElement.id = 'gold-column-style';
     styleElement.textContent = `
-      .gold-cost-header, .gold-cost-cell {
+      .gold-cost-header, .gold-cost-cell,
+      .gold-per-point-header, .gold-per-point-cell {
         text-align: right;
         padding-right: 15px;
       }
@@ -319,6 +338,11 @@ const DataRenderer = (function() {
         color: #4CAF50;
         margin-left: 4px;
         font-weight: normal;
+      }
+      
+      .gold-per-point-cell {
+        color: #607D8B;
+        font-weight: 500;
       }
     `;
     

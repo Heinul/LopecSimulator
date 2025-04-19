@@ -198,6 +198,51 @@ const DataManager = {
       case 'differenceAsc':
         this.processedData.sort((a, b) => a.difference - b.difference);
         break;
+      case 'goldDesc':
+        // 골드 소요량 높은순 (값이 없는 경우는 마지막에 표시)
+        this.processedData.sort((a, b) => {
+          const aGold = a.goldCost || (a.key && this.scanData[a.key] ? this.scanData[a.key].goldCost : 0) || 0;
+          const bGold = b.goldCost || (b.key && this.scanData[b.key] ? this.scanData[b.key].goldCost : 0) || 0;
+          return bGold - aGold;
+        });
+        break;
+      case 'goldAsc':
+        // 골드 소요량 낮은순 (값이 없는 경우는 마지막에 표시)
+        this.processedData.sort((a, b) => {
+          const aGold = a.goldCost || (a.key && this.scanData[a.key] ? this.scanData[a.key].goldCost : 0) || 0;
+          const bGold = b.goldCost || (b.key && this.scanData[b.key] ? this.scanData[b.key].goldCost : 0) || 0;
+          if (aGold === 0 && bGold === 0) return 0;
+          if (aGold === 0) return 1;
+          if (bGold === 0) return -1;
+          return aGold - bGold;
+        });
+        break;
+      case 'goldPerPointDesc':
+        // 1점당 골드 소요량 높은순
+        this.processedData.sort((a, b) => {
+          const aGold = a.goldCost || (a.key && this.scanData[a.key] ? this.scanData[a.key].goldCost : 0) || 0;
+          const bGold = b.goldCost || (b.key && this.scanData[b.key] ? this.scanData[b.key].goldCost : 0) || 0;
+          const aRatio = a.difference > 0 ? aGold / a.difference : 0;
+          const bRatio = b.difference > 0 ? bGold / b.difference : 0;
+          return bRatio - aRatio;
+        });
+        break;
+      case 'goldPerPointAsc':
+        // 1점당 골드 소요량 낮은순
+        this.processedData.sort((a, b) => {
+          const aGold = a.goldCost || (a.key && this.scanData[a.key] ? this.scanData[a.key].goldCost : 0) || 0;
+          const bGold = b.goldCost || (b.key && this.scanData[b.key] ? this.scanData[b.key].goldCost : 0) || 0;
+          const aRatio = a.difference > 0 ? aGold / a.difference : Infinity;
+          const bRatio = b.difference > 0 ? bGold / b.difference : Infinity;
+          if (aRatio === 0 && bRatio === 0) return 0;
+          if (aRatio === 0) return 1;
+          if (bRatio === 0) return -1;
+          if (aRatio === Infinity && bRatio === Infinity) return 0;
+          if (aRatio === Infinity) return 1;
+          if (bRatio === Infinity) return -1;
+          return aRatio - bRatio;
+        });
+        break;
       case 'tierDesc':
         // 티어가 있는 항목을 먼저 보여주고, 티어 정보로 정렬
         this.processedData.sort((a, b) => {
