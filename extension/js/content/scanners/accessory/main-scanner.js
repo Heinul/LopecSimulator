@@ -748,7 +748,8 @@ LopecScanner.Scanners.Accessory.AccessoryScanner = (function() {
               }
               
               BaseScanner.state.scanResults[resultKey] = {
-                type: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
+                type: 'accessory',
+                subType: `${typeDisplayName} 옵션 조합 (${jobType === 'DEALER' ? '딜러' : '서포터'})`,
                 combo: combo.label,
                 tier: tierText, // 티어 정보 추가
                 item: `${itemName}`,

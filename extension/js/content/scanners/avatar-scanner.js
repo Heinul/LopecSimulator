@@ -198,7 +198,8 @@ LopecScanner.Scanners.AvatarScanner = (function() {
           // 결과 저장
           const resultKey = `avatar-${category}-${grade}`;
           BaseScanner.state.scanResults[resultKey] = {
-            type: AVATAR_CATEGORIES[category],
+            type: 'avatar',
+            subType: AVATAR_CATEGORIES[category],
             category: category,
             item: `${AVATAR_CATEGORIES[category]} ${AVATAR_GRADES[grade]}`,
             from: AVATAR_GRADES[originalGrade],
