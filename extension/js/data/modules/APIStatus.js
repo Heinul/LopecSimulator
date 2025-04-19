@@ -401,7 +401,15 @@ const APIStatus = (function() {
           
           console.log(`장신구 검색: ${accessoryType} (${classType}, ${combinationType}, ${itemGrade})`);
           
-          // 새 API 모듈을 사용하여 검색
+          // 전역 객체에서 AccessoryApi 불러오기
+          const AccessoryApi = window.AccessoryApi;
+          
+          if (!AccessoryApi || !AccessoryApi.searchByStringType) {
+            console.error('AccessoryApi 또는 searchByStringType 함수를 찾을 수 없습니다.');
+            continue;
+          }
+          
+          // API를 사용하여 검색
           const result = await AccessoryApi.searchByStringType(classType, accessoryType, combinationType, itemGrade);
           
           if (result && result.price) {
