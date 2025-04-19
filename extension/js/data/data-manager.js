@@ -30,6 +30,22 @@ const DataManager = {
   },
   
   /**
+   * 데이터 저장
+   * @param {Function} callback - 저장 완료 후 실행할 콜백 함수
+   */
+  saveData(callback) {
+    chrome.storage.local.set({ scanData: this.scanData }, (result) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        console.error('데이터 저장 오류:', error);
+      } else {
+        console.log('데이터 저장 완료:', Object.keys(this.scanData).length, '아이템');
+      }
+      callback && callback(error);
+    });
+  },
+  
+  /**
    * 각인서 가격 계산
    * @param {string} engravingName - 각인 이름
    * @param {string} grade - 각인서 등급

@@ -203,6 +203,17 @@ const APIStatus = (function() {
         // 데이터 테이블 업데이트
         updateDataTableWithGoldInfo(filteredData);
         
+        // 업데이트된 데이터 저장 (새로고침 후에도 유지되도록)
+        if (DataManager && typeof DataManager.saveData === 'function') {
+          DataManager.saveData((error) => {
+            if (error) {
+              console.error('골드 데이터 저장 중 오류:', error);
+            } else {
+              console.log('골드 데이터가 포함된 데이터 저장 완료');
+            }
+          });
+        }
+        
         alert('골드 데이터를 성공적으로 가져왔습니다!');
       } catch (apiError) {
         console.error('API 호출 오류:', apiError);
@@ -211,6 +222,17 @@ const APIStatus = (function() {
         try {
           // 데이터 테이블 업데이트
           updateDataTableWithGoldInfo(filteredData);
+          
+          // 업데이트된 데이터 저장 (새로고침 후에도 유지되도록)
+          if (DataManager && typeof DataManager.saveData === 'function') {
+            DataManager.saveData((error) => {
+              if (error) {
+                console.error('골드 데이터 저장 중 오류:', error);
+              } else {
+                console.log('일부 오류가 발생했지만 가져온 골드 데이터 저장 완료');
+              }
+            });
+          }
           
           // 일부 데이터만 가져왔을 수 있으므로 다른 메시지 표시
           const goldItems = filteredData.filter(item => item.goldCost).length;
@@ -309,7 +331,12 @@ const APIStatus = (function() {
       }
     }
     
-    console.log('모든 배치 처리 완료, 원본 데이터에 골드 정보 병합 완료');
+    // 업데이트된 scanData를 chrome.storage.local에 저장
+    chrome.storage.local.set({ scanData: DataManager.scanData }, function() {
+      console.log('골드 정보가 포함된 scanData를 chrome.storage.local에 저장했습니다.');
+    });
+    
+    console.log('모든 배치 처리 완료, 원본 데이터에 골드 정보 병합 및 저장 완료');
   }
   
   /**
