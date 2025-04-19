@@ -124,6 +124,7 @@ const DataRenderer = (function() {
             <th>현재값</th>
             <th>변경값</th>
             <th>점수변동</th>
+            <th class="gold-cost-header">골드 소요량</th>
           </tr>
         </thead>
         <tbody>
@@ -234,6 +235,31 @@ const DataRenderer = (function() {
         }
       }
       
+      // 골드 정보 추가
+      let goldCostHTML = '';
+      
+      // 골드 정보가 현재 데이터에 있는 경우
+      if (item.goldCost) {
+        // 각인서의 경우 책 수량도 표시
+        if (item.type === 'engraving' && item.engravingBooks) {
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${item.goldCost.toLocaleString()}G</span> <span class="book-count">(${item.engravingBooks}개)</span></td>`;
+        } else {
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${item.goldCost.toLocaleString()}G</span></td>`;
+        }
+      }
+      // 원본 scanData에서 골드 정보 가져오기
+      else if (item.key && DataManager.scanData[item.key] && DataManager.scanData[item.key].goldCost) {
+        const scanItem = DataManager.scanData[item.key];
+        // 각인서의 경우 책 수량도 표시
+        if (item.type === 'engraving' && scanItem.engravingBooks) {
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span> <span class="book-count">(${scanItem.engravingBooks}개)</span></td>`;
+        } else {
+          goldCostHTML = `<td class="gold-cost-cell" style="color: #F9A825; font-weight: bold;"><span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span></td>`;
+        }
+      } else {
+        goldCostHTML = `<td class="gold-cost-cell" style="color: #999;">-</td>`;
+      }
+      
       tableHTML += `
         <tr data-item-key="${item.key}" data-item-type="${item.type}">
           <td class="item-category">${categoryName}</td>
@@ -241,6 +267,7 @@ const DataRenderer = (function() {
           <td class="item-from">${fromDisplay}</td>
           <td class="item-to">${toDisplay}</td>
           <td class="item-difference ${scoreClass}">${item.difference.toFixed(2)}</td>
+          ${goldCostHTML}
         </tr>
       `;
     });
@@ -253,14 +280,49 @@ const DataRenderer = (function() {
     // HTML 업데이트
     tableContainer.innerHTML = tableHTML;
     
-    // API 모듈이 있으면 골드 정보 추가
-    if (window.LopecScanner && window.LopecScanner.API && window.LopecScanner.API.APIManager) {
-      // 메시지로 데이터 전달 (비동기 처리를 위해)
-      chrome.runtime.sendMessage({
-        action: 'dataProcessed',
-        processedData: processedData
-      });
-    }
+    // 골드 표시 스타일 추가
+    addGoldColumnStyle();
+  }
+  
+  /**
+   * 골드 표시 스타일 추가
+   */
+  function addGoldColumnStyle() {
+    // 이미 스타일이 있는지 확인
+    if (document.getElementById('gold-column-style')) return;
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'gold-column-style';
+    styleElement.textContent = `
+      .gold-cost-header, .gold-cost-cell {
+        text-align: right;
+        padding-right: 15px;
+      }
+      
+      .gold-value {
+        position: relative;
+      }
+      
+      .gold-value::before {
+        content: '';
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background-color: #F9A825;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+      }
+      
+      .book-count {
+        font-size: 0.9em;
+        color: #4CAF50;
+        margin-left: 4px;
+        font-weight: normal;
+      }
+    `;
+    
+    document.head.appendChild(styleElement);
   }
 
   /**
@@ -274,7 +336,8 @@ const DataRenderer = (function() {
   return {
     initialize,
     updateSummary,
-    updateDataTable
+    updateDataTable,
+    addGoldColumnStyle
   };
 })();
 

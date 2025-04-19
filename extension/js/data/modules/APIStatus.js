@@ -295,7 +295,21 @@ const APIStatus = (function() {
       }
     }
     
-    console.log('모든 배치 처리 완료');
+    // 모든 아이템의 골드 정보를 원본 scanData에도 저장
+    for (const item of items) {
+      if (item.key && item.goldCost) {
+        const scanItem = DataManager.scanData[item.key];
+        if (scanItem) {
+          // 골드 정보 및 관련 세부정보 저장
+          scanItem.goldCost = item.goldCost;
+          if (item.engravingBooks) scanItem.engravingBooks = item.engravingBooks;
+          if (item.costDetails) scanItem.costDetails = item.costDetails;
+          console.log(`원본 scanData에 골드 정보 저장: ${item.key}, ${item.goldCost}G`);
+        }
+      }
+    }
+    
+    console.log('모든 배치 처리 완료, 원본 데이터에 골드 정보 병합 완료');
   }
   
   /**
@@ -875,13 +889,25 @@ const APIStatus = (function() {
         row.appendChild(goldCell);
       }
       
-      // 골드 소요량 정보가 있는 경우
+      // 골드 소요량 정보가 있는 경우 - 먼저 처리된 데이터에서 확인
       if (item.goldCost) {
         // 각인서의 경우 책 수량도 표시
         if (item.type === 'engraving' && item.engravingBooks) {
           goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span> <span class="book-count">(${item.engravingBooks}개)</span>`;
         } else {
           goldCell.innerHTML = `<span class="gold-value">${item.goldCost.toLocaleString()}G</span>`;
+        }
+        goldCell.style.color = '#F9A825'; // 골드 색상
+        goldCell.style.fontWeight = 'bold';
+      } 
+      // 직접 데이터에 없는 경우 원본 scanData에서 확인
+      else if (item.key && DataManager.scanData[item.key] && DataManager.scanData[item.key].goldCost) {
+        const scanItem = DataManager.scanData[item.key];
+        // 각인서의 경우 책 수량도 표시
+        if (item.type === 'engraving' && scanItem.engravingBooks) {
+          goldCell.innerHTML = `<span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span> <span class="book-count">(${scanItem.engravingBooks}개)</span>`;
+        } else {
+          goldCell.innerHTML = `<span class="gold-value">${scanItem.goldCost.toLocaleString()}G</span>`;
         }
         goldCell.style.color = '#F9A825'; // 골드 색상
         goldCell.style.fontWeight = 'bold';

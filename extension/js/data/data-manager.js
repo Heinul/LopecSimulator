@@ -108,12 +108,22 @@ const DataManager = {
       // 음수 값은 절대값으로 변환하지만 표시는 -로 유지
       const normalizedDiff = parseFloat(item.difference);
       
-      this.processedData.push({
+      // 새 오브젝트 생성 (원본 객체의 모든 프로퍼티를 복사)
+      const processedItem = {
         ...item,
         difference: normalizedDiff,
         // 원본 키 추가
         key: key
-      });
+      };
+      
+      // 골드 정보가 원본에 있는 경우 복사
+      if (item.goldCost !== undefined) {
+        processedItem.goldCost = item.goldCost;
+        if (item.engravingBooks) processedItem.engravingBooks = item.engravingBooks;
+        if (item.costDetails) processedItem.costDetails = item.costDetails;
+      }
+      
+      this.processedData.push(processedItem);
     }
     
     console.log('Processed items before filtering:', this.processedData.length);
