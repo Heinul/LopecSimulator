@@ -16,12 +16,6 @@ function initialize() {
   ApiModule.initialize();
   console.log('API 모듈 초기화 완료');
   
-  // UI 컨트롤러 초기화
-  if (typeof UIController !== 'undefined' && typeof UIController.initializeAll === 'function') {
-    UIController.initializeAll();
-  } else {
-    console.error('UIController 또는 initializeAll 함수를 찾을 수 없습니다.');
-  }
 }
 
 // 페이지 로드 시 초기화
