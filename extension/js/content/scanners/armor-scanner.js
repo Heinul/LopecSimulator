@@ -21,9 +21,21 @@ LopecScanner.Scanners.ArmorScanner = (function() {
   function prepareArmorScan(armorNameElements, armorUpgradeElements) {
     let scanCount = 0;
     
-    // 현재 값들 저장
+    // 현재 값들 저장 및 장비 티어 정보 저장
     armorNameElements.forEach((element, index) => {
       BaseScanner.state.originalValues[`armor-name-${index}`] = element.value;
+      
+      // 장비 티어 정보 가져오기 (상위 select 요소)
+      const parentDiv = element.closest('.name-wrap');
+      if (parentDiv) {
+        const gradeSelect = parentDiv.querySelector('select.plus');
+        if (gradeSelect) {
+          const gradeValue = gradeSelect.value;
+          const gradeText = gradeSelect.options[gradeSelect.selectedIndex].text;
+          BaseScanner.state.originalValues[`armor-grade-${index}`] = gradeValue;
+          BaseScanner.state.originalValues[`armor-grade-text-${index}`] = gradeText;
+        }
+      }
     });
     
     armorUpgradeElements.forEach((element, index) => {
@@ -100,6 +112,18 @@ LopecScanner.Scanners.ArmorScanner = (function() {
           }
         }
         
+        // 장비 티어 정보 가져오기
+        let tierInfo = '';
+        let tierValue = '';
+        const parentDiv = nameElement.closest('.name-wrap');
+        if (parentDiv) {
+          const gradeSelect = parentDiv.querySelector('select.plus');
+          if (gradeSelect) {
+            tierValue = gradeSelect.value;
+            tierInfo = gradeSelect.options[gradeSelect.selectedIndex].text;
+          }
+        }
+        
         // 결과 저장
         BaseScanner.state.scanResults[`armor-name-${i}-${newNameValue}`] = {
           type: '장비 강화',
@@ -108,7 +132,9 @@ LopecScanner.Scanners.ArmorScanner = (function() {
           from: nameCurrentValue,
           to: newNameValue,
           score: result.score,
-          difference: result.difference
+          difference: result.difference,
+          tier: tierInfo,  // 티어 정보 저장 (예: 'T3 고대')
+          tierValue: tierValue // 티어 값 저장 (예: '1525')
         };
         
         BaseScanner.updateScanProgress();
@@ -164,6 +190,18 @@ LopecScanner.Scanners.ArmorScanner = (function() {
           }
         }
         
+        // 장비 티어 정보 가져오기
+        let tierInfo = '';
+        let tierValue = '';
+        const parentDiv = upgradeElement.closest('.name-wrap');
+        if (parentDiv) {
+          const gradeSelect = parentDiv.querySelector('select.plus');
+          if (gradeSelect) {
+            tierValue = gradeSelect.value;
+            tierInfo = gradeSelect.options[gradeSelect.selectedIndex].text;
+          }
+        }
+        
         // 결과 저장
         BaseScanner.state.scanResults[`armor-upgrade-${index}-${newUpgradeValue}`] = {
           type: '장비 상재',
@@ -172,7 +210,9 @@ LopecScanner.Scanners.ArmorScanner = (function() {
           from: upgradeCurrentValue,
           to: newUpgradeValue,
           score: result.score,
-          difference: result.difference
+          difference: result.difference,
+          tier: tierInfo,  // 티어 정보 저장 (예: 'T3 고대')
+          tierValue: tierValue // 티어 값 저장 (예: '1525')
         };
         
         BaseScanner.updateScanProgress();

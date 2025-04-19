@@ -47,9 +47,10 @@ const DataManager = {
   /**
    * 구조화된 데이터에서 각인서 가격 정보 가져오기
    * @param {string} gradeFilter - 등급 필터 (선택적)
+   * @param {string} tierFilter - 티어 필터 (선택적)
    * @returns {Array} - 각인서 가격 정보 배열
    */
-  getEnhancedEngravingInfo(gradeFilter = null) {
+  getEnhancedEngravingInfo(gradeFilter = null, tierFilter = null) {
     // 구조화된 데이터가 없으면 빈 배열 반환
     if (!this.structuredData || !this.structuredData.engraving) {
       return [];
@@ -62,6 +63,13 @@ const DataManager = {
     if (gradeFilter) {
       filteredEngravings = engravings.filter(item => 
         item.toGrade === gradeFilter || item.fromGrade === gradeFilter
+      );
+    }
+    
+    // 티어 필터링 (지정된 경우)
+    if (tierFilter && filteredEngravings.length > 0) {
+      filteredEngravings = filteredEngravings.filter(item => 
+        item.tier === tierFilter
       );
     }
     
@@ -81,7 +89,9 @@ const DataManager = {
         toCount: toCount,
         diffCount: diffCount,
         score: engraving.score || 0,
-        difference: engraving.difference || 0
+        difference: engraving.difference || 0,
+        tier: engraving.tier || '',  // 티어 정보 추가
+        tierValue: engraving.tierValue || '' // 티어 값 추가
       };
     });
   },
@@ -136,6 +146,24 @@ const DataManager = {
       case 'differenceAsc':
         this.processedData.sort((a, b) => a.difference - b.difference);
         break;
+      case 'tierDesc':
+        // 티어가 있는 항목을 먼저 보여주고, 티어 정보로 정렬
+        this.processedData.sort((a, b) => {
+          if (a.tier && !b.tier) return -1;
+          if (!a.tier && b.tier) return 1;
+          if (!a.tier && !b.tier) return 0;
+          return b.tierValue - a.tierValue;
+        });
+        break;
+      case 'tierAsc':
+        // 티어가 있는 항목을 먼저 보여주고, 티어 정보로 정렬 (T3 먼저, T4 다음)
+        this.processedData.sort((a, b) => {
+          if (a.tier && !b.tier) return -1;
+          if (!a.tier && b.tier) return 1;
+          if (!a.tier && !b.tier) return 0;
+          return a.tierValue - b.tierValue;
+        });
+        break;
     }
   },
   
@@ -160,11 +188,35 @@ const DataManager = {
           count: 0,
           positive: 0,
           maxChange: 0,
-          maxItem: null
+          maxItem: null,
+          tierData: {} // 티어별 데이터 추가
         };
       }
       
       categories[item.type].count++;
+      
+      // 티어 정보가 있는 경우 티어별 통계 추가
+      if (item.tier) {
+        if (!categories[item.type].tierData[item.tier]) {
+          categories[item.type].tierData[item.tier] = {
+            count: 0,
+            positive: 0,
+            maxChange: 0,
+            maxItem: null
+          };
+        }
+        
+        categories[item.type].tierData[item.tier].count++;
+        
+        if (parseFloat(item.difference) > 0) {
+          categories[item.type].tierData[item.tier].positive++;
+          
+          if (parseFloat(item.difference) > categories[item.type].tierData[item.tier].maxChange) {
+            categories[item.type].tierData[item.tier].maxChange = parseFloat(item.difference);
+            categories[item.type].tierData[item.tier].maxItem = item;
+          }
+        }
+      }
       
       if (parseFloat(item.difference) > 0) {
         positiveChanges++;
@@ -190,7 +242,7 @@ const DataManager = {
       return null;
     }
     
-    const headers = ['카테고리', '항목', '현재값', '변경값', '점수변동'];
+    const headers = ['카테고리', '항목', '현재값', '변경값', '점수변동', '티어 정보'];
     const rows = this.processedData.map(item => {
       // 카테고리 이름 변환
       let categoryName = '';
@@ -209,7 +261,8 @@ const DataManager = {
         item.item,
         item.from,
         item.to,
-        item.difference.toFixed(2)
+        item.difference.toFixed(2),
+        item.tier || '' // 티어 정보 추가 (없으면 빈 문자열)
       ];
     });
     
@@ -234,6 +287,15 @@ const DataManager = {
         categories[item.type] = [];
       }
       categories[item.type].push(item);
+      
+      // 티어별 그룹화도 추가
+      if (item.tier) {
+        const tierCategory = `${item.type}_${item.tier}`;
+        if (!categories[tierCategory]) {
+          categories[tierCategory] = [];
+        }
+        categories[tierCategory].push(item);
+      }
     });
     
     // 각 카테고리에서 상위 5개 항목 추출
@@ -243,10 +305,18 @@ const DataManager = {
       categories[category].sort((a, b) => b.difference - a.difference);
       
       // 상위 5개 항목만 선택
-      result[category] = categories[category].slice(0, 5).map(item => ({
-        name: `${item.item} (${item.from} → ${item.to})`,
-        value: item.difference
-      }));
+      result[category] = categories[category].slice(0, 5).map(item => {
+        // 티어 정보가 있으면 이름에 포함
+        let nameWithTier = item.tier ? 
+          `[${item.tier}] ${item.item} (${item.from} → ${item.to})` : 
+          `${item.item} (${item.from} → ${item.to})`;
+          
+        return {
+          name: nameWithTier,
+          value: item.difference,
+          tier: item.tier || ''
+        };
+      });
     }
     
     return result;
