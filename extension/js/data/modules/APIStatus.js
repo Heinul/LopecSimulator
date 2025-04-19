@@ -371,8 +371,6 @@ const APIStatus = (function() {
             continue;
           }
           
-          // 클래스 타입 (기본값 딜러)
-          const classType = '딜러';
           
           // 옵션 조합 추출 (기본값 상상)
           let combinationType = '상상';
@@ -419,6 +417,14 @@ const APIStatus = (function() {
             itemGrade = item.grade;
           } else if (item.item && item.item.includes('유물')) {
             itemGrade = '유물';
+          }
+          
+          // 클래스 타입 구분 (서포터/딜러)
+          let classType = '딜러'; // 기본값은 딜러
+          
+          // subType에 '서포터'가 포함되어 있으면 서포터 타입으로 설정
+          if (item.subType && item.subType.includes('서포터')) {
+            classType = '서포터';
           }
           
           console.log(`장신구 검색: ${accessoryType} (${classType}, ${combinationType}, ${itemGrade})`);
