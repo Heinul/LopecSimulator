@@ -3,12 +3,12 @@
  * 각인서 검색 및 최저가 조회 기능 제공
  */
 
-import CONFIG from './config.js';
+// CONFIG는 전역 변수로 정의되어 있음 (DATA_API_CONFIG)
 
 /**
  * 각인서 등급 상수
  */
-const ENGRAVING_GRADES = {
+window.ENGRAVING_GRADES = {
     EPIC: '영웅',
     LEGENDARY: '전설',
     RELIC: '유물'
@@ -19,10 +19,10 @@ const ENGRAVING_GRADES = {
  * @param {string} engravingName - 각인 이름 (예: "돌격대장")
  * @returns {Object} - API 요청 본문
  */
-function buildEngravingRequestBody(engravingName) {
+window.buildEngravingRequestBody = function(engravingName) {
     // 오직 카테고리 코드와 이름만 사용
     return {
-        CategoryCode: CONFIG.categoryCodes.engraving,
+        CategoryCode: DATA_API_CONFIG.categoryCodes.engraving,
         ItemName: engravingName
     };
 }
@@ -33,18 +33,18 @@ function buildEngravingRequestBody(engravingName) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object>} - API 응답
  */
-async function sendApiRequest(requestBody, apiKey) {
+window.sendApiRequest = async function(requestBody, apiKey) {
     try {
         if (!apiKey) {
             throw new Error('API 키가 제공되지 않았습니다.');
         }
         
-        console.log(`API 요청 주소: ${CONFIG.baseUrl}${CONFIG.endpoints.market}`);
+        console.log(`API 요청 주소: ${DATA_API_CONFIG.baseUrl}${DATA_API_CONFIG.endpoints.market}`);
         
-        const response = await fetch(`${CONFIG.baseUrl}${CONFIG.endpoints.market}`, {
+        const response = await fetch(`${DATA_API_CONFIG.baseUrl}${DATA_API_CONFIG.endpoints.market}`, {
             method: 'POST',
             headers: {
-                ...CONFIG.headers,
+                ...DATA_API_CONFIG.headers,
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify(requestBody)
@@ -81,7 +81,7 @@ async function sendApiRequest(requestBody, apiKey) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} - 각인서 최저가 정보
  */
-async function getEngravingPrice(engravingName, grade, apiKey) {
+window.getEngravingPrice = async function(engravingName, grade, apiKey) {
     try {
         // 요청 본문 생성 - 파라미터 2개만 사용(카테고리 코드 + 각인 이름)
         const requestBody = buildEngravingRequestBody(engravingName);
@@ -139,8 +139,12 @@ async function getEngravingPrice(engravingName, grade, apiKey) {
     }
 }
 
-export default {
-    ENGRAVING_GRADES,
-    getEngravingPrice,
-    buildEngravingRequestBody
+// 전역 변수로 정의됨
+window.EngravingApi = {
+    ENGRAVING_GRADES: window.ENGRAVING_GRADES,
+    getEngravingPrice: window.getEngravingPrice,
+    buildEngravingRequestBody: window.buildEngravingRequestBody
 };
+
+// export 구문 추가
+export default window.EngravingApi;

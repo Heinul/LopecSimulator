@@ -3,12 +3,12 @@
  * 보석 검색 및 최저가 조회 기능 제공
  */
 
-import CONFIG from './config.js';
+// CONFIG는 전역 변수로 정의되어 있음 (DATA_API_CONFIG)
 
 /**
  * 보석 타입 상수
  */
-const GEM_TYPES = {
+window.GEM_TYPES = {
     FLAME: '멸화',
     GEHPWA: '겁화',
     RED: '홍염',
@@ -18,7 +18,7 @@ const GEM_TYPES = {
 /**
  * 보석 레벨 상수
  */
-const GEM_LEVELS = {
+window.GEM_LEVELS = {
     LEVEL_1: '1레벨',
     LEVEL_2: '2레벨',
     LEVEL_3: '3레벨',
@@ -36,7 +36,7 @@ const GEM_LEVELS = {
  * @param {string} itemName - 보석 이름 (예: "9레벨 겁화")
  * @returns {Object} - API 요청 본문
  */
-function buildGemRequestBody(itemName) {
+window.buildGemRequestBody = function(itemName) {
     return {
         CategoryCode: 210000,
         ItemName: itemName,
@@ -52,14 +52,14 @@ function buildGemRequestBody(itemName) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object>} - API 응답
  */
-async function sendApiRequest(requestBody, apiKey) {
+window.sendGemApiRequest = async function(requestBody, apiKey) {
     try {
         console.log('보석 API 요청 본문:', JSON.stringify(requestBody, null, 2));
         
-        const response = await fetch(`${CONFIG.baseUrl}${CONFIG.endpoints.market}`, {
+        const response = await fetch(`${DATA_API_CONFIG.baseUrl}${DATA_API_CONFIG.endpoints.market}`, {
             method: 'POST',
             headers: {
-                ...CONFIG.headers,
+                ...DATA_API_CONFIG.headers,
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify(requestBody)
@@ -83,7 +83,7 @@ async function sendApiRequest(requestBody, apiKey) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} - 보석 최저가 정보
  */
-async function getGemPrice(gemLevel, gemType, apiKey) {
+window.getGemPrice = async function(gemLevel, gemType, apiKey) {
     try {
         // 보석 이름 생성 (예: "9레벨 겁화")
         const gemName = `${gemLevel} ${gemType}`;
@@ -92,7 +92,7 @@ async function getGemPrice(gemLevel, gemType, apiKey) {
         const requestBody = buildGemRequestBody(gemName);
         
         // API 요청 전송
-        const response = await sendApiRequest(requestBody, apiKey);
+        const response = await window.sendGemApiRequest(requestBody, apiKey);
         
         // 결과가 없는 경우
         if (!response || response.length === 0) {
@@ -119,7 +119,7 @@ async function getGemPrice(gemLevel, gemType, apiKey) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} - 보석 최저가 정보
  */
-async function getGemPriceByLevelAndType(level, type, apiKey) {
+window.getGemPriceByLevelAndType = async function(level, type, apiKey) {
     // 숫자 레벨을 문자열로 변환
     const gemLevel = `${level}레벨`;
     
@@ -129,7 +129,7 @@ async function getGemPriceByLevelAndType(level, type, apiKey) {
         return null;
     }
     
-    if (!Object.values(GEM_TYPES).includes(type)) {
+    if (!Object.values(window.GEM_TYPES).includes(type)) {
         console.error('유효하지 않은 보석 타입:', type);
         return null;
     }
@@ -143,7 +143,7 @@ async function getGemPriceByLevelAndType(level, type, apiKey) {
     
     try {
         // API 요청 전송
-        const response = await sendApiRequest(requestBody, apiKey);
+        const response = await window.sendGemApiRequest(requestBody, apiKey);
         
         // 결과가 없는 경우
         if (!response || response.length === 0) {
@@ -165,10 +165,14 @@ async function getGemPriceByLevelAndType(level, type, apiKey) {
     }
 }
 
-export default {
-    GEM_TYPES,
-    GEM_LEVELS,
-    getGemPrice,
-    getGemPriceByLevelAndType,
-    buildGemRequestBody
+// 전역 변수로 모듈 정의
+window.GemApi = {
+    GEM_TYPES: window.GEM_TYPES,
+    GEM_LEVELS: window.GEM_LEVELS,
+    getGemPrice: window.getGemPrice,
+    getGemPriceByLevelAndType: window.getGemPriceByLevelAndType,
+    buildGemRequestBody: window.buildGemRequestBody
 };
+
+// export 구문 추가
+export default window.GemApi;

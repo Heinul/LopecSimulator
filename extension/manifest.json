@@ -41,20 +41,6 @@
         "js/api/requestBuilder.js",
         "js/api/accessoryApi.js",
         "js/api/index.js",
-        "js/data/modules/api/config.js",
-        "js/data/modules/api/engraving-api.js",
-        "js/data/modules/api/market-api.js",
-        "js/data/modules/api/gem-api.js",
-        "js/data/modules/api/main-api.js",
-        "js/data/modules/engraving-calculator.js",
-        "js/data/modules/data-package.js",
-        "js/data/bootstrap.js",
-        "js/data/modules/APIManager.js",
-        "js/data/modules/APIStatus.js",
-        "js/data/modules/pricing/PriceManager.js",
-        "js/data/modules/pricing/PriceStorage.js",
-        "js/data/modules/pricing/index.js",
-        "js/data/modules/PriceIntegration.js",
         "js/content/main.js"
       ]
     }

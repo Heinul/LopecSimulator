@@ -3,7 +3,7 @@
  */
 
 // API 설정 상수
-export const API_CONFIG = {
+window.DATA_API_CONFIG = {
     baseUrl: 'https://developer-lostark.game.onstove.com',
     endpoints: {
         auction: '/auctions/items',
@@ -28,4 +28,5 @@ export const API_CONFIG = {
     }
 };
 
-export default API_CONFIG;
+// 기본 내보내기 추가
+export default DATA_API_CONFIG;

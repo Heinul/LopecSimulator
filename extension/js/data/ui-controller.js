@@ -4,6 +4,11 @@
  */
 
 // UI 컨트롤러 모듈
+// import 관련 모듈
+import DataManager from './data-manager.js';
+import DataRenderer from './modules/DataRenderer.js';
+import APIStatus from './modules/APIStatus.js';
+
 // 참고: 해당 모듈은 APIStatus와 DataManager, DataRenderer를 사용함
 // 해당 모듈들이 앞서 로드되어야 함
 const UIController = (function() {

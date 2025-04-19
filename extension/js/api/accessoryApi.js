@@ -2,26 +2,12 @@
  * 장신구 검색 API 모듈
  */
 
-import { ApiClient } from './apiClient.js';
-import { 
-    CATEGORY_CODES,
-    ACCESSORY_OPTIONS,
-    OPTION_COMBINATION_TYPES,
-    CLASS_TYPE_MAPPING,
-    ACCESSORY_TYPE_MAPPING
-} from './constants.js';
-import {
-    buildMarketRequestData,
-    createAccessoryEtcOptions,
-    getOptionsForClass,
-    getAccessoryCodeByString,
-    buildAuctionRequestData
-} from './requestBuilder.js';
+
 
 /**
  * 장신구 최저가 검색 API
  */
-export const AccessoryApi = {
+window.AccessoryApi = {
     // 캐시 저장소
     _cache: {},
     
@@ -352,4 +338,4 @@ export const AccessoryApi = {
     OPTION_COMBINATION_TYPES
 };
 
-export default AccessoryApi;
+

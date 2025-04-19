@@ -2,10 +2,10 @@
  * API 요청을 보내는 기본 모듈
  */
 
-import { API_CONFIG } from './constants.js';
+
 
 // API 키 관리 객체
-export const ApiKeyManager = {
+window.ApiKeyManager = {
     /**
      * 저장된 API 키를 가져옵니다.
      * @returns {Promise<string|null>} API 키 또는 null (저장된 키가 없는 경우)
@@ -96,7 +96,7 @@ export const ApiKeyManager = {
 /**
  * API 요청 클라이언트
  */
-export const ApiClient = {
+window.ApiClient = {
     /**
      * API 요청을 보냅니다.
      * @param {string} endpoint - API 엔드포인트 (예: '/markets/items')
@@ -157,7 +157,4 @@ export const ApiClient = {
     }
 };
 
-export default {
-    ApiKeyManager,
-    ApiClient
-};
+

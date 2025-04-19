@@ -3,7 +3,7 @@
  * 장신구 검색 및 최저가 조회 기능 제공
  */
 
-const ACCESSORY_CODES = {
+window.ACCESSORY_CODES = {
     NECKLACE: 200010,
     EARRING: 200020,
     RING: 200030
@@ -13,7 +13,7 @@ const ACCESSORY_CODES = {
  * 장신구 옵션 상수 (FirstOption, SecondOption)
  * 딜러와 서포터에 대한 기본 옵션 세트 정의
  */
-const ACCESSORY_OPTIONS = {
+window.ACCESSORY_OPTIONS = {
     // 딜러 옵션
     DEALER: {
         // 목걸이: 추가피해, 적에게 주는 피해
@@ -53,7 +53,7 @@ const ACCESSORY_OPTIONS = {
     }
 };
 
-const OPTION_COMBINATION_TYPES = {
+window.OPTION_COMBINATION_TYPES = {
     // 상상, 상중, 중상, 상하, 하상, 상무, 무상, 중중, 중하, 하중, 중무, 무중, 하하, 하무, 무하, 무무
     SANG_SANG: "상상",
     SANG_JUNG: "상중",
@@ -78,7 +78,7 @@ const OPTION_COMBINATION_TYPES = {
  * @param {string} typeString - 조합 타입 문자열 (예: "상상", "상중" 등)
  * @returns {string|null} 조합 타입 키 또는 null
  */
-function findCombinationTypeKey(typeString) {
+window.findCombinationTypeKey = function(typeString) {
     for (const [key, value] of Object.entries(OPTION_COMBINATION_TYPES)) {
         if (value === typeString) {
             return key;
@@ -92,7 +92,7 @@ function findCombinationTypeKey(typeString) {
  * @param {string} accessoryTypeString - 장신구 타입 문자열 ("목걸이", "귀걸이", "반지")
  * @returns {number|null} 장신구 코드 또는 null
  */
-function getAccessoryCodeByString(accessoryTypeString) {
+window.getAccessoryCodeByString = function(accessoryTypeString) {
     switch (accessoryTypeString) {
         case "목걸이":
             return ACCESSORY_CODES.NECKLACE;
@@ -110,7 +110,7 @@ function getAccessoryCodeByString(accessoryTypeString) {
  * @param {string} accessoryTypeString - 장신구 타입 문자열 ("목걸이", "귀걸이", "반지")
  * @returns {string|null} 장신구 타입 키 또는 null
  */
-function getAccessoryTypeKey(accessoryTypeString) {
+window.getAccessoryTypeKey = function(accessoryTypeString) {
     switch (accessoryTypeString) {
         case "목걸이":
             return "NECKLACE";
@@ -128,7 +128,7 @@ function getAccessoryTypeKey(accessoryTypeString) {
  * @param {string} classTypeString - 클래스 타입 문자열 ("딜러", "서포터")
  * @returns {string|null} 클래스 타입 키 또는 null
  */
-function getClassTypeKey(classTypeString) {
+window.getClassTypeKey = function(classTypeString) {
     switch (classTypeString) {
         case "딜러":
             return "DEALER";
@@ -140,7 +140,7 @@ function getClassTypeKey(classTypeString) {
 }
 
 // API 요청 기본 URL
-const API_BASE_URL = 'https://developer-lostark.game.onstove.com/markets/items';
+window.API_BASE_URL = 'https://developer-lostark.game.onstove.com/markets/items';
 
 /**
  * 장신구 검색 API 요청을 구성하는 함수
@@ -148,7 +148,7 @@ const API_BASE_URL = 'https://developer-lostark.game.onstove.com/markets/items';
  * @param {Array} options - 검색할 옵션 배열 [{FirstOption, SecondOption, MinValue, MaxValue}, ...]
  * @returns {Object} API 요청 body 객체
  */
-function buildRequestBody(categoryCode, options) {
+window.buildRequestBody = function(categoryCode, options) {
     return {
         CategoryCode: categoryCode,
         SortCondition: "ASC",
@@ -172,7 +172,7 @@ function buildRequestBody(categoryCode, options) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object>} API 응답 객체
  */
-async function sendApiRequest(requestBody, apiKey) {
+window.sendApiRequest = async function(requestBody, apiKey) {
     try {
         const response = await fetch(API_BASE_URL, {
             method: 'POST',
@@ -202,7 +202,7 @@ async function sendApiRequest(requestBody, apiKey) {
  * @param {string} apiKey - API 키
  * @returns {Promise<number>} 최저가 (골드)
  */
-async function getLowestPrice(categoryCode, combinationType, options, apiKey) {
+window.getLowestPrice = async function(categoryCode, combinationType, options, apiKey) {
     // 옵션 조합 타입에 따른 EtcOptions 구성
     const etcOptions = convertOptionsToEtcOptions(options, combinationType);
     
@@ -236,7 +236,7 @@ async function getLowestPrice(categoryCode, combinationType, options, apiKey) {
  * @param {string} combinationType - 옵션 조합 타입
  * @returns {Array} EtcOptions 형식의 배열
  */
-function convertOptionsToEtcOptions(options, combinationType) {
+window.convertOptionsToEtcOptions = function(options, combinationType) {
     // 상, 중, 하 등급에 따른 값 조정을 위한 함수
     function adjustValueByGrade(value, grade) {
         switch (grade) {
@@ -351,7 +351,7 @@ function convertOptionsToEtcOptions(options, combinationType) {
  * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
  * @returns {Array} 해당 클래스와 장신구 타입에 대한 옵션 배열
  */
-function getOptionsForClass(classType, accessoryType) {
+window.getOptionsForClass = function(classType, accessoryType) {
     if (!ACCESSORY_OPTIONS[classType] || !ACCESSORY_OPTIONS[classType][accessoryType]) {
         console.error(`알 수 없는 클래스 타입(${classType}) 또는 장신구 타입(${accessoryType})`);
         return [];
@@ -369,7 +369,7 @@ function getOptionsForClass(classType, accessoryType) {
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} 최저가 정보
  */
-async function getLowestPriceByClass(classType, accessoryType, combinationType, values, apiKey) {
+window.getLowestPriceByClass = async function(classType, accessoryType, combinationType, values, apiKey) {
     const options = getOptionsForClass(classType, accessoryType);
     if (options.length === 0) return null;
     
@@ -399,7 +399,7 @@ async function getLowestPriceByClass(classType, accessoryType, combinationType, 
  * @param {string} apiKey - API 키
  * @returns {Promise<Object|null>} 최저가 정보
  */
-async function getLowestPriceByStringTypes(classTypeString, accessoryTypeString, combinationTypeString, values, apiKey) {
+window.getLowestPriceByStringTypes = async function(classTypeString, accessoryTypeString, combinationTypeString, values, apiKey) {
     // 이름을 키로 변환
     const classTypeKey = getClassTypeKey(classTypeString);
     const accessoryTypeKey = getAccessoryTypeKey(accessoryTypeString);
@@ -424,19 +424,23 @@ async function getLowestPriceByStringTypes(classTypeString, accessoryTypeString,
     return await getLowestPriceByClass(classTypeKey, accessoryTypeKey, OPTION_COMBINATION_TYPES[combinationTypeKey], values, apiKey);
 }
 
-export default {
-    ACCESSORY_CODES,
-    ACCESSORY_OPTIONS,
-    OPTION_COMBINATION_TYPES,
-    getLowestPrice,
-    getLowestPriceByClass,
-    getLowestPriceByStringTypes,
-    getOptionsForClass,
-    buildRequestBody,
-    sendApiRequest,
-    convertOptionsToEtcOptions,
-    getAccessoryCodeByString,
-    getAccessoryTypeKey,
-    getClassTypeKey,
-    findCombinationTypeKey
+// 전역 변수로 모듈 정의
+window.MarketApi = {
+    ACCESSORY_CODES: window.ACCESSORY_CODES,
+    ACCESSORY_OPTIONS: window.ACCESSORY_OPTIONS,
+    OPTION_COMBINATION_TYPES: window.OPTION_COMBINATION_TYPES,
+    getLowestPrice: window.getLowestPrice,
+    getLowestPriceByClass: window.getLowestPriceByClass,
+    getLowestPriceByStringTypes: window.getLowestPriceByStringTypes,
+    getOptionsForClass: window.getOptionsForClass,
+    buildRequestBody: window.buildRequestBody,
+    sendApiRequest: window.sendApiRequest,
+    convertOptionsToEtcOptions: window.convertOptionsToEtcOptions,
+    getAccessoryCodeByString: window.getAccessoryCodeByString,
+    getAccessoryTypeKey: window.getAccessoryTypeKey,
+    getClassTypeKey: window.getClassTypeKey,
+    findCombinationTypeKey: window.findCombinationTypeKey
 };
+
+// export 구문 추가
+export default window.MarketApi;

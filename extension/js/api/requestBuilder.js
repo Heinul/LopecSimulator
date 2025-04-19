@@ -3,23 +3,14 @@
  * markets와 auctions 요청을 위한 데이터 생성 함수를 제공합니다.
  */
 
-import { 
-    CATEGORY_CODES, 
-    ACCESSORY_OPTIONS, 
-    OPTION_VALUES, 
-    GRADE_MAPPING,
-    GRADE_TYPE_MAPPING,
-    OPTION_COMBINATION_TYPES,
-    CLASS_TYPE_MAPPING,
-    ACCESSORY_TYPE_MAPPING
-} from './constants.js';
+
 
 /**
  * 문자열 타입으로 조합 타입 찾기
  * @param {string} typeString - 조합 타입 문자열 (예: "상상", "상중" 등)
  * @returns {string|null} 조합 타입 키 또는 null
  */
-export function findCombinationTypeKey(typeString) {
+window.findCombinationTypeKey = function(typeString) {
     for (const [key, value] of Object.entries(OPTION_COMBINATION_TYPES)) {
         if (value === typeString) {
             return key;
@@ -33,7 +24,7 @@ export function findCombinationTypeKey(typeString) {
  * @param {string} accessoryTypeString - 장신구 타입 문자열 ("목걸이", "귀걸이", "반지")
  * @returns {number|null} 장신구 코드 또는 null
  */
-export function getAccessoryCodeByString(accessoryTypeString) {
+window.getAccessoryCodeByString = function(accessoryTypeString) {
     switch (accessoryTypeString) {
         case "목걸이":
             return CATEGORY_CODES.accessory.necklace;
@@ -51,7 +42,7 @@ export function getAccessoryCodeByString(accessoryTypeString) {
  * @param {string} gradeString - 등급 문자열 ("상", "중", "하", "무")
  * @returns {string} 등급 타입 ("HIGH", "MEDIUM", "LOW", "NONE")
  */
-export function getGradeTypeByString(gradeString) {
+window.getGradeTypeByString = function(gradeString) {
     return GRADE_TYPE_MAPPING[gradeString] || "NONE";
 }
 
@@ -61,7 +52,7 @@ export function getGradeTypeByString(gradeString) {
  * @param {string} grade - 등급 ("상", "중", "하", "무")
  * @returns {number} 조정된 값
  */
-export function adjustValueByGrade(baseValue, grade) {
+window.adjustValueByGrade = function(baseValue, grade) {
     switch (grade) {
         case "상": return baseValue;
         case "중": return Math.floor(baseValue * 0.6);
@@ -78,7 +69,7 @@ export function adjustValueByGrade(baseValue, grade) {
  * @param {string} grade - 등급 ("HIGH", "MEDIUM", "LOW")
  * @returns {Object|null} MinValue, MaxValue를 포함한 객체 또는 null
  */
-export function getOptionValueByGrade(accessoryType, secondOption, grade) {
+window.getOptionValueByGrade = function(accessoryType, secondOption, grade) {
     if (
         OPTION_VALUES[accessoryType] && 
         OPTION_VALUES[accessoryType][secondOption] && 
@@ -94,7 +85,7 @@ export function getOptionValueByGrade(accessoryType, secondOption, grade) {
  * @param {Array} options - 옵션 배열 [{FirstOption, SecondOption, accessoryType, grade}, ...]
  * @returns {Array} EtcOptions 형식의 배열
  */
-export function convertToEtcOptions(options) {
+window.convertToEtcOptions = function(options) {
     // 옵션이 없는 경우 빈 슬롯 3개 반환
     if (!options || options.length === 0) {
         return [
@@ -139,7 +130,7 @@ export function convertToEtcOptions(options) {
  * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
  * @returns {Array} EtcOptions 형식의 배열
  */
-export function createAccessoryEtcOptions(options, combinationType, accessoryType, itemGrade = "고대") {
+window.createAccessoryEtcOptions = function(options, combinationType, accessoryType, itemGrade = "고대") {
     // 조합 타입에 따른 등급 배열 가져오기
     const grades = GRADE_MAPPING[combinationType] || ["상", "상"];
     
@@ -238,7 +229,7 @@ export function createAccessoryEtcOptions(options, combinationType, accessoryTyp
  * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
  * @returns {Array} 해당 클래스/장신구에 적합한 옵션 배열
  */
-export function getOptionsForClass(classType, accessoryType) {
+window.getOptionsForClass = function(classType, accessoryType) {
     if (
         ACCESSORY_OPTIONS[classType] && 
         ACCESSORY_OPTIONS[classType][accessoryType]
@@ -255,7 +246,7 @@ export function getOptionsForClass(classType, accessoryType) {
  * @param {Object} extraParams - 추가 파라미터
  * @returns {Object} 마켓 API 요청 데이터
  */
-export function buildMarketRequestData(categoryCode, etcOptions, extraParams = {}) {
+window.buildMarketRequestData = function(categoryCode, etcOptions, extraParams = {}) {
     return {
         CategoryCode: categoryCode,
         SortCondition: "ASC",
@@ -281,7 +272,7 @@ export function buildMarketRequestData(categoryCode, etcOptions, extraParams = {
  * @param {Object} extraParams - 추가 파라미터
  * @returns {Object} 경매장 API 요청 데이터
  */
-export function buildAuctionRequestData(categoryCode, etcOptions, extraParams = {}) {
+window.buildAuctionRequestData = function(categoryCode, etcOptions, extraParams = {}) {
     return {
         CategoryCode: categoryCode,
         SortCondition: "ASC",
@@ -309,7 +300,7 @@ export function buildAuctionRequestData(categoryCode, etcOptions, extraParams = 
  * @param {string} itemGrade - 아이템 등급 ("고대", "유물" 등)
  * @returns {Object} 경매장 API 요청 데이터
  */
-export function buildRequestByStringType(classTypeString, accessoryTypeString, combinationTypeString, itemGrade = "고대") {
+window.buildRequestByStringType = function(classTypeString, accessoryTypeString, combinationTypeString, itemGrade = "고대") {
     // 문자열을 키로 변환
     const classType = CLASS_TYPE_MAPPING[classTypeString];
     const accessoryType = ACCESSORY_TYPE_MAPPING[accessoryTypeString];
@@ -334,16 +325,17 @@ export function buildRequestByStringType(classTypeString, accessoryTypeString, c
     return buildAuctionRequestData(categoryCode, etcOptions, { ItemGrade: itemGrade });
 }
 
-export default {
-    buildMarketRequestData,
-    buildAuctionRequestData,
-    createAccessoryEtcOptions,
-    getOptionsForClass,
-    convertToEtcOptions,
-    getOptionValueByGrade,
-    adjustValueByGrade,
-    getGradeTypeByString,
-    getAccessoryCodeByString,
-    findCombinationTypeKey,
-    buildRequestByStringType
+
+window.RequestBuilder = {
+    buildMarketRequestData: window.buildMarketRequestData,
+    buildAuctionRequestData: window.buildAuctionRequestData,
+    createAccessoryEtcOptions: window.createAccessoryEtcOptions,
+    getOptionsForClass: window.getOptionsForClass,
+    convertToEtcOptions: window.convertToEtcOptions,
+    getOptionValueByGrade: window.getOptionValueByGrade,
+    adjustValueByGrade: window.adjustValueByGrade,
+    getGradeTypeByString: window.getGradeTypeByString,
+    getAccessoryCodeByString: window.getAccessoryCodeByString,
+    findCombinationTypeKey: window.findCombinationTypeKey,
+    buildRequestByStringType: window.buildRequestByStringType
 };

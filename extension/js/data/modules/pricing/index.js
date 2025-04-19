@@ -1,4 +1,8 @@
 // 가격 모듈 통합 인터페이스
+// export를 사용하기 위해 PriceManager와 PriceStorage 가져오기
+
+import PriceManager from './PriceManager.js';
+import PriceStorage from './PriceStorage.js';
 const PricingSystem = (function() {
   // 가격 모듈 API 캐시
   let apiReady = false;
@@ -485,3 +489,6 @@ if (window.LopecScanner) {
     PricingSystem: PricingSystem
   };
 }
+
+// 내보내기
+export default PricingSystem;

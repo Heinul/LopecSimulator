@@ -439,3 +439,9 @@ const PriceStorage = (function() {
 
 // 모듈이 로드되면 자동으로 초기화
 document.addEventListener('DOMContentLoaded', PriceStorage.initialize);
+
+// 전역 변수로 노출
+window.PriceStorage = PriceStorage;
+
+// 내보내기
+export default PriceStorage;

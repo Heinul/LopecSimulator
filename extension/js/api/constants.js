@@ -3,7 +3,7 @@
  */
 
 // API 기본 설정
-export const API_CONFIG = {
+window.API_CONFIG = {
     baseUrl: 'https://developer-lostark.game.onstove.com',
     endpoints: {
         auction: '/auctions/items',
@@ -17,7 +17,7 @@ export const API_CONFIG = {
 };
 
 // 카테고리 코드
-export const CATEGORY_CODES = {
+window.CATEGORY_CODES = {
     // 장신구
     accessory: {
         necklace: 200010, // 목걸이
@@ -34,7 +34,7 @@ export const CATEGORY_CODES = {
  * 장신구 옵션 상수 (FirstOption, SecondOption)
  * 딜러와 서포터에 대한 기본 옵션 세트 정의
  */
-export const ACCESSORY_OPTIONS = {
+window.ACCESSORY_OPTIONS = {
     // 딜러 옵션
     DEALER: {
         // 목걸이: 추가피해, 적에게 주는 피해
@@ -75,7 +75,7 @@ export const ACCESSORY_OPTIONS = {
 };
 
 // 옵션 등급별 값 정의
-export const OPTION_VALUES = {
+window.OPTION_VALUES = {
     // 목걸이 옵션
     NECKLACE: {
         // 적에게 주는 피해 증가
@@ -156,7 +156,7 @@ export const OPTION_VALUES = {
 };
 
 // 옵션 조합 타입
-export const OPTION_COMBINATION_TYPES = {
+window.OPTION_COMBINATION_TYPES = {
     SANG_SANG: "상상", // 상상
     SANG_JUNG: "상중", // 상중
     JUNG_SANG: "중상", // 중상
@@ -176,7 +176,7 @@ export const OPTION_COMBINATION_TYPES = {
 };
 
 // 등급 맵핑 (조합타입에 따른 등급 배열)
-export const GRADE_MAPPING = {
+window.GRADE_MAPPING = {
     "상상": ["상", "상"],
     "상중": ["상", "중"],
     "중상": ["중", "상"],
@@ -196,7 +196,7 @@ export const GRADE_MAPPING = {
 };
 
 // 등급 타입 매핑
-export const GRADE_TYPE_MAPPING = {
+window.GRADE_TYPE_MAPPING = {
     "상": "HIGH",
     "중": "MEDIUM",
     "하": "LOW",
@@ -204,20 +204,20 @@ export const GRADE_TYPE_MAPPING = {
 };
 
 // 클래스 타입 매핑
-export const CLASS_TYPE_MAPPING = {
+window.CLASS_TYPE_MAPPING = {
     "딜러": "DEALER",
     "서포터": "SUPPORTER"
 };
 
 // 장신구 타입 매핑
-export const ACCESSORY_TYPE_MAPPING = {
+window.ACCESSORY_TYPE_MAPPING = {
     "목걸이": "NECKLACE",
     "귀걸이": "EARRING",
     "반지": "RING"
 };
 
 // 전체 상수 객체로 내보내기
-export default {
+window.API_CONSTANTS = {
     API_CONFIG,
     CATEGORY_CODES,
     ACCESSORY_OPTIONS,

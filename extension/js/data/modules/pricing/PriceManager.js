@@ -3,6 +3,9 @@
  * 보석, 각인서, 악세서리 가격 정보를 검색하고 관리합니다.
  */
 
+// API 관련 설정 가져오기
+import API_CONFIG from '../api/config.js';
+
 // 가격 관리자 모듈
 const PriceManager = (function() {
   // 가격 데이터 캐시 (세션 기간 동안 유지)
@@ -470,3 +473,9 @@ const PriceManager = (function() {
 
 // 모듈이 로드되면 자동으로 초기화
 document.addEventListener('DOMContentLoaded', PriceManager.initialize);
+
+// 전역 변수로 노출
+window.PriceManager = PriceManager;
+
+// 내보내기
+export default PriceManager;

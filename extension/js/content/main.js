@@ -52,7 +52,6 @@ window.LopecScanner.Scanners.Accessory.AccessoryScanner = window.LopecScanner.Sc
       console.log('리팩토링된 장신구 스캐너 모듈이 로드되었습니다.');
     }
     
-    // 초기화 메시지
-    console.log('로펙 시뮬레이터 점수 분석기가 로드되었습니다');
+
   });
 })();
