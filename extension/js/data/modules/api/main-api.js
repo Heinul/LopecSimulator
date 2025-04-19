@@ -155,50 +155,6 @@ const AccessorySearch = {
         return this.searchAccessory(MarketApi.ACCESSORY_CODES.RING, combinationType, options);
     },
     
-    /**
-     * 클래스 타입별 장신구 검색 (딜러 또는 서포터)
-     * @param {string} classType - 클래스 타입 ("DEALER" 또는 "SUPPORTER")
-     * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
-     * @param {string} combinationType - 옵션 조합 타입 (예: "상상", "상중", 등)
-     * @param {Array} values - 옵션 값 배열 [첫번째 옵션 값, 두번째 옵션 값]
-     * @returns {Promise<Object|null>} 검색 결과
-     */
-    async searchByClass(classType, accessoryType, combinationType, values) {
-        const apiKey = await ApiKeyManager.getApiKey();
-        if (!apiKey) {
-            console.error('API 키가 설정되지 않았습니다.');
-            return null;
-        }
-        
-        try {
-            return await MarketApi.getLowestPriceByClass(classType, accessoryType, combinationType, values, apiKey);
-        } catch (error) {
-            console.error(`${classType} ${accessoryType} 검색 중 오류 발생:`, error);
-            return null;
-        }
-    },
-    
-    /**
-     * 딜러 장신구 검색
-     * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
-     * @param {string} combinationType - 옵션 조합 타입
-     * @param {Array} values - 옵션 값 배열
-     * @returns {Promise<Object|null>} 검색 결과
-     */
-    async searchDealer(accessoryType, combinationType, values) {
-        return this.searchByClass("DEALER", accessoryType, combinationType, values);
-    },
-    
-    /**
-     * 서포터 장신구 검색
-     * @param {string} accessoryType - 장신구 타입 ("NECKLACE", "EARRING", "RING")
-     * @param {string} combinationType - 옵션 조합 타입
-     * @param {Array} values - 옵션 값 배열
-     * @returns {Promise<Object|null>} 검색 결과
-     */
-    async searchSupporter(accessoryType, combinationType, values) {
-        return this.searchByClass("SUPPORTER", accessoryType, combinationType, values);
-    },
     
     /**
      * 옵션 정보 가져오기
@@ -210,28 +166,6 @@ const AccessorySearch = {
         return MarketApi.getOptionsForClass(classType, accessoryType);
     },
     
-    /**
-     * 문자열 타입을 사용한 검색 (한글 문자열 지원)
-     * @param {string} classType - 클래스 타입 ("딜러" 또는 "서포터")
-     * @param {string} accessoryType - 장신구 타입 ("목걸이", "귀걸이", "반지")
-     * @param {string} combinationType - 옵션 조합 타입 (예: "상상", "상중", 등)
-     * @param {Array} values - 옵션 값 배열 [첫번째 옵션 값, 두번째 옵션 값]
-     * @returns {Promise<Object|null>} 검색 결과
-     */
-    async searchByStringType(classType, accessoryType, combinationType, values) {
-        const apiKey = await ApiKeyManager.getApiKey();
-        if (!apiKey) {
-            console.error('API 키가 설정되지 않았습니다.');
-            return null;
-        }
-        
-        try {
-            return await MarketApi.getLowestPriceByStringTypes(classType, accessoryType, combinationType, values, apiKey);
-        } catch (error) {
-            console.error(`${classType} ${accessoryType} ${combinationType} 검색 중 오류 발생:`, error);
-            return null;
-        }
-    },
     
     /**
      * 문자열 타입으로 옵션 정보 가져오기
@@ -356,9 +290,11 @@ window.LopecScanner.API.getAccessoryPrice = async function(categoryCode, combina
     return AccessorySearch.searchAccessory(categoryCode, combinationType, options);
 };
 
-// 문자열 타입 지원 함수 - 한글 문자열 지원
+// 문자열 타입 지원 함수 - AccessoryApi.js 함수를 사용하도록 구현
 window.LopecScanner.API.searchByString = async function(classType, accessoryType, combinationType, values) {
-    return AccessorySearch.searchByStringType(classType, accessoryType, combinationType, values);
+    // tierValue가 values에 있다면 사용하고, 없으면 기본값을 사용
+    const tierValue = values && values.tier ? values.tier : "고대";
+    return window.AccessoryApi.searchByStringType(classType, accessoryType, combinationType, tierValue);
 };
 
 // 보석 검색 함수
