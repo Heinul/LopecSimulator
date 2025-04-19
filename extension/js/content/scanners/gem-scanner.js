@@ -105,7 +105,8 @@ LopecScanner.Scanners.GemScanner = (function() {
         const gemDisplayName = `보석 (${gemType} ${skillName})`;
         
         BaseScanner.state.scanResults[resultKey] = {
-          type: 'gem',  // type을 'gem'으로 변경 (스캔 결과의 'type' 필드가 영문 카테고리 이름이어야 함)
+          type: 'gem',  // 주요 카테고리
+          subType: '보석 레벨', // 세부 구분
           index: i,
           item: gemDisplayName,
           from: `${currentValue}레벨`,

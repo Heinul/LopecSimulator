@@ -126,7 +126,33 @@ const DataManager = {
     
     // 카테고리 필터
     if (categoryFilter !== 'all') {
-      this.processedData = this.processedData.filter(item => item.type === categoryFilter);
+      // type 필드를 사용하여 필터링
+      this.processedData = this.processedData.filter(item => {
+        // 영문 카테고리 type 필드가 있는지 확인
+        if (item.type && typeof item.type === 'string') {
+          // 영문 표기 카테고리의 경우 (예: 'armor', 'gem' 등)
+          if (item.type === categoryFilter) {
+            return true;
+          }
+          
+          // 한글 표기 카테고리의 경우 ('장비', '보석' 등)
+          // 카테고리와 비교하여 매칭
+          if (categoryFilter === 'armor' && item.type.includes('장비')) {
+            return true;
+          } else if (categoryFilter === 'gem' && item.type.includes('보석')) {
+            return true;
+          } else if (categoryFilter === 'accessory' && item.type.includes('장신구')) {
+            return true;
+          } else if (categoryFilter === 'engraving' && item.type.includes('각인')) {
+            return true;
+          } else if (categoryFilter === 'karma' && item.type.includes('카르마')) {
+            return true;
+          } else if (categoryFilter === 'avatar' && item.type.includes('아바타')) {
+            return true;
+          }
+        }
+        return false;
+      });
       console.log('After category filter:', this.processedData.length);
     }
     
@@ -242,22 +268,48 @@ const DataManager = {
       return null;
     }
     
-    const headers = ['카테고리', '항목', '현재값', '변경값', '점수변동', '티어 정보'];
+    const headers = ['카테고리', '세부 구분', '항목', '현재값', '변경값', '점수변동', '티어 정보'];
     const rows = this.processedData.map(item => {
       // 카테고리 이름 변환
       let categoryName = '';
-      switch(item.type) {
-        case 'armor': categoryName = '장비'; break;
-        case 'gem': categoryName = '보석'; break;
-        case 'accessory': categoryName = '장신구'; break;
-        case 'engraving': categoryName = '각인'; break;
-        case 'karma': categoryName = '카르마'; break;
-        case 'avatar': categoryName = '아바타'; break;
-        default: categoryName = item.type;
+      let subTypeName = item.subType || '';
+      
+      // type이 영문으로 되어 있으면 변환
+      if (typeof item.type === 'string') {
+        if (item.type === 'armor') {
+          categoryName = '장비';
+        } else if (item.type === 'gem') {
+          categoryName = '보석';
+        } else if (item.type === 'accessory') {
+          categoryName = '장신구';
+        } else if (item.type === 'engraving') {
+          categoryName = '각인';
+        } else if (item.type === 'karma') {
+          categoryName = '카르마';
+        } else if (item.type === 'avatar') {
+          categoryName = '아바타';
+        } else if (item.type.includes('장비')) {
+          categoryName = '장비';
+        } else if (item.type.includes('보석')) {
+          categoryName = '보석';
+        } else if (item.type.includes('장신구')) {
+          categoryName = '장신구';
+        } else if (item.type.includes('각인')) {
+          categoryName = '각인';
+        } else if (item.type.includes('카르마')) {
+          categoryName = '카르마';
+        } else if (item.type.includes('아바타')) {
+          categoryName = '아바타';
+        } else {
+          categoryName = item.type;
+        }
+      } else {
+        categoryName = item.type || '';
       }
       
       return [
         categoryName,
+        subTypeName,
         item.item,
         item.from,
         item.to,
@@ -283,18 +335,56 @@ const DataManager = {
     const categories = {};
     
     this.processedData.forEach(item => {
-      if (!categories[item.type]) {
-        categories[item.type] = [];
+      // 카테고리 이름 확인 및 정리
+      let categoryKey = item.type;
+      
+      // type이 영문이거나 한글이라도 일관된 키로 정리
+      if (typeof categoryKey === 'string') {
+        if (categoryKey === 'armor' || categoryKey.includes('장비')) {
+          categoryKey = 'armor';
+        } else if (categoryKey === 'gem' || categoryKey.includes('보석')) {
+          categoryKey = 'gem';
+        } else if (categoryKey === 'accessory' || categoryKey.includes('장신구')) {
+          categoryKey = 'accessory';
+        } else if (categoryKey === 'engraving' || categoryKey.includes('각인')) {
+          categoryKey = 'engraving';
+        } else if (categoryKey === 'karma' || categoryKey.includes('카르마')) {
+          categoryKey = 'karma';
+        } else if (categoryKey === 'avatar' || categoryKey.includes('아바타')) {
+          categoryKey = 'avatar';
+        }
       }
-      categories[item.type].push(item);
+      
+      if (!categories[categoryKey]) {
+        categories[categoryKey] = [];
+      }
+      categories[categoryKey].push(item);
+      
+      // 세부 구분(서브타입)별 그룹화도 추가
+      if (item.subType) {
+        const subTypeKey = `${categoryKey}_${item.subType}`;
+        if (!categories[subTypeKey]) {
+          categories[subTypeKey] = [];
+        }
+        categories[subTypeKey].push(item);
+      }
       
       // 티어별 그룹화도 추가
       if (item.tier) {
-        const tierCategory = `${item.type}_${item.tier}`;
+        const tierCategory = `${categoryKey}_${item.tier}`;
         if (!categories[tierCategory]) {
           categories[tierCategory] = [];
         }
         categories[tierCategory].push(item);
+        
+        // 티어와 서브타입 모두 가진 그룹도 추가
+        if (item.subType) {
+          const combinedKey = `${categoryKey}_${item.subType}_${item.tier}`;
+          if (!categories[combinedKey]) {
+            categories[combinedKey] = [];
+          }
+          categories[combinedKey].push(item);
+        }
       }
     });
     
@@ -306,14 +396,42 @@ const DataManager = {
       
       // 상위 5개 항목만 선택
       result[category] = categories[category].slice(0, 5).map(item => {
-        // 티어 정보가 있으면 이름에 포함
-        let nameWithTier = item.tier ? 
-          `[${item.tier}] ${item.item} (${item.from} → ${item.to})` : 
-          `${item.item} (${item.from} → ${item.to})`;
-          
+        // 카테고리 이름 생성
+        let categoryName = '';
+        if (typeof item.type === 'string') {
+          if (item.type === 'armor' || item.type.includes('장비')) {
+            categoryName = '장비';
+          } else if (item.type === 'gem' || item.type.includes('보석')) {
+            categoryName = '보석';
+          } else if (item.type === 'accessory' || item.type.includes('장신구')) {
+            categoryName = '장신구';
+          } else if (item.type === 'engraving' || item.type.includes('각인')) {
+            categoryName = '각인';
+          } else if (item.type === 'karma' || item.type.includes('카르마')) {
+            categoryName = '카르마';
+          } else if (item.type === 'avatar' || item.type.includes('아바타')) {
+            categoryName = '아바타';
+          } else {
+            categoryName = item.type;
+          }
+        } else {
+          categoryName = item.type || '';
+        }
+        
+        // 세부 구분 정보 추가
+        const subTypePart = item.subType ? `[${item.subType}] ` : '';
+        
+        // 티어 정보 추가
+        const tierPart = item.tier ? `[${item.tier}] ` : '';
+        
+        // 전체 이름 구성 ([카테고리][세부구분][티어] 항목 (현재값 -> 변경값))
+        const nameWithDetails = `${categoryName && subTypePart ? `[${categoryName}]` : ''}${subTypePart}${tierPart}${item.item} (${item.from} → ${item.to})`;
+        
         return {
-          name: nameWithTier,
+          name: nameWithDetails,
           value: item.difference,
+          category: categoryName,
+          subType: item.subType || '',
           tier: item.tier || ''
         };
       });

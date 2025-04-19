@@ -126,7 +126,8 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         
         // 결과 저장
         BaseScanner.state.scanResults[`armor-name-${i}-${newNameValue}`] = {
-          type: '장비 강화',
+          type: 'armor',  // 주요 카테고리
+          subType: '장비 강화', // 세부 구분
           index: i,
           item: document.querySelectorAll('.armor-tag')[i]?.textContent || `장비 ${i+1}`,
           from: nameCurrentValue,
@@ -204,7 +205,8 @@ LopecScanner.Scanners.ArmorScanner = (function() {
         
         // 결과 저장
         BaseScanner.state.scanResults[`armor-upgrade-${index}-${newUpgradeValue}`] = {
-          type: '장비 상재',
+          type: 'armor',  // 주요 카테고리
+          subType: '장비 상재', // 세부 구분
           index: index,
           item: document.querySelectorAll('.armor-tag')[index]?.textContent || `장비 ${index+1} 상재`,
           from: upgradeCurrentValue,

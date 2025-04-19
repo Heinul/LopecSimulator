@@ -177,7 +177,8 @@ LopecScanner.Scanners.KarmaScanner = (function() {
             
             // 결과 저장
             BaseScanner.state.scanResults[`karma-radio-${groupIndex}-${i}`] = {
-              type: karmaType,
+              type: 'karma',
+              subType: karmaType,
               index: groupIndex,
               item: `${karmaType} 랭크 ${i}`,
               from: `랭크 ${originalCheckedIndex}`,
@@ -279,7 +280,8 @@ LopecScanner.Scanners.KarmaScanner = (function() {
             
             // 결과 저장
             BaseScanner.state.scanResults[`karma-checkbox-${i}`] = {
-              type: '카르마 옵션',
+              type: 'karma',
+              subType: '카르마 옵션',
               index: i,
               item: optionText,
               from: '미적용',

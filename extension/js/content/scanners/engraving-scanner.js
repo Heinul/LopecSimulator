@@ -170,6 +170,7 @@ function prepareEngravingScan(elements) {
           // 결과 저장
           BaseScanner.state.scanResults[`engraving-${currentGrade}-${i}-${level}`] = {
             type: 'engraving',
+            subType: '각인 레벨',
             grade: currentGrade,
             index: i,
             engravingName: currentName,  // 각인서 이름
@@ -212,6 +213,7 @@ function prepareEngravingScan(elements) {
             // 결과 저장
             BaseScanner.state.scanResults[`engraving-${nextGrade}-${i}-${level}`] = {
               type: 'engraving',
+              subType: '각인 등급변경',
               grade: nextGrade,
               index: i,
               engravingName: currentName,  // 각인서 이름
