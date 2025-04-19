@@ -305,8 +305,8 @@ const APIStatus = (function() {
    */
   function isAccessoryItem(item) {
     const accessoryTypes = ['accessory', 'earring1', 'earring2', 'ring1', 'ring2', 'necklace'];
-    console.log('장신구 타입 확인:', item.item);
-    return accessoryTypes.includes(item.accessoryType);
+    console.log('장신구 타입 확인:', item);
+    return item.type === 'accessory' || accessoryTypes.includes(item.accessoryType);
   }
   
   /**
@@ -363,11 +363,11 @@ const APIStatus = (function() {
           let accessoryType = '';
           
           // 장신구 타입 추출
-          if (item.item.includes('necklace')) accessoryType = '목걸이';
-          else if (item.item.includes('earring')) accessoryType = '귀걸이';
-          else if (item.item.includes('ring')) accessoryType = '반지';
+          if (item.accessoryType === 'necklace') accessoryType = '목걸이';
+          else if (item.accessoryType.includes('earring')) accessoryType = '귀걸이';
+          else if (item.accessoryType.includes('ring')) accessoryType = '반지';
           else {
-            console.warn(`알 수 없는 장신구 타입: ${item.item}`);
+            console.warn(`알 수 없는 장신구 타입: ${item.accessoryType}`);
             continue;
           }
           
@@ -378,24 +378,46 @@ const APIStatus = (function() {
           let combinationType = '상상';
           
           // 조합 타입 추출
-          const itemNameParts = item.item.split(' ');
-          for (const part of itemNameParts) {
-            if (part === '상상' || part === '상중' || part === '중상' || 
-                part === '상하' || part === '하상' || part === '상무' || 
-                part === '무상' || part === '중중' || part === '중하' || 
-                part === '하중' || part === '중무' || part === '무중' || 
-                part === '하하' || part === '하무' || part === '무하' || 
-                part === '무무') {
-              combinationType = part;
-              break;
+          if (item.combo) {
+            // 콤보에서 조합 타입 추출
+            const comboNameParts = item.combo.split('-');
+            if (comboNameParts.length > 0) {
+              // 첫 번째 부분이 조합 타입인 경우
+              const firstPart = comboNameParts[0];
+              if (['상상', '상중', '중상', '상하', '하상', '상무', '무상', '중중', '중하', '하중', '중무', '무중', '하하', '하무', '무하', '무무'].includes(firstPart)) {
+                combinationType = firstPart;
+              }
+            }
+          } else {
+            // 기존 방식: 아이템 이름에서 조합 타입 추출
+            const itemNameParts = item.item ? item.item.split(' ') : [];
+            for (const part of itemNameParts) {
+              if (part === '상상' || part === '상중' || part === '중상' || 
+                  part === '상하' || part === '하상' || part === '상무' || 
+                  part === '무상' || part === '중중' || part === '중하' || 
+                  part === '하중' || part === '중무' || part === '무중' || 
+                  part === '하하' || part === '하무' || part === '무하' || 
+                  part === '무무') {
+                combinationType = part;
+                break;
+              }
             }
           }
           
           // 아이템 등급 추출 (고대, 유물)
           let itemGrade = '고대'; // 기본값
-          if (item.grade) {
+          if (item.tier) {
+            // tier 속성에서 등급 추출 (예: 'T4고대')
+            if (item.tier.includes('고대')) {
+              itemGrade = '고대';
+            } else if (item.tier.includes('유물')) {
+              itemGrade = '유물';
+            } else if (item.tier.includes('전설')) {
+              itemGrade = '전설';
+            }
+          } else if (item.grade) {
             itemGrade = item.grade;
-          } else if (item.item.includes('유물')) {
+          } else if (item.item && item.item.includes('유물')) {
             itemGrade = '유물';
           }
           
